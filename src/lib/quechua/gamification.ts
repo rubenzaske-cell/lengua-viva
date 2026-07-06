@@ -52,9 +52,9 @@ export function formatMs(ms: number): string {
   return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
 }
 
-// Determinar el nivel del usuario basado en XP
+// Determinar el nivel del usuario basado en Quipus tejidos (XP)
 export function getLevel(xp: number): { level: number; title: string; current: number; needed: number; progress: number } {
-  // Cada nivel requiere más XP: nivel n requiere 50 * n XP acumulado
+  // Cada nivel requiere más quipus: nivel n requiere 50 * n quipus acumulado
   let level = 1;
   let needed = 50;
   let acc = 0;

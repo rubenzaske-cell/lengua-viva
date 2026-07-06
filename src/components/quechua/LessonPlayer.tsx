@@ -8,6 +8,7 @@ import { X, Heart, Volume2, Check, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { KunturMascot, randomPhrase } from "@/components/quechua/KunturMascot";
 import { IntiCoin } from "@/components/quechua/IntiCoin";
+import { QuipuKnot } from "@/components/quechua/QuipuKnot";
 
 type Feedback = "none" | "correct" | "wrong";
 
@@ -717,10 +718,10 @@ function CompletionScreen({
         </p>
 
         <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto mb-6">
-          <div className="bg-duo-yellow/15 border-2 border-duo-yellow/30 rounded-2xl p-4">
-            <div className="text-3xl mb-1">⭐</div>
-            <div className="text-xs font-bold text-muted-foreground uppercase">XP ganado</div>
-            <div className="text-2xl font-extrabold text-duo-yellow">+{xp}</div>
+          <div className="bg-duo-orange/15 border-2 border-duo-orange/30 rounded-2xl p-4">
+            <div className="mb-1 flex justify-center"><QuipuKnot size={36} /></div>
+            <div className="text-xs font-bold text-muted-foreground uppercase">Quipus</div>
+            <div className="text-2xl font-extrabold text-duo-orange">+{xp}</div>
           </div>
           <div className="bg-duo-yellow/15 border-2 border-duo-yellow/30 rounded-2xl p-4">
             <div className="mb-1 flex justify-center"><IntiCoin size={36} /></div>

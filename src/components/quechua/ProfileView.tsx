@@ -3,10 +3,11 @@
 import { useAppStore } from "@/lib/quechua/store";
 import { ACHIEVEMENTS, CURRICULUM } from "@/lib/quechua/content";
 import { getLevel, todayStr } from "@/lib/quechua/gamification";
-import { Flame, Star, Heart, Trophy, Target, TrendingUp, Calendar } from "lucide-react";
+import { Flame, Heart, Trophy, Target, TrendingUp, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { IntiCoin } from "@/components/quechua/IntiCoin";
+import { QuipuKnot } from "@/components/quechua/QuipuKnot";
 
 export function ProfileView() {
   const stats = useAppStore((s) => s.stats);
@@ -43,7 +44,7 @@ export function ProfileView() {
 
   const statCards = [
     { icon: Flame, label: "Días de racha", value: stats.streak, color: "text-duo-orange", bg: "bg-duo-orange/10" },
-    { icon: Star, label: "XP totales", value: stats.xp, color: "text-duo-yellow", bg: "bg-duo-yellow/10" },
+    { icon: null, isQuipu: true, label: "Quipus tejidos", value: stats.xp, color: "text-duo-orange", bg: "bg-duo-orange/10" },
     { icon: Trophy, label: "Coronas", value: totalCrowns, color: "text-duo-purple", bg: "bg-duo-purple/10" },
     { icon: null, isCoin: true, label: "Intis", value: stats.gems, color: "text-duo-yellow", bg: "bg-duo-yellow/10" },
     { icon: Target, label: "Lecciones", value: `${completedLessons}/${totalLessons}`, color: "text-duo-green", bg: "bg-duo-green/10" },
@@ -72,18 +73,18 @@ export function ProfileView() {
         </div>
       </motion.div>
 
-      {/* Barra de nivel */}
+      {/* Barra de nivel (quipus tejidos) */}
       <div className="bg-card rounded-2xl border-2 border-border p-4 mb-6">
-        <div className="flex justify-between text-sm font-bold mb-1.5">
-          <span className="text-muted-foreground">Nivel {level.level}</span>
-          <span className="text-duo-green">{level.current}/{level.needed} XP</span>
+        <div className="flex justify-between items-center text-sm font-bold mb-1.5">
+          <span className="text-muted-foreground flex items-center gap-1.5">Nivel {level.level} · {level.title}</span>
+          <span className="text-duo-orange flex items-center gap-1"><QuipuKnot size={16} /> {level.current}/{level.needed}</span>
         </div>
         <div className="h-3 rounded-full bg-muted overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${level.progress * 100}%` }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="h-full bg-gradient-to-r from-duo-green to-duo-green-dark rounded-full"
+            className="h-full bg-gradient-to-r from-duo-orange to-amber-700 rounded-full"
           />
         </div>
       </div>
@@ -101,6 +102,8 @@ export function ProfileView() {
             >
               {card.isCoin ? (
                 <div className="mb-2"><IntiCoin size={28} /></div>
+              ) : card.isQuipu ? (
+                <div className="mb-2"><QuipuKnot size={28} /></div>
               ) : (
                 <Icon className={`w-7 h-7 ${card.color} mb-2`} fill="currentColor" />
               )}
@@ -139,14 +142,14 @@ export function ProfileView() {
         </p>
       </div>
 
-      {/* Meta diaria */}
+      {/* Meta diaria de quipus */}
       <div className="bg-card rounded-2xl border-2 border-border p-4 mb-6">
         <h3 className="font-extrabold mb-2 flex items-center gap-2">
-          <Target className="w-5 h-5 text-duo-yellow" /> Meta diaria
+          <QuipuKnot size={20} /> Meta diaria
         </h3>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-bold text-muted-foreground">Hoy has ganado</span>
-          <span className="text-duo-yellow font-extrabold">{stats.dailyXp} / {stats.dailyGoal} XP</span>
+          <span className="text-sm font-bold text-muted-foreground">Quipus tejidos hoy</span>
+          <span className="text-duo-orange font-extrabold flex items-center gap-1">{stats.dailyXp} / {stats.dailyGoal}</span>
         </div>
         <div className="h-3 rounded-full bg-muted overflow-hidden">
           <motion.div

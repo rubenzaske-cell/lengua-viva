@@ -1,10 +1,11 @@
 "use client";
 
 import { useAppStore } from "@/lib/quechua/store";
-import { Flame, Heart, Target } from "lucide-react";
+import { Flame, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatMs, nextHeartInMs } from "@/lib/quechua/gamification";
 import { IntiCoin } from "@/components/quechua/IntiCoin";
+import { QuipuKnot } from "@/components/quechua/QuipuKnot";
 
 export function TopBar() {
   const stats = useAppStore((s) => s.stats);
@@ -61,16 +62,16 @@ export function TopBar() {
           </span>
         </button>
 
-        {/* Meta diaria */}
+        {/* Meta diaria de quipus */}
         <div className="flex-1 flex items-center gap-2 justify-end">
-          <Target className="w-5 h-5 text-duo-yellow shrink-0" fill="currentColor" />
+          <QuipuKnot size={22} className="shrink-0" />
           <div className="flex-1 max-w-[140px]">
             <div className="flex justify-between text-xs font-bold text-muted-foreground mb-0.5">
-              <span>{stats.dailyXp}/{stats.dailyGoal} XP</span>
+              <span>{stats.dailyXp}/{stats.dailyGoal}</span>
             </div>
             <div className="h-2.5 rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full bg-duo-yellow rounded-full transition-all duration-500"
+                className="h-full bg-gradient-to-r from-duo-orange to-amber-600 rounded-full transition-all duration-500"
                 style={{ width: `${dailyProgress}%` }}
               />
             </div>

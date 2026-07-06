@@ -47,7 +47,7 @@ export function ShopView() {
       }
       if (data.boost) {
         setXpBoostUntil(data.boost);
-        toast.success("¡Doble XP activado!", { description: "Por 15 minutos" });
+        toast.success("¡Doble Quipus activado!", { description: "Por 15 minutos" });
       } else {
         toast.success(`¡${item.name} comprado!`, { description: `-${item.cost} intis` });
       }

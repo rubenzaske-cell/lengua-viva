@@ -104,7 +104,7 @@ export default function Home() {
       <BottomNav />
       {xpBoostUntil && xpBoostUntil > Date.now() && (
         <div className="fixed bottom-20 right-4 z-40 bg-duo-blue text-white text-xs font-extrabold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1 animate-bounce-subtle">
-          ⚡ Doble XP activo
+          ⚡ Doble Quipus activo
         </div>
       )}
     </div>

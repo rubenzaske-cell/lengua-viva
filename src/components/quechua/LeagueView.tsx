@@ -148,7 +148,7 @@ export function LeagueView() {
                 <div className={`font-extrabold ${isUser ? "text-duo-green" : "text-foreground"}`}>
                   {m.name}{isUser && " (tú)"}
                 </div>
-                <div className="text-xs text-muted-foreground font-bold">{m.xp} XP esta semana</div>
+                <div className="text-xs text-muted-foreground font-bold">{m.xp} quipus esta semana</div>
               </div>
               {isPromo && <TrendingUp className="w-5 h-5 text-duo-green" />}
               {isDemo && <TrendingDown className="w-5 h-5 text-duo-red" />}

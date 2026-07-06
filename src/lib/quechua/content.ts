@@ -880,9 +880,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "first_lesson", name: "Primer Paso", description: "Completa tu primera lección", emoji: "🎯", target: 1, metric: "lessons", tier: "bronze" },
   { id: "lessons_5", name: "Estudiante", description: "Completa 5 lecciones", emoji: "📚", target: 5, metric: "lessons", tier: "bronze" },
   { id: "lessons_10", name: "Dedicado", description: "Completa 10 lecciones", emoji: "📖", target: 10, metric: "lessons", tier: "silver" },
-  { id: "xp_100", name: "Centurión", description: "Acumula 100 XP", emoji: "⭐", target: 100, metric: "xp", tier: "bronze" },
-  { id: "xp_500", name: "Estrella", description: "Acumula 500 XP", emoji: "🌟", target: 500, metric: "xp", tier: "silver" },
-  { id: "xp_1000", name: "Leyenda", description: "Acumula 1000 XP", emoji: "💫", target: 1000, metric: "xp", tier: "gold" },
+  { id: "xp_100", name: "Tejedor", description: "Teje 100 quipus", emoji: "🎋", target: 100, metric: "xp", tier: "bronze" },
+  { id: "xp_500", name: "Maestro Tejedor", description: "Teje 500 quipus", emoji: "🧵", target: 500, metric: "xp", tier: "silver" },
+  { id: "xp_1000", name: "Leyenda", description: "Teje 1000 quipus", emoji: "💫", target: 1000, metric: "xp", tier: "gold" },
   { id: "streak_3", name: "En Racha", description: "Mantén una racha de 3 días", emoji: "🔥", target: 3, metric: "streak", tier: "bronze" },
   { id: "streak_7", name: "Semana Perfecta", description: "Mantén una racha de 7 días", emoji: "📅", target: 7, metric: "streak", tier: "silver" },
   { id: "streak_30", name: "Inquebrantable", description: "Mantén una racha de 30 días", emoji: "💎", target: 30, metric: "streak", tier: "gold" },
@@ -924,7 +924,7 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: "refill_hearts", name: "Llenar Corazones", description: "Restaura todos tus corazones al instante", emoji: "❤️", cost: 350, type: "hearts" },
   { id: "frozen_1", name: "Congelar Racha", description: "Protege tu racha por un día perdido", emoji: "🧊", cost: 200, type: "frozen" },
   { id: "frozen_3", name: "3 Congeladores", description: "Tres congeladores de racha", emoji: "🧊", cost: 500, type: "frozen" },
-  { id: "double_xp", name: "Doble XP (15 min)", description: "Duplica tu XP por 15 minutos", emoji: "⚡", cost: 450, type: "boost" },
+  { id: "double_xp", name: "Doble Quipus (15 min)", description: "Duplica tus quipus tejidos por 15 minutos", emoji: "⚡", cost: 450, type: "boost" },
   { id: "extra_heart", name: "Corazón Extra", description: "Un corazón adicional permanente", emoji: "💖", cost: 800, type: "hearts" },
 ];
 

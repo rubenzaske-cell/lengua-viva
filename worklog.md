@@ -117,3 +117,42 @@ Stage Summary:
 - Componente IntiCoin reutilizable creado. Imagen optimizada (120 KB, 256px, PNG transparente).
 - La moneda se ve dorada/amarilla (duo-yellow) en vez de azul, dándole más calidez andina a la interfaz.
 - Script reutilizable en scripts/process-inti-coin.ts.
+
+---
+Task ID: 13 (Quipus reemplazan XP/estrellas)
+Agent: Z.ai Code (main)
+Task: Reemplazar las XP/estrellas por "Quipus tejidos" (nudos andinos) como medida de progreso/nivel
+
+Work Log:
+- Generé el ícono de quipu con z-ai image: prompt de quipu andino 2D plano estilo Duolingo, cuerda principal horizontal marrón con 4 cuerdas colgantes, cada una con 2-3 nudos en colores terracota/dorado/marrón, contornos bold, fondo blanco. Tamaño 1024x1024. (Hubo un error 500 de red temporal en el primer intento, reintenté con éxito.)
+- Verifiqué con VLM: confirmó que es un quipu 2D flat cartoon estilo Duolingo con fondo blanco.
+- Procesé con chroma key: el fondo era un blanco cálido RGB(250,241,231). Apliqué distancia euclidiana HARD=50/SOFT=90. Resultado: 53.8% transparente, 256x256px, 58 KB. Verificado componiendo sobre rojo: el VLM confirmó "red" en el fondo y el quipu intacto.
+- Creé el componente reutilizable `QuipuKnot.tsx`.
+- Reemplacé XP/⭐/Star por Quipus/🎋/QuipuKnot en toda la app:
+  - **TopBar**: meta diaria ahora usa QuipuKnot (antes Target amarillo) + barra con gradiente naranja-ámbar. Texto "X/Y" sin "XP".
+  - **LearnPath**: header muestra "quipus tejidos" con ícono QuipuKnot (antes "XP totales"). Nodo de lección completada con coronas muestra QuipuKnot (antes Star). Burbuja de Kuntur: "Meta del día cumplida 🎋" (antes ⭐).
+  - **LessonPlayer**: pantalla de completado tiene tarjeta "Quipus" con ícono QuipuKnot (antes "XP ganado" con ⭐), en color naranja para diferenciarla de los Intis dorados.
+  - **ProfileView**: tarjeta de stats "Quipus tejidos" con QuipuKnot (antes "XP totales" con Star amarilla). Barra de nivel muestra "Nivel X · Título" + QuipuKnot + "current/needed" (antes "XP"). Meta diaria: "Quipus tejidos hoy" con QuipuKnot (antes "Hoy has ganado ... XP" con Target).
+  - **LeagueView**: "X quipus esta semana" (antes "X XP esta semana").
+  - **content.ts**: logros renombrados: "Centurión/100 XP ⭐"→"Tejedor/100 quipus 🎋", "Estrella/500 XP 🌟"→"Maestro Tejedor/500 quipus 🧵", "Leyenda/1000 XP 💫"→"Leyenda/1000 quipus 💫". Item de tienda: "Doble XP (15 min)"→"Doble Quipus (15 min)", "Duplica tu XP"→"Duplica tus quipus tejidos".
+  - **page.tsx**: indicador flotante "Doble Quipus activo" (antes "Doble XP activo").
+  - **ShopView toast**: "¡Doble Quipus activado!" (antes "¡Doble XP activado!").
+  - **gamification.ts**: comentarios actualizados ("Quipus tejidos" en vez de "XP").
+- Bug encontrado y arreglado: removí `Target` del import de ProfileView pero aún se usaba en la tarjeta "Lecciones" → runtime ReferenceError. Lo restauré.
+- `bun run lint` pasa limpio (0 errores, 0 warnings).
+- Verificación con Agent Browser + VLM en 5 contextos:
+  1. TopBar meta diaria: "quipu icon (brown/tan) instead of target/star" + "87 quipus tejidos" ✓
+  2. LearnPath header: "quipus tejidos with quipu icon" + nodo completado "quipu icon instead of star" ✓
+  3. Perfil: tarjeta "QUIPUS TEJIDOS" con quipu ✓, barra de nivel con quipu ✓, "Quipus tejidos hoy" ✓
+  4. Pantalla completado: 'Quipus' con ícono quipu marrón (+25) e 'Intis' con moneda sol dorada (+7) ✓
+  5. Logros: "Tejedor - Teje 100 quipus" ✓
+  6. Tienda: item "Doble Quipus (15 min) - Duplica tus quipus tejidos por 15 minutos" ✓
+- Sin errores de consola ni runtime.
+
+Stage Summary:
+- Las XP/estrellas fueron reemplazadas por "Quipus tejidos" en TODA la app. La metáfora: cada vez que aprendes, tejes un nudo más en tu quipu de sabiduría.
+- El ícono de quipu (nudo andino marrón) reemplaza a la estrella amarilla en: barra superior, ruta de aprendizaje, perfil, pantalla de completado, logros.
+- Paleta de color: los quipus usan tonos naranja/marrón (duo-orange + amber) para diferenciarse visualmente de los Intis dorados.
+- Logros temáticos: "Tejedor" (100 quipus), "Maestro Tejedor" (500), "Leyenda" (1000).
+- Componente QuipuKnot reutilizable creado. Imagen optimizada (58 KB, 256px, PNG transparente).
+- El campo backend `xp` se mantuvo por simplicidad (solo cambió la capa de presentación y textos).
