@@ -1,0 +1,76 @@
+// RunaSimi - Aprende Quechua (Duolingo-style)
+// Prisma schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Estado global del usuario (app de un solo usuario, sin auth)
+model UserState {
+  id              String   @id @default("default")
+  xp              Int      @default(0)
+  gems            Int      @default(50)
+  hearts          Int      @default(5)
+  maxHearts       Int      @default(5)
+  heartsLastRegen DateTime @default(now())
+  streak          Int      @default(0)
+  lastStreakDate  String?
+  dailyXp         Int      @default(0)
+  dailyXpDate     String?
+  dailyGoal       Int      @default(30)
+  league          String   @default("BRONZE")
+  leagueXp        Int      @default(0)
+  leagueWeek      Int      @default(1)
+  frozenCount     Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Progreso por lección
+model LessonProgress {
+  id          String    @id @default(cuid())
+  lessonId    String    @unique
+  status      String    @default("LOCKED") // LOCKED | ACTIVE | COMPLETED
+  crowns      Int       @default(0) // 0-3 (mastery levels)
+  lastScore   Int       @default(0)
+  bestScore   Int       @default(0)
+  completedAt DateTime?
+  attempts    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Progreso de logros
+model AchievementProgress {
+  id            String    @id @default(cuid())
+  achievementId String    @unique
+  progress      Int       @default(0)
+  target        Int       @default(1)
+  unlockedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Historial de días con racha (para calendario)
+model StreakDay {
+  id        String   @id @default(cuid())
+  date      String   @unique // YYYY-MM-DD
+  xp        Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// Compañeros de liga (bots simulados para leaderboard)
+model LeagueMember {
+  id        String   @id @default(cuid())
+  name      String
+  avatar    String   @default("🦝")
+  leagueXp  Int      @default(0)
+  league    String   @default("BRONZE")
+  week      Int      @default(1)
+  createdAt DateTime @default(now())
+}

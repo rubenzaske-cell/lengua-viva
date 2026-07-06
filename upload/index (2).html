@@ -1,0 +1,3451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lengua Viva — Nuestro Idioma, Nuestra Herencia</title>
+<style>
+/* ========================================
+   LENGUA VIVA — Estilos completos
+   100% Peruano 🇵🇪
+   ======================================== */
+
+:root {
+  /* Paleta andina */
+  --primary: #C84B31;
+  --primary-dark: #A03A24;
+  --primary-light: #E8724E;
+  --secondary: #2D4263;
+  --secondary-light: #4A6491;
+  --accent: #ECDBBA;
+  --accent-gold: #FFB300;
+  --accent-gold-light: #FFD54F;
+  --success: #4CAF50;
+  --success-light: #81C784;
+  --warning: #FFA726;
+  --error: #E53935;
+  --kondor: #7E57C2;
+  --qucha: #29B6F6;
+  --pachamama: #66BB6A;
+  
+  /* Superficies */
+  --bg: #F5F0E8;
+  --bg-card: #FFFFFF;
+  --bg-dark: #1A1A1A;
+  --text-primary: #1A1A1A;
+  --text-secondary: #555555;
+  --text-muted: #999999;
+  --border: #E8E0D4;
+  
+  /* Sombras */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.15);
+  --shadow-glow: 0 0 20px rgba(200,75,49,0.3);
+  
+  /* Radios */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  
+  /* Tamaños */
+  --phone-w: 390px;
+  --phone-h: 844px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Patrón andino de fondo sutil */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(200,75,49,0.015) 40px, rgba(200,75,49,0.015) 41px),
+    repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(200,75,49,0.015) 40px, rgba(200,75,49,0.015) 41px);
+  pointer-events: none;
+}
+
+/* ========================================
+   CONTENEDOR PRINCIPAL - PANTALLA COMPLETA
+   ======================================== */
+.phone-frame {
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  border-radius: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Dynamic Island - ocultar en pantalla completa */
+.dynamic-island {
+  display: none;
+}
+
+/* Status bar */
+.status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 24px 6px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 999;
+  color: var(--text-primary);
+}
+.status-bar.light { color: white; }
+.status-icons { display: flex; gap: 6px; align-items: center; font-size: 14px; }
+
+/* ========================================
+   PANTALLAS
+   ======================================== */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  animation: screenIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.screen.active {
+  display: flex;
+}
+
+@keyframes screenIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes screenInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,179,0,0.3); }
+  50% { box-shadow: 0 0 25px rgba(255,179,0,0.6); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes confetti {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(400px) rotate(720deg); opacity: 0; }
+}
+@keyframes floatUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.screen-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.screen-content::-webkit-scrollbar { display: none; }
+
+/* ========================================
+   PANTALLA: BIENVENIDA
+   ======================================== */
+#welcome-screen {
+  background: linear-gradient(160deg, var(--primary) 0%, #E8724E 40%, var(--accent) 100%);
+  justify-content: space-between;
+  align-items: center;
+  padding: 80px 40px 50px;
+}
+
+.welcome-top {
+  text-align: center;
+  animation: floatUp 0.8s ease-out;
+}
+
+.welcome-logo {
+  width: 150px;
+  height: 150px;
+  background: rgba(255,255,255,0.2);
+  border: 3px solid rgba(255,255,255,0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 28px;
+  animation: pulse 2s infinite;
+  backdrop-filter: blur(10px);
+}
+.welcome-logo span { font-size: 72px; }
+
+.welcome-title {
+  font-size: 52px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  line-height: 1.1;
+}
+.welcome-subtitle {
+  color: rgba(255,255,255,0.9);
+  font-size: 17px;
+  margin-top: 10px;
+  letter-spacing: 0.5px;
+  font-weight: 300;
+}
+
+.welcome-features {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  animation: floatUp 1s ease-out 0.3s both;
+}
+.welcome-feature {
+  text-align: center;
+  color: white;
+}
+.welcome-feature-icon {
+  font-size: 32px;
+  margin-bottom: 6px;
+}
+.welcome-feature-label {
+  font-size: 13px;
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+.welcome-bottom {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  animation: floatUp 1s ease-out 0.5s both;
+}
+.welcome-desc {
+  text-align: center;
+  color: rgba(255,255,255,0.85);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 20px;
+  background: white;
+  color: var(--primary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  transition: all 0.2s;
+}
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-secondary {
+  width: 100%;
+  padding: 18px;
+  background: transparent;
+  color: white;
+  border: 2px solid rgba(255,255,255,0.6);
+  border-radius: var(--radius-md);
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 14px;
+  transition: all 0.2s;
+}
+.btn-secondary:active { transform: scale(0.97); background: rgba(255,255,255,0.1); }
+
+.btn-text {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.75);
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 14px;
+  width: 100%;
+  padding: 8px;
+}
+
+/* ========================================
+   PANTALLA: ENCUESTA
+   ======================================== */
+#survey-screen {
+  background: var(--bg);
+}
+
+.survey-header {
+  padding: 50px 20px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+}
+.survey-back {
+  width: 36px;
+  height: 36px;
+  background: var(--bg);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+}
+.survey-progress-text {
+  font-weight: 700;
+  color: var(--secondary);
+  font-size: 15px;
+}
+.survey-progress-bar {
+  height: 4px;
+  background: #eee;
+  position: relative;
+}
+.survey-progress-fill {
+  height: 100%;
+  background: var(--primary);
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+  border-radius: 2px;
+}
+
+.survey-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 24px 100px;
+}
+
+.survey-icon { font-size: 44px; margin-bottom: 16px; }
+.survey-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--secondary);
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+.survey-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.survey-input {
+  width: 100%;
+  padding: 16px 16px 16px 48px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  background: white;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+  outline: none;
+}
+.survey-input:focus { border-color: var(--primary); }
+.survey-input-group {
+  position: relative;
+  margin-bottom: 12px;
+}
+.survey-input-group .icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+}
+
+/* Opciones */
+.option-card {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.option-card:active { transform: scale(0.98); }
+.option-card.selected {
+  border-color: var(--primary);
+  background: rgba(200,75,49,0.05);
+}
+.option-card .opt-icon { font-size: 32px; }
+.option-card .opt-info { flex: 1; }
+.option-card .opt-name { font-weight: 700; font-size: 15px; color: var(--text-primary); }
+.option-card .opt-detail { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.option-card .opt-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: transparent;
+  transition: all 0.2s;
+}
+.option-card.selected .opt-check {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+/* Grid opciones */
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.grid-option {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.grid-option:active { transform: scale(0.96); }
+.grid-option.selected {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: white;
+}
+.grid-option .big-num {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--secondary);
+}
+.grid-option.selected .big-num { color: white; }
+.grid-option .unit { font-size: 12px; color: var(--text-muted); }
+.grid-option.selected .unit { color: rgba(255,255,255,0.8); }
+.grid-option .label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.survey-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 24px 24px;
+  background: linear-gradient(to top, var(--bg) 80%, transparent);
+}
+
+/* ========================================
+   HOME SCREEN
+   ======================================== */
+#home-screen { background: var(--bg); }
+
+.home-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  padding: 50px 20px 24px;
+  border-radius: 0 0 28px 28px;
+  position: relative;
+}
+.home-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 16px;
+}
+.home-stat {
+  text-align: center;
+  color: white;
+}
+.home-stat .stat-icon { font-size: 20px; }
+.home-stat .stat-value {
+  font-size: 16px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+.home-stat .stat-label {
+  font-size: 10px;
+  opacity: 0.75;
+}
+
+.home-greeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+.home-greeting-text h2 {
+  color: white;
+  font-size: 22px;
+  font-weight: 800;
+}
+.home-greeting-text p {
+  color: rgba(255,255,255,0.85);
+  font-size: 13px;
+  margin-top: 2px;
+}
+.home-greeting-text .rank-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.notif-btn {
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.2);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  position: relative;
+}
+.notif-btn .badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  background: var(--accent-gold);
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+}
+
+.streak-card {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin: 16px 4px 0;
+  backdrop-filter: blur(10px);
+}
+.streak-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.streak-icon {
+  font-size: 44px;
+  animation: pulse 2s infinite;
+}
+.streak-info h3 {
+  color: white;
+  font-size: 18px;
+  font-weight: 800;
+}
+.streak-info p {
+  color: rgba(255,255,255,0.8);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.streak-next {
+  margin-top: 12px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  text-align: center;
+}
+.streak-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.streak-bar-fill {
+  height: 100%;
+  background: white;
+  border-radius: 3px;
+  transition: width 0.5s;
+}
+
+.home-content { padding: 24px 20px 120px; max-width: 600px; margin: 0 auto; }
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Language cards */
+.lang-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+}
+.lang-scroll::-webkit-scrollbar { display: none; }
+.lang-card {
+  min-width: 160px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  color: white;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.lang-card:active { transform: scale(0.97); }
+.lang-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+}
+.lang-card .flag { font-size: 28px; }
+.lang-card .lang-name { font-size: 15px; font-weight: 800; margin-top: 10px; }
+.lang-card .lang-native { font-size: 12px; opacity: 0.8; font-style: italic; }
+.lang-card .lang-speakers { font-size: 10px; opacity: 0.7; margin-top: 6px; }
+.lang-card.coming {
+  background: #ccc !important;
+  opacity: 0.7;
+}
+.lang-card .coming-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.3);
+  color: white;
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* Weekly card */
+.weekly-card {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.weekly-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.weekly-header h3 { font-size: 15px; font-weight: 700; }
+.weekly-header span { color: var(--primary); font-weight: 600; font-size: 13px; }
+.week-days {
+  display: flex;
+  justify-content: space-around;
+}
+.week-day {
+  text-align: center;
+  width: 36px;
+}
+.week-day .day-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 4px;
+  font-size: 13px;
+  background: #f5f5f5;
+  color: var(--text-muted);
+}
+.week-day.completed .day-circle {
+  background: var(--success);
+  color: white;
+}
+.week-day.today .day-circle {
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+}
+.week-day .day-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Daily lesson card */
+.daily-lesson {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(45,66,99,0.3);
+  transition: transform 0.2s;
+}
+.daily-lesson:active { transform: scale(0.97); }
+.daily-lesson-icon {
+  width: 52px;
+  height: 52px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+}
+.daily-lesson-info { flex: 1; }
+.daily-lesson-info .label { color: rgba(255,255,255,0.7); font-size: 12px; }
+.daily-lesson-info h3 { color: white; font-size: 16px; font-weight: 700; }
+.daily-lesson-info .xp-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-top: 4px;
+}
+.daily-lesson .play-btn {
+  font-size: 32px;
+  color: white;
+}
+
+/* Cultural missions */
+.missions-card {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.mission-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+.mission-item + .mission-item { border-top: 1px solid var(--border); }
+.mission-icon {
+  width: 42px;
+  height: 42px;
+  background: var(--accent);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.mission-info { flex: 1; }
+.mission-info h4 { font-size: 13px; font-weight: 600; }
+.mission-info p { font-size: 11px; color: var(--text-muted); }
+.mission-progress {
+  height: 5px;
+  background: #eee;
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.mission-progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+}
+.mission-xp {
+  background: rgba(255,179,0,0.15);
+  color: var(--accent-gold);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+/* Community challenge */
+.community-card {
+  background: linear-gradient(135deg, var(--kondor) 0%, #9575CD 100%);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  color: white;
+  box-shadow: 0 4px 16px rgba(126,87,194,0.3);
+}
+.community-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.community-header h3 { font-size: 15px; font-weight: 700; }
+.community-header span { font-size: 12px; opacity: 0.7; }
+.community-card p { font-size: 13px; margin: 10px 0 14px; opacity: 0.9; }
+.community-bar {
+  height: 8px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.community-bar-fill {
+  height: 100%;
+  background: white;
+  border-radius: 4px;
+  width: 72%;
+}
+.community-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
+  opacity: 0.8;
+}
+.community-card .btn-join {
+  display: block;
+  width: fit-content;
+  margin: 14px auto 0;
+  background: white;
+  color: var(--kondor);
+  border: none;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ========================================
+   BOTTOM NAV
+   ======================================== */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: white;
+  display: flex;
+  border-top: 1px solid var(--border);
+  padding-bottom: 20px;
+  z-index: 100;
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  transition: color 0.2s;
+  padding-top: 8px;
+}
+.nav-item .nav-icon { font-size: 22px; }
+.nav-item.active { color: var(--primary); }
+.nav-item.active .nav-icon { transform: scale(1.1); }
+
+/* ========================================
+   LESSON MAP SCREEN
+   ======================================== */
+#map-screen { background: var(--bg); }
+
+.map-header {
+  padding: 44px 20px 16px;
+  border-radius: 0 0 28px 28px;
+  color: white;
+}
+.map-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.map-back {
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.2);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+.map-header h2 { font-size: 17px; font-weight: 700; text-align: center; }
+.map-header .lang-native { font-size: 12px; opacity: 0.8; text-align: center; font-style: italic; }
+.map-progress-card {
+  background: rgba(255,255,255,0.15);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.map-progress-card .prog-info { flex: 1; }
+.map-progress-card .prog-info h4 { font-size: 13px; font-weight: 600; }
+.map-progress-card .prog-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.map-progress-card .prog-fill {
+  height: 100%;
+  background: white;
+  border-radius: 3px;
+  width: 15%;
+}
+.map-progress-card .flag { font-size: 32px; }
+
+.map-content {
+  padding: 20px 20px 100px;
+  overflow-y: auto;
+}
+
+/* Module section */
+.module-card {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.module-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+.module-info { flex: 1; }
+.module-info h3 { font-size: 16px; font-weight: 700; }
+.module-info p { font-size: 12px; color: var(--text-muted); }
+.module-info .module-bar {
+  height: 5px;
+  background: #eee;
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.module-info .module-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+.module-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Lesson nodes */
+.lesson-path {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.lesson-node {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.lesson-node:active { transform: scale(0.97); }
+.lesson-node.offset { margin-left: 40px; }
+
+.lesson-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-md);
+  position: relative;
+}
+.lesson-circle.completed {
+  background: var(--success);
+  color: white;
+}
+.lesson-circle.current {
+  animation: pulse 2s infinite;
+  box-shadow: var(--shadow-glow);
+}
+.lesson-circle.locked {
+  background: #ccc;
+  opacity: 0.6;
+}
+.lesson-info h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.lesson-info p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.lesson-info .meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.lesson-info .meta .xp { color: var(--accent-gold); font-weight: 600; }
+.lesson-info .done-badge {
+  color: var(--success);
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ========================================
+   LESSON PLAYER
+   ======================================== */
+#lesson-screen {
+  background: white;
+}
+
+.player-header {
+  padding: 44px 20px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+}
+.player-close {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.player-progress {
+  flex: 1;
+  height: 10px;
+  background: #eee;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.player-progress-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: 5px;
+  transition: width 0.4s;
+}
+.player-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.player-body {
+  flex: 1;
+  padding: 24px 28px;
+  overflow-y: auto;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+.question-type-badge {
+  display: inline-block;
+  background: var(--accent);
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.question-prompt {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--secondary);
+  line-height: 1.3;
+  margin-bottom: 28px;
+}
+
+.answer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.answer-option {
+  padding: 18px;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.answer-option:active { transform: scale(0.98); }
+.answer-option .opt-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.answer-option.selected {
+  border-color: var(--primary);
+  background: rgba(200,75,49,0.05);
+}
+.answer-option.selected .opt-number {
+  background: var(--primary);
+  color: white;
+}
+.answer-option.correct {
+  border-color: var(--success);
+  background: rgba(76,175,80,0.08);
+}
+.answer-option.correct .opt-number {
+  background: var(--success);
+  color: white;
+}
+.answer-option.wrong {
+  border-color: var(--error);
+  background: rgba(229,57,53,0.08);
+}
+.answer-option.wrong .opt-number {
+  background: var(--error);
+  color: white;
+}
+
+.explanation-box {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  animation: screenInUp 0.3s ease-out;
+}
+.explanation-box.correct {
+  background: rgba(76,175,80,0.1);
+  border: 1px solid var(--success);
+}
+.explanation-box.wrong {
+  background: rgba(255,167,38,0.1);
+  border: 1px solid var(--warning);
+}
+.explanation-box h4 {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+.explanation-box.correct h4 { color: var(--success); }
+.explanation-box.wrong h4 { color: var(--warning); }
+.explanation-box p { font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
+
+.player-footer {
+  padding: 16px 24px 28px;
+}
+.btn-continue {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-continue:active { transform: scale(0.97); }
+.btn-continue.inactive {
+  background: #e0e0e0;
+  color: #999;
+}
+.btn-continue.correct-btn {
+  background: var(--success);
+  color: white;
+}
+.btn-continue.wrong-btn {
+  background: var(--warning);
+  color: white;
+}
+
+/* Results screen */
+.results-screen {
+  text-align: center;
+  padding: 40px 24px;
+  animation: scaleIn 0.5s ease-out;
+}
+.results-trophy {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  animation: glow 2s infinite;
+}
+.results-trophy.gold {
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light));
+}
+.results-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--secondary);
+  margin-bottom: 8px;
+}
+.results-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.results-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 32px;
+}
+.result-stat { text-align: center; }
+.result-stat .stat-icon { font-size: 28px; }
+.result-stat .stat-val { font-size: 22px; font-weight: 800; margin-top: 4px; }
+.result-stat .stat-lbl { font-size: 11px; color: var(--text-muted); }
+
+/* ========================================
+   SOCIAL FEED
+   ======================================== */
+#social-screen { background: var(--bg); }
+
+.social-header {
+  padding: 44px 20px 12px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+}
+.social-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.social-top h2 { font-size: 18px; font-weight: 700; }
+.social-actions { display: flex; gap: 8px; }
+.social-actions button {
+  width: 36px;
+  height: 36px;
+  background: var(--bg);
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.social-categories {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+}
+.social-categories::-webkit-scrollbar { display: none; }
+.cat-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  flex-shrink: 0;
+}
+.cat-chip .cat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.cat-chip.active .cat-icon {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.cat-chip .cat-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.cat-chip.active .cat-label {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.social-content {
+  padding: 12px 16px 100px;
+  overflow-y: auto;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Post card */
+.post-card {
+  background: white;
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+}
+.post-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--primary);
+}
+.post-user { flex: 1; }
+.post-user h4 { font-size: 14px; font-weight: 700; }
+.post-user .post-time { font-size: 11px; color: var(--text-muted); }
+.post-lang-badge {
+  background: rgba(200,75,49,0.1);
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.post-body { padding: 0 14px 12px; }
+.post-body p { font-size: 14px; line-height: 1.5; color: var(--text-primary); }
+.post-image {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(135deg, var(--accent) 0%, rgba(200,75,49,0.1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+}
+.post-image .placeholder-icon { font-size: 40px; opacity: 0.5; }
+.post-image .placeholder-text { font-size: 12px; color: var(--text-muted); }
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 14px;
+}
+.post-tag {
+  background: rgba(200,75,49,0.08);
+  color: var(--primary);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+.post-actions {
+  display: flex;
+  padding: 8px 8px 12px;
+  gap: 4px;
+}
+.post-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: background 0.2s;
+}
+.post-action:active { background: var(--bg); }
+.post-action.liked { color: #e53935; }
+.post-action .action-icon { font-size: 18px; }
+
+/* FAB */
+.fab {
+  position: absolute;
+  bottom: 90px;
+  right: 16px;
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+}
+
+/* ========================================
+   PROFILE SCREEN
+   ======================================== */
+#profile-screen { background: var(--bg); }
+
+.profile-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  padding: 44px 20px 20px;
+  color: white;
+}
+.profile-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.profile-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  border: 3px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 800;
+}
+.profile-info h2 { font-size: 20px; font-weight: 800; }
+.profile-info .rank-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+.profile-settings {
+  margin-left: auto;
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.2);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+.profile-stats-row {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 16px;
+}
+.profile-stat {
+  text-align: center;
+}
+.profile-stat .stat-icon { font-size: 20px; }
+.profile-stat .stat-val { font-size: 18px; font-weight: 800; }
+.profile-stat .stat-lbl { font-size: 11px; opacity: 0.75; }
+
+.profile-content {
+  padding: 16px 20px 100px;
+  overflow-y: auto;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.rank-card {
+  border-radius: var(--radius-md);
+  padding: 18px;
+  color: white;
+  margin-bottom: 14px;
+}
+.rank-card-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.rank-card .rank-icon { font-size: 36px; }
+.rank-card .rank-name { font-size: 20px; font-weight: 800; }
+.rank-card .rank-subtitle { font-size: 13px; opacity: 0.8; }
+.rank-card .next-rank {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 14px;
+}
+.rank-card .rank-bar {
+  height: 7px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 4px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.rank-card .rank-fill {
+  height: 100%;
+  background: white;
+  border-radius: 4px;
+}
+
+/* Achievements */
+.achievements-card {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+}
+.achievements-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.achievement-badge {
+  width: 60px;
+  padding: 8px 4px;
+  text-align: center;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #f9f9f9;
+}
+.achievement-badge.unlocked {
+  background: rgba(255,179,0,0.1);
+  border-color: var(--accent-gold);
+}
+.achievement-badge .badge-icon { font-size: 24px; }
+.achievement-badge .badge-label { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+.achievement-badge.locked .badge-icon { filter: grayscale(1); opacity: 0.4; }
+
+/* Options */
+.options-card {
+  background: white;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+}
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+.option-row + .option-row { border-top: 1px solid var(--border); }
+.option-row .row-icon { font-size: 20px; }
+.option-row .row-label { flex: 1; font-weight: 500; }
+.option-row .row-sub { font-size: 11px; color: var(--text-muted); }
+.option-row .row-arrow { color: var(--text-muted); }
+
+/* ========================================
+   NOTIFICATIONS
+   ======================================== */
+#notif-screen { background: var(--bg); }
+.notif-header {
+  padding: 44px 20px 12px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.notif-header h2 { font-size: 18px; font-weight: 700; }
+.notif-content {
+  padding: 12px 16px 40px;
+  overflow-y: auto;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.notif-item {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.notif-item.new {
+  background: rgba(200,75,49,0.04);
+  border: 1px solid rgba(200,75,49,0.15);
+}
+.notif-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.notif-info { flex: 1; }
+.notif-info h4 {
+  font-size: 14px;
+  font-weight: 700;
+}
+.notif-item.new .notif-info h4 { color: var(--primary); }
+.notif-info p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.notif-info .notif-time { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-top: 4px;
+}
+
+/* ========================================
+   CREATE POST
+   ======================================== */
+#create-screen { background: var(--bg); }
+.create-header {
+  padding: 44px 20px 12px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.create-header h2 { font-size: 18px; font-weight: 700; }
+.create-publish {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+}
+.create-content {
+  padding: 16px;
+  overflow-y: auto;
+}
+.cat-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cat-btn {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  background: white;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cat-btn.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+.create-textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 16px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: white;
+  font-size: 15px;
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+  font-family: inherit;
+}
+.media-buttons {
+  display: flex;
+  justify-content: space-around;
+  padding: 16px;
+  background: white;
+  border-radius: var(--radius-md);
+  margin-top: 12px;
+}
+.media-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.media-btn .m-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+.media-btn .m-label { font-size: 11px; color: var(--text-muted); }
+
+/* ========================================
+   CONFETTI
+   ======================================== */
+.confetti-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  top: -10px;
+  animation: confetti 2s linear forwards;
+}
+
+/* XP popup */
+.xp-popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--accent-gold);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 20px;
+  font-size: 24px;
+  font-weight: 800;
+  z-index: 9999;
+  animation: floatUp 0.5s ease-out, fadeOut 0.5s 1s forwards;
+  box-shadow: 0 4px 20px rgba(255,179,0,0.5);
+}
+@keyframes fadeOut {
+  to { opacity: 0; transform: translate(-50%, -80%); }
+}
+
+/* Streak popup */
+.streak-popup {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s;
+}
+.streak-popup-content {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 30px;
+  text-align: center;
+  max-width: 300px;
+  animation: scaleIn 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.streak-popup-content .big-icon { font-size: 64px; margin-bottom: 12px; }
+.streak-popup-content h3 { font-size: 22px; font-weight: 800; color: var(--secondary); }
+.streak-popup-content p { font-size: 14px; color: var(--text-muted); margin: 8px 0 16px; }
+.streak-popup-content button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* Pantallas grandes - centrar contenido con max-width */
+@media (min-width: 768px) {
+  .phone-screen {
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 0 60px rgba(0,0,0,0.15);
+  }
+  body {
+    background: linear-gradient(135deg, #2D4263 0%, #1a2a42 50%, #2D4263 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .phone-frame {
+    width: 480px;
+    height: 100vh;
+    max-height: 900px;
+    border-radius: 24px;
+    overflow: hidden;
+  }
+  .phone-screen {
+    border-radius: 24px;
+  }
+}
+
+/* Muy grandes (escritorio) */
+@media (min-width: 1200px) {
+  .phone-frame {
+    height: 92vh;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+<div class="phone-screen" id="app">
+  <div class="dynamic-island"></div>
+  
+  <!-- ==========================================
+       PANTALLA: BIENVENIDA
+       ========================================== -->
+  <div class="screen active" id="welcome-screen">
+    <div class="status-bar light">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>📶</span>
+        <span>📡</span>
+        <span>🔋</span>
+      </div>
+    </div>
+    <div class="welcome-top">
+      <div class="welcome-logo"><span>🏔️</span></div>
+      <h1 class="welcome-title">Lengua Viva</h1>
+      <p class="welcome-subtitle">Nuestro Idioma, Nuestra Herencia</p>
+    </div>
+
+    <div class="welcome-features">
+      <div class="welcome-feature">
+        <div class="welcome-feature-icon">🎮</div>
+        <div class="welcome-feature-label">Gamificado</div>
+      </div>
+      <div class="welcome-feature">
+        <div class="welcome-feature-icon">🗣️</div>
+        <div class="welcome-feature-label">Interactivo</div>
+      </div>
+      <div class="welcome-feature">
+        <div class="welcome-feature-icon">🏆</div>
+        <div class="welcome-feature-label">Cultural</div>
+      </div>
+    </div>
+
+    <div class="welcome-bottom">
+      <p class="welcome-desc">
+        Preserva las lenguas indígenas del Perú mientras aprendes jugando
+      </p>
+      <button class="btn-primary" onclick="showScreen('survey-screen')">
+        ¡Comenzar mi viaje! 🚀
+      </button>
+      <button class="btn-secondary" onclick="showScreen('home-screen')">
+        Ya tengo una cuenta
+      </button>
+      <button class="btn-text" onclick="showScreen('home-screen')">
+        Continuar como invitado →
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PANTALLA: ENCUESTA
+       ========================================== -->
+  <div class="screen" id="survey-screen">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons"><span>📶</span><span>📡</span><span>🔋</span></div>
+    </div>
+    <div class="survey-header">
+      <button class="survey-back" onclick="surveyBack()">←</button>
+      <span class="survey-progress-text" id="survey-step">1/5</span>
+    </div>
+    <div class="survey-progress-bar">
+      <div class="survey-progress-fill" id="survey-progress" style="width:20%"></div>
+    </div>
+    
+    <div class="survey-body" id="survey-body">
+      <!-- Step 1: Nombre -->
+      <div class="survey-step" id="step-1">
+        <div class="survey-icon">👋</div>
+        <h2 class="survey-title">¡Bienvenido a Lengua Viva!</h2>
+        <p class="survey-subtitle">Antes de empezar, cuéntanos sobre ti para personalizar tu experiencia.</p>
+        <div class="survey-input-group">
+          <span class="icon">👤</span>
+          <input type="text" class="survey-input" id="input-name" placeholder="¿Cómo te llamas?" style="padding-left:44px">
+        </div>
+        <div class="survey-input-group">
+          <span class="icon">📧</span>
+          <input type="email" class="survey-input" id="input-email" placeholder="Tu email (opcional)" style="padding-left:44px">
+        </div>
+      </div>
+    </div>
+
+    <div class="survey-footer">
+      <button class="btn-primary" id="survey-next" onclick="surveyNext()" style="background:var(--primary);color:white;">
+        Siguiente →
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       HOME SCREEN
+       ========================================== -->
+  <div class="screen" id="home-screen">
+    <div class="status-bar light">
+      <span>9:41</span>
+      <div class="status-icons"><span>📶</span><span>📡</span><span>🔋</span></div>
+    </div>
+
+    <div class="screen-content">
+      <div class="home-header">
+        <div class="home-stats">
+          <div class="home-stat">
+            <div class="stat-icon">🌿</div>
+            <div class="stat-value" id="home-streak">7</div>
+            <div class="stat-label">días</div>
+          </div>
+          <div class="home-stat">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-value" id="home-xp">250</div>
+            <div class="stat-label">XP</div>
+          </div>
+          <div class="home-stat">
+            <div class="stat-icon">💎</div>
+            <div class="stat-value" id="home-gems">50</div>
+            <div class="stat-label">gemas</div>
+          </div>
+          <div class="home-stat">
+            <div class="stat-icon">❤️</div>
+            <div class="stat-value" id="home-hearts">5</div>
+            <div class="stat-label">vidas</div>
+          </div>
+        </div>
+
+        <div class="home-greeting">
+          <div class="home-greeting-text">
+            <h2 id="greeting-name">¡Allin p'unchaw, Aprendiz!</h2>
+            <div class="rank-badge">
+              <span>🧒</span>
+              <span id="home-rank">Warma</span>
+              <span style="margin-left:6px">⭐</span>
+              <span>Liga Chaska</span>
+            </div>
+          </div>
+          <button class="notif-btn" onclick="showScreen('notif-screen')">
+            🔔
+            <div class="badge"></div>
+          </button>
+        </div>
+
+        <div class="streak-card">
+          <div class="streak-main">
+            <div class="streak-icon" id="streak-icon">🌿</div>
+            <div class="streak-info">
+              <h3 id="streak-name">Brote</h3>
+              <p id="streak-desc">Tu dedicación brota con fuerza</p>
+            </div>
+          </div>
+          <div class="streak-next" id="streak-next">
+            Siguiente evolución: Flor 🌸 en 7 días
+          </div>
+          <div class="streak-bar">
+            <div class="streak-bar-fill" id="streak-bar" style="width:50%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-content">
+        <!-- Idiomas -->
+        <div class="section-title">🌎 Tus idiomas</div>
+        <div class="lang-scroll">
+          <div class="lang-card" style="background:linear-gradient(135deg,#C84B31,#E8724E)" onclick="openLessonMap('quechua')">
+            <div class="flag">🏔️</div>
+            <div class="lang-name">Quechua</div>
+            <div class="lang-native">Runasimi</div>
+            <div class="lang-speakers">👥 ~10M hablantes</div>
+          </div>
+          <div class="lang-card" style="background:linear-gradient(135deg,#66BB6A,#81C784)" onclick="openLessonMap('shipibo')">
+            <div class="flag">🌿</div>
+            <div class="lang-name">Shipibo-Conibo</div>
+            <div class="lang-native">JShipibo</div>
+            <div class="lang-speakers">👥 ~35K hablantes</div>
+          </div>
+          <div class="lang-card coming">
+            <div class="coming-badge">Próximamente</div>
+            <div class="flag">🌄</div>
+            <div class="lang-name">Aymara</div>
+            <div class="lang-native">Aymar aru</div>
+            <div class="lang-speakers">👥 ~2M hablantes</div>
+          </div>
+          <div class="lang-card coming">
+            <div class="coming-badge">Próximamente</div>
+            <div class="flag">🦜</div>
+            <div class="lang-name">Asháninka</div>
+            <div class="lang-native">Asháninka</div>
+            <div class="lang-speakers">👥 ~100K hablantes</div>
+          </div>
+        </div>
+
+        <!-- Progreso semanal -->
+        <div class="weekly-card" style="margin-top:20px">
+          <div class="weekly-header">
+            <h3>📅 Esta semana</h3>
+            <span>4/7 días</span>
+          </div>
+          <div class="week-days">
+            <div class="week-day completed"><div class="day-circle">✓</div><div class="day-label">L</div></div>
+            <div class="week-day completed"><div class="day-circle">✓</div><div class="day-label">M</div></div>
+            <div class="week-day completed"><div class="day-circle">✓</div><div class="day-label">X</div></div>
+            <div class="week-day completed"><div class="day-circle">✓</div><div class="day-label">J</div></div>
+            <div class="week-day today"><div class="day-circle">V</div><div class="day-label">V</div></div>
+            <div class="week-day"><div class="day-circle">S</div><div class="day-label">S</div></div>
+            <div class="week-day"><div class="day-circle">D</div><div class="day-label">D</div></div>
+          </div>
+        </div>
+
+        <!-- Lección del día -->
+        <div class="section-title">📚 Continúa aprendiendo</div>
+        <div class="daily-lesson" onclick="startLesson('qu_m1_l1')">
+          <div class="daily-lesson-icon">☀️</div>
+          <div class="daily-lesson-info">
+            <div class="label">Lección del día</div>
+            <h3>Allian p'unchaw — Saludos</h3>
+            <div class="xp-badge">+15 XP · 5 min</div>
+          </div>
+          <div class="play-btn">▶</div>
+        </div>
+
+        <!-- Misiones culturales -->
+        <div class="missions-card">
+          <div class="section-title" style="margin-bottom:8px">🎭 Misiones Culturales</div>
+          <div class="mission-item">
+            <div class="mission-icon">🎵</div>
+            <div class="mission-info">
+              <h4>Aprende un huayno</h4>
+              <p>Traduce la letra de una canción andina</p>
+              <div class="mission-progress"><div class="mission-progress-fill" style="width:60%"></div></div>
+            </div>
+            <div class="mission-xp">+25 XP</div>
+          </div>
+          <div class="mission-item">
+            <div class="mission-icon">📖</div>
+            <div class="mission-info">
+              <h4>Leyenda del Cóndor</h4>
+              <p>Lee y responde sobre la leyenda</p>
+              <div class="mission-progress"><div class="mission-progress-fill" style="width:0%"></div></div>
+            </div>
+            <div class="mission-xp">+30 XP</div>
+          </div>
+        </div>
+
+        <!-- Reto comunitario -->
+        <div class="community-card">
+          <div class="community-header">
+            <h3>🤝 Reto Comunitario</h3>
+            <span>3 días</span>
+          </div>
+          <p>Entre todos, traduzcamos la leyenda del Lago Titicaca al quechua</p>
+          <div class="community-bar"><div class="community-bar-fill"></div></div>
+          <div class="community-info">
+            <span>72% completado</span>
+            <span>1,847 participantes</span>
+          </div>
+          <button class="btn-join">Participar 🙋</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-item active" onclick="switchTab(this,'home-screen')">
+        <span class="nav-icon">🏠</span>
+        Inicio
+      </button>
+      <button class="nav-item" onclick="switchTab(this,'map-screen');openLessonMap('quechua')">
+        <span class="nav-icon">📚</span>
+        Aprender
+      </button>
+      <button class="nav-item" onclick="switchTab(this,'social-screen')">
+        <span class="nav-icon">👥</span>
+        Comunidad
+      </button>
+      <button class="nav-item" onclick="switchTab(this,'profile-screen')">
+        <span class="nav-icon">👤</span>
+        Perfil
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       LESSON MAP SCREEN
+       ========================================== -->
+  <div class="screen" id="map-screen">
+    <div class="status-bar light">
+      <span>9:41</span>
+      <div class="status-icons"><span>📶</span><span>📡</span><span>🔋</span></div>
+    </div>
+
+    <div class="map-header" id="map-header" style="background:linear-gradient(135deg,#C84B31,#E8724E)">
+      <div class="map-top-bar">
+        <button class="map-back" onclick="showScreen('home-screen')">←</button>
+        <div>
+          <h2 id="map-lang-name">Quechua</h2>
+          <div class="lang-native" id="map-lang-native">Runasimi</div>
+        </div>
+        <button class="map-back">⚙️</button>
+      </div>
+      <div class="map-progress-card">
+        <div class="prog-info">
+          <h4>Progreso del curso</h4>
+          <div class="prog-bar"><div class="prog-fill"></div></div>
+          <span style="font-size:11px;opacity:0.8">15% completado</span>
+        </div>
+        <div class="flag">🏔️</div>
+      </div>
+    </div>
+
+    <div class="screen-content map-content" id="map-content">
+      <!-- Modules and lessons rendered by JS -->
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-item" onclick="switchTab(this,'home-screen')">
+        <span class="nav-icon">🏠</span>Inicio
+      </button>
+      <button class="nav-item active">
+        <span class="nav-icon">📚</span>Aprender
+      </button>
+      <button class="nav-item" onclick="switchTab(this,'social-screen')">
+        <span class="nav-icon">👥</span>Comunidad
+      </button>
+      <button class="nav-item" onclick="switchTab(this,'profile-screen')">
+        <span class="nav-icon">👤</span>Perfil
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       LESSON PLAYER SCREEN
+       ========================================== -->
+  <div class="screen" id="lesson-screen">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons"><span>📶</span><span>📡</span><span>🔋</span></div>
+    </div>
+
+    <div class="player-header">
+      <button class="player-close" onclick="showScreen('map-screen')">✕</button>
+      <div class="player-progress">
+        <div class="player-progress-fill" id="player-progress" style="width:20%"></div>
+      </div>
+      <div class="player-count" id="player-count">1/5</div>
+    </div>
+
+    <div class="player-body" id="player-body">
+      <!-- Rendered by JS -->
+    </div>
+
+    <div class="player-footer">
+      <button class="btn-continue inactive" id="btn-continue" onclick="continueLesson()">
+        Selecciona una opción
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       SOCIAL SCREEN
+       ========================================== -->
+  <div class="screen" id="social-screen">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons"><span>📶</span><span>📡</span><span>🔋</span></div>
+    </div>
+
+    <div class="social-header">
+      <div class="social-top">
+        <h2>Comunidad Lengua Viva</h2>
+        <div class="social-actions">
+          <button>🔍</button>
+          <button onclick="showScreen('create-screen')">➕</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="social-categories">
+      <button class="cat-chip active"><div class="cat-icon">🌎</div><div class="cat-label">Todo</div></button>
+      <button class="cat-chip"><div class="cat-icon">🎭</div><div class="cat-label">Cultura</div></button>
+      <button class="cat-chip"><div class="cat-icon">🗣️</div><div class="cat-label">Idioma</div></button>
+      <button class="cat-chip"><div class="cat-icon">🎵</div><div class="cat-label">Música</div></button>
+      <button class="cat-chip"><div class="cat-icon">🍽️</div><div class="cat-label">Gastronomía</div></button>
+      <button class="cat-chip"><div class="cat-icon">🎨</div><div class="cat-label">Artesanía</div></button>
+      <button class="cat-chip"><div class="cat-icon">📜</div><div class="cat-label">Historia</div></button>
+    </div>
+
+    <div class="screen-content" style="padding-bottom:80px">
+      <div class="social-content" id="social-feed">
+        <!-- Posts rendered by JS -->
+      </div>
+    </div>
+
+    <button class="fab" onclick="showScreen('create-screen')">✚</button>
+
+    <div class="bottom-nav">
+      <button class="nav-item" onclick="switchTab(this,'home-screen')">
+        <span class="nav-icon">🏠</span>Inicio
+      </button>
+      <button class="nav-item" onclick="switchTab(this,'map-screen');openLessonMap('quechua')">
+        <span class="nav-icon">📚</span>Aprender
+      </button>
+      <button class="nav-item active">
+        <span class="nav-icon">👥</span>Comunidad
+      </button>
+      <button class="nav-item" onclick="switchTab(this,'profile-screen')">
+        <span class="nav-icon">👤</span>Perfil
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       CREATE POST SCREEN
+       ========================================== -->
+  <div class="screen" id="create-screen">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons"><span>📶</span><span>📡</span><span>🔋</span></div>
+    </div>
+    <div class="create-header">
+      <button class="survey-back" onclick="showScreen('social-screen')">←</button>
+      <h2>Compartir</h2>
+      <button class="create-publish" onclick="publishPost();showScreen('social-screen')">Publicar</button>
+    </div>
+    <div class="screen-content">
+      <div class="create-content">
+        <p style="font-size:14px;font-weight:700;margin-bottom:10px">¿Qué quieres compartir?</p>
+        <div class="cat-selector">
+          <button class="cat-btn selected">🎭 Cultura</button>
+          <button class="cat-btn">🗣️ Idioma</button>
+          <button class="cat-btn">🎵 Música</button>
+          <button class="cat-btn">🍽️ Gastronomía</button>
+          <button class="cat-btn">🎨 Artesanía</button>
+          <button class="cat-btn">📜 Historia</button>
+        </div>
+        <textarea class="create-textarea" id="post-text" placeholder="Comparte algo sobre tu cultura...&#10;&#10;¿Qué tradición, palabra o historia quieres compartir con la comunidad?"></textarea>
+        <div class="media-buttons">
+          <button class="media-btn"><div class="m-icon" style="background:rgba(102,187,106,0.15);color:#66BB6A">📷</div><div class="m-label">Foto</div></button>
+          <button class="media-btn"><div class="m-icon" style="background:rgba(200,75,49,0.15);color:#C84B31">🎬</div><div class="m-label">Video</div></button>
+          <button class="media-btn"><div class="m-icon" style="background:rgba(126,87,194,0.15);color:#7E57C2">🎙️</div><div class="m-label">Audio</div></button>
+          <button class="media-btn"><div class="m-icon" style="background:rgba(41,182,246,0.15);color:#29B6F6">📍</div><div class="m-label">Lugar</div></button>
+        </div>
+        <div style="margin-top:16px;background:white;border-radius:16px;padding:16px">
+          <p style="font-size:14px;font-weight:600;margin-bottom:8px">🌎 Idioma relacionado</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="cat-btn">Quechua</button>
+            <button class="cat-btn">Shipibo</button>
+            <button class="cat-btn">Aymara</button>
+          </div>
+        </div>
+        <div style="margin-top:16px;background:rgba(236,219,186,0.3);border-radius:16px;padding:16px">
+          <p style="font-size:14px;font-weight:700;margin-bottom:8px">📋 Guía de la comunidad</p>
+          <p style="font-size:12px;line-height:1.6;color:var(--text-secondary)">
+            • Respeta todas las culturas y tradiciones<br>
+            • Comparte contenido auténtico y verídico<br>
+            • Si compartes conocimiento sagrado, hazlo con respeto<br>
+            • Usa etiquetas apropiadas
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PROFILE SCREEN
+       ========================================== -->
+  <div class="screen" id="profile-screen">
+    <div class="status-bar light">
+      <span>9:41</span>
+      <div class="status-icons"><span>📶</span><span>📡</span><span>🔋</span></div>
+    </div>
+
+    <div class="screen-content">
+      <div class="profile-header">
+        <div class="profile-top">
+          <div class="profile-avatar" id="profile-avatar-letter">A</div>
+          <div class="profile-info">
+            <h2 id="profile-name">Aprendiz</h2>
+            <div class="rank-line">
+              <span id="profile-rank-icon">🧒</span>
+              <span id="profile-rank-name">Warma</span>
+              <span>⭐</span>
+              <span>Liga Chaska</span>
+            </div>
+          </div>
+          <button class="profile-settings">⚙️</button>
+        </div>
+        <div class="profile-stats-row">
+          <div class="profile-stat">
+            <div class="stat-icon">🌿</div>
+            <div class="stat-val" id="profile-streak">7</div>
+            <div class="stat-lbl">Racha</div>
+          </div>
+          <div class="profile-stat">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-val" id="profile-xp">250</div>
+            <div class="stat-lbl">XP Total</div>
+          </div>
+          <div class="profile-stat">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-val" id="profile-best">7</div>
+            <div class="stat-lbl">Mejor racha</div>
+          </div>
+          <div class="profile-stat">
+            <div class="stat-icon">🏅</div>
+            <div class="stat-val">3</div>
+            <div class="stat-lbl">Logros</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-content">
+        <!-- Racha evolutiva -->
+        <div class="section-title">🔥 Tu racha evoluciona</div>
+        <div class="achievements-card">
+          <div style="display:flex;justify-content:space-around;padding:10px 0">
+            <div style="text-align:center"><div style="font-size:24px">🌱</div><div style="font-size:10px;color:var(--accent-gold);font-weight:600">1d</div></div>
+            <div style="text-align:center"><div style="font-size:24px">🌿</div><div style="font-size:10px;color:var(--accent-gold);font-weight:600">7d</div></div>
+            <div style="text-align:center"><div style="font-size:18px;opacity:0.4">🌸</div><div style="font-size:10px;color:var(--text-muted)">14d</div></div>
+            <div style="text-align:center"><div style="font-size:18px;opacity:0.4">🏞️</div><div style="font-size:10px;color:var(--text-muted)">30d</div></div>
+            <div style="text-align:center"><div style="font-size:18px;opacity:0.4">🏔️</div><div style="font-size:10px;color:var(--text-muted)">60d</div></div>
+            <div style="text-align:center"><div style="font-size:18px;opacity:0.4">🦅</div><div style="font-size:10px;color:var(--text-muted)">90d</div></div>
+            <div style="text-align:center"><div style="font-size:18px;opacity:0.4">☀️</div><div style="font-size:10px;color:var(--text-muted)">180d</div></div>
+            <div style="text-align:center"><div style="font-size:18px;opacity:0.4">🌎</div><div style="font-size:10px;color:var(--text-muted)">365d</div></div>
+          </div>
+        </div>
+
+        <!-- Rango -->
+        <div class="rank-card" style="background:linear-gradient(135deg,#81C784,#66BB6A)">
+          <div class="rank-card-top">
+            <div class="rank-icon">🧒</div>
+            <div>
+              <div class="rank-name">Warma</div>
+              <div class="rank-subtitle">El niño explorador</div>
+            </div>
+          </div>
+          <div class="next-rank">
+            <span>Siguiente: Chasqui 🏃</span>
+            <span>250/2000 XP</span>
+          </div>
+          <div class="rank-bar"><div class="rank-fill" style="width:12.5%"></div></div>
+        </div>
+
+        <!-- Logros -->
+        <div class="achievements-card">
+          <div class="section-title" style="margin-bottom:0">🏅 Logros</div>
+          <div class="achievements-grid">
+            <div class="achievement-badge unlocked"><div class="badge-icon">🌱</div><div class="badge-label">Primer paso</div></div>
+            <div class="achievement-badge unlocked"><div class="badge-icon">🔥</div><div class="badge-label">7 días</div></div>
+            <div class="achievement-badge unlocked"><div class="badge-icon">📚</div><div class="badge-label">10 lecciones</div></div>
+            <div class="achievement-badge locked"><div class="badge-icon">🎭</div><div class="badge-label">Cultural</div></div>
+            <div class="achievement-badge locked"><div class="badge-icon">🦅</div><div class="badge-label">Cóndor</div></div>
+            <div class="achievement-badge locked"><div class="badge-icon">🌟</div><div class="badge-label">Inca</div></div>
+          </div>
+        </div>
+
+        <!-- Retabos -->
+        <div class="achievements-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div class="section-title" style="margin-bottom:0">🎨 Retabos Digitales</div>
+            <span style="color:var(--primary);font-weight:600;font-size:13px">3/24</span>
+          </div>
+          <p style="font-size:12px;color:var(--text-muted)">Colecciona piezas artesanales de cada región</p>
+          <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:12px">
+            <div style="aspect-ratio:1;background:rgba(255,179,0,0.15);border-radius:8px;border:1px solid var(--accent-gold);display:flex;align-items:center;justify-content:center">🏺</div>
+            <div style="aspect-ratio:1;background:rgba(255,179,0,0.15);border-radius:8px;border:1px solid var(--accent-gold);display:flex;align-items:center;justify-content:center">🎭</div>
+            <div style="aspect-ratio:1;background:rgba(255,179,0,0.15);border-radius:8px;border:1px solid var(--accent-gold);display:flex;align-items:center;justify-content:center">🧶</div>
+            <div style="aspect-ratio:1;background:#f5f5f5;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:#ccc">?</div>
+            <div style="aspect-ratio:1;background:#f5f5f5;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:#ccc">?</div>
+            <div style="aspect-ratio:1;background:#f5f5f5;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:#ccc">?</div>
+          </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="achievements-card">
+          <div class="section-title" style="margin-bottom:0">📊 Estadísticas</div>
+          <div style="display:flex;gap:10px;margin-top:14px">
+            <div style="flex:1;padding:12px;background:rgba(236,219,186,0.3);border-radius:12px;text-align:center">
+              <div style="font-size:18px">📚</div>
+              <div style="font-size:18px;font-weight:800">24</div>
+              <div style="font-size:10px;color:var(--text-muted)">Lecciones</div>
+            </div>
+            <div style="flex:1;padding:12px;background:rgba(236,219,186,0.3);border-radius:12px;text-align:center">
+              <div style="font-size:18px">⏱️</div>
+              <div style="font-size:18px;font-weight:800">3.5h</div>
+              <div style="font-size:10px;color:var(--text-muted)">Estudiando</div>
+            </div>
+            <div style="flex:1;padding:12px;background:rgba(236,219,186,0.3);border-radius:12px;text-align:center">
+              <div style="font-size:18px">💬</div>
+              <div style="font-size:18px;font-weight:800">156</div>
+              <div style="font-size:10px;color:var(--text-muted)">Palabras</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Opciones -->
+        <div class="options-card">
+          <button class="option-row">
+            <span class="row-icon">📥</span>
+            <span class="row-label">Contenido descargado<div class="row-sub">42 lecciones</div></span>
+            <span class="row-arrow">›</span>
+          </button>
+          <button class="option-row">
+            <span class="row-icon">👥</span>
+            <span class="row-label">Invitar amigos<div class="row-sub">Gana gemas</div></span>
+            <span class="row-arrow">›</span>
+          </button>
+          <button class="option-row">
+            <span class="row-icon">❓</span>
+            <span class="row-label">Ayuda y soporte</span>
+            <span class="row-arrow">›</span>
+          </button>
+          <button class="option-row">
+            <span class="row-icon">ℹ️</span>
+            <span class="row-label">Acerca de Lengua Viva<div class="row-sub">Versión 1.0.0</div></span>
+            <span class="row-arrow">›</span>
+          </button>
+        </div>
+
+        <div style="text-align:center;padding:10px">
+          <p style="font-size:12px;color:var(--text-muted)">Lengua Viva v1.0.0</p>
+          <p style="font-size:11px;color:var(--text-muted)">Hecho con ❤️ en el Perú 🇵🇪</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-item" onclick="switchTab(this,'home-screen')">
+        <span class="nav-icon">🏠</span>Inicio
+      </button>
+      <button class="nav-item" onclick="switchTab(this,'map-screen');openLessonMap('quechua')">
+        <span class="nav-icon">📚</span>Aprender
+      </button>
+      <button class="nav-item" onclick="switchTab(this,'social-screen')">
+        <span class="nav-icon">👥</span>Comunidad
+      </button>
+      <button class="nav-item active">
+        <span class="nav-icon">👤</span>Perfil
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       NOTIFICATIONS SCREEN
+       ========================================== -->
+  <div class="screen" id="notif-screen">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons"><span>📶</span><span>📡</span><span>🔋</span></div>
+    </div>
+    <div class="notif-header">
+      <button class="survey-back" onclick="showScreen('home-screen')">←</button>
+      <h2>Notificaciones</h2>
+      <button style="background:none;border:none;color:var(--primary);font-weight:600;cursor:pointer;font-size:13px">Leer todo</button>
+    </div>
+    <div class="screen-content">
+      <div class="notif-content">
+        <div class="notif-item new">
+          <div class="notif-icon">🔥</div>
+          <div class="notif-info">
+            <h4>¡Racha de 7 días!</h4>
+            <p>Has desbloqueado la evolución: Brote 🌿</p>
+            <div class="notif-time">Hace 2 horas</div>
+          </div>
+          <div class="notif-dot"></div>
+        </div>
+        <div class="notif-item new">
+          <div class="notif-icon">🏆</div>
+          <div class="notif-info">
+            <h4>Nuevo logro: Primer paso</h4>
+            <p>Has completado tu primera lección. ¡Sigue así!</p>
+            <div class="notif-time">Hace 5 horas</div>
+          </div>
+          <div class="notif-dot"></div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-icon">❤️</div>
+          <div class="notif-info">
+            <h4>A María Quispe le gustó tu publicación</h4>
+            <p>"¡Hoy aprendí a decir Te quiero en quechua!"</p>
+            <div class="notif-time">Hace 8 horas</div>
+          </div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-icon">💬</div>
+          <div class="notif-info">
+            <h4>Nuevo comentario de Carlos A.</h4>
+            <p>¡Qué bonito! Mi abuelita también me decía eso...</p>
+            <div class="notif-time">Ayer</div>
+          </div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-icon">⭐</div>
+          <div class="notif-info">
+            <h4>¡Subiste de rango!</h4>
+            <p>Ahora eres Warma 🧒. ¡Sigue aprendiendo!</p>
+            <div class="notif-time">Hace 2 días</div>
+          </div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-icon">🎭</div>
+          <div class="notif-info">
+            <h4>Nueva misión cultural disponible</h4>
+            <p>Aprende un huayno y traduce su letra. +25 XP</p>
+            <div class="notif-time">Hace 2 días</div>
+          </div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-icon">🌎</div>
+          <div class="notif-info">
+            <h4>Reto comunitario activo</h4>
+            <p>Traduzcamos entre todos la leyenda del Lago Titicaca</p>
+            <div class="notif-time">Hace 3 días</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+/* ========================================
+   LENGUA VIVA — Lógica de la App
+   ======================================== */
+
+// Estado global
+const state = {
+  userName: 'Aprendiz',
+  streak: 7,
+  xp: 250,
+  gems: 50,
+  hearts: 5,
+  rank: 'Warma',
+  currentLang: 'quechua',
+  completedLessons: ['qu_m1_l1'],
+  currentLessonIndex: 0,
+  currentQuestionIndex: 0,
+  currentScore: 0,
+  currentMistakes: 0,
+  answered: false,
+};
+
+// Datos de lecciones
+const lessons = {
+  'qu_m1_l1': {
+    id: 'qu_m1_l1',
+    title: "Allian p'unchaw",
+    description: 'Saludos básicos del día',
+    icon: '☀️',
+    moduleId: 'qu_m1',
+    languageId: 'quechua',
+    xpReward: 15,
+    questions: [
+      {
+        type: '🎯 Selección múltiple',
+        prompt: '¿Cómo se dice "Buenos días" en quechua?',
+        options: ["Allian p'unchaw", 'Allin tuta', 'Imaynallan', 'Añay'],
+        correct: 0,
+        explanation: "Allian p'unchaw significa literalmente \"buen día\". \"P'unchaw\" = día.",
+      },
+      {
+        type: '🎯 Selección múltiple',
+        prompt: '¿Qué significa "Imaynallan"?',
+        options: ['Gracias', '¿Cómo estás?', 'Estoy bien', 'Buenas noches'],
+        correct: 1,
+        explanation: 'Imaynallan es la pregunta para conocer cómo está alguien.',
+      },
+      {
+        type: '🎯 Selección múltiple',
+        prompt: '¿Cómo dirías "Gracias" en quechua?',
+        options: ['Allillanmi', 'Añay', 'Allin tariy', 'Wawqi'],
+        correct: 1,
+        explanation: 'Añay es la forma quechua de expresar gratitud.',
+      },
+      {
+        type: '🎯 Selección múltiple',
+        prompt: 'Si alguien te saluda con "Imaynallan", ¿qué respondes si estás bien?',
+        options: ['Añay', 'Allillanmi', "Allian p'unchaw", 'Allin tuta'],
+        correct: 1,
+        explanation: 'Allillanmi significa "Estoy bien", es la respuesta correcta.',
+      },
+      {
+        type: '🎯 Selección múltiple',
+        prompt: '¿Cuál es el saludo correcto para la noche?',
+        options: ['Allin tariy', "Allian p'unchaw", 'Allin tuta', 'Imaynallan'],
+        correct: 2,
+        explanation: 'Allin tuta = Buenas noches. "Tuta" significa noche.',
+      },
+    ],
+  },
+  'qu_m1_l2': {
+    id: 'qu_m1_l2',
+    title: '¿Pi sutiyki?',
+    description: 'Presentarte y decir tu nombre',
+    icon: '🙋',
+    moduleId: 'qu_m1',
+    languageId: 'quechua',
+    xpReward: 15,
+    questions: [
+      {
+        type: '🎯 Selección múltiple',
+        prompt: '¿Cómo se dice "Yo" en quechua?',
+        options: ['Qam', 'Pay', 'Ñuqa', 'Kani'],
+        correct: 2,
+        explanation: 'Ñuqa es el pronombre personal "yo" en quechua.',
+      },
+      {
+        type: '🎯 Selección múltiple',
+        prompt: '¿Qué significa "Sutiy"?',
+        options: ['Mi casa', 'Mi nombre', 'Mi amigo', 'Mi tierra'],
+        correct: 1,
+        explanation: 'Sutiy significa "mi nombre". Suti = nombre, -y = mi.',
+      },
+      {
+        type: '🎯 Selección múltiple',
+        prompt: '¿Cómo preguntarías "¿Cuál es tu nombre?"?',
+        options: ['Imaynallan', 'Qampa sutiyki?', 'Añay tayta', 'Ñuqa kani'],
+        correct: 1,
+        explanation: 'Qampa sutiyki = Tu nombre (¿cuál es?).',
+      },
+      {
+        type: '🎯 Selección múltiple',
+        prompt: '¿Qué significa "Munani"?',
+        options: ['Soy', 'Tengo', 'Me gusta/Quiero', 'Veo'],
+        correct: 2,
+        explanation: 'Munani expresa gusto o deseo. "Runasimita munani" = Me gusta el quechua.',
+      },
+    ],
+  },
+  'qu_m2_l1': {
+    id: 'qu_m2_l1',
+    title: 'Yupaykuna',
+    description: 'Los números del 1 al 10',
+    icon: '🔢',
+    moduleId: 'qu_m2',
+    languageId: 'quechua',
+    xpReward: 20,
+    questions: [
+      {
+        type: '🎯 Selección múltiple',
+        prompt: '¿Cómo se dice "5" en quechua?',
+        options: ['Tawa', 'Kimsa', 'Pichqa', 'Suqta'],
+        correct: 2,
+        explanation: 'Pichqa = 5. Los quechuas tenían un sistema decimal.',
+      },
+      {
+        type: '🎯 Selección múltiple',
+        prompt: '¿Qué número es "Chunka"?',
+        options: ['7', '8', '9', '10'],
+        correct: 3,
+        explanation: 'Chunka = 10. Es la base del sistema decimal quechua.',
+      },
+      {
+        type: '🎯 Selección múltiple',
+        prompt: '¿Cómo se dice "3" en quechua?',
+        options: ['Huk', 'Iskay', 'Kimsa', 'Tawa'],
+        correct: 2,
+        explanation: 'Kimsa = 3. Huk=1, Iskay=2, Kimsa=3.',
+      },
+    ],
+  },
+};
+
+// Módulos
+const modules = [
+  {
+    id: 'qu_m1',
+    languageId: 'quechua',
+    title: 'Rimaykuy',
+    description: 'Saludos y presentaciones básicas',
+    icon: '👋',
+    color: '#C84B31',
+    theme: 'Primer encuentro',
+    lessons: ['qu_m1_l1', 'qu_m1_l2', 'qu_m1_l3', 'qu_m1_l4'],
+  },
+  {
+    id: 'qu_m2',
+    languageId: 'quechua',
+    title: 'Yachay',
+    description: 'Números, colores y familia',
+    icon: '🔢',
+    color: '#FFB300',
+    theme: 'El mundo alrededor',
+    lessons: ['qu_m2_l1', 'qu_m2_l2', 'qu_m2_l3'],
+  },
+  {
+    id: 'qu_m3',
+    languageId: 'quechua',
+    title: 'Mikhuy',
+    description: 'Alimentos, mercado y cocina',
+    icon: '🍽️',
+    color: '#66BB6A',
+    theme: 'En el mercado andino',
+    lessons: ['qu_m3_l1', 'qu_m3_l2'],
+  },
+  {
+    id: 'qu_m4',
+    languageId: 'quechua',
+    title: 'Pacha',
+    description: 'Naturaleza, clima y geografía',
+    icon: '🏔️',
+    color: '#29B6F6',
+    theme: 'La Pachamama',
+    lessons: ['qu_m4_l1', 'qu_m4_l2'],
+  },
+];
+
+// Posts de muestra
+const posts = [
+  {
+    id: '1',
+    user: 'María Quispe',
+    initial: 'M',
+    time: 'Hace 2h',
+    lang: 'QUECHUA',
+    content: '¡Hoy aprendí a decir "Te quiero" en quechua! Se dice "Munayki" 🥰. Mi abuelita siempre me lo decía y ahora entiendo el significado completo. El munay no es solo querer, es un amor que viene del corazón y la voluntad. ❤️',
+    tags: ['quechua', 'munayki', 'amor', 'tradición'],
+    likes: 142,
+    comments: 23,
+    shares: 8,
+    liked: false,
+  },
+  {
+    id: '2',
+    user: 'Carlos Asháninka',
+    initial: 'C',
+    time: 'Hace 5h',
+    lang: 'ASHÁNINKA',
+    content: 'Mi comunidad en la selva central celebró la fiesta de la yuca. En asháninka decimos "Mapachiki" para referirnos a esta celebración donde compartimos como hermanos. 🌿🍽️',
+    tags: ['asháninka', 'gastronomía', 'comunidad'],
+    likes: 89,
+    comments: 12,
+    shares: 5,
+    liked: true,
+    hasImage: true,
+  },
+  {
+    id: '3',
+    user: 'Rosa Condori',
+    initial: 'R',
+    time: 'Hace 8h',
+    lang: 'QUECHUA',
+    content: '¡Mi primer texto tejido con el patrón "Pallay"! En quechua "pallay" significa recoger, y cada patrón que tejemos recoge la historia de nuestros ancestros. Este diseño representa las montañas sagradas de mi comunidad en Cusco. 🏔️🧵',
+    tags: ['textil', 'quechua', 'artesanía', 'Cusco'],
+    likes: 234,
+    comments: 45,
+    shares: 18,
+    liked: false,
+    hasImage: true,
+  },
+  {
+    id: '4',
+    user: 'Luisa Mamani',
+    initial: 'L',
+    time: 'Ayer',
+    lang: 'QUECHUA',
+    content: '¿Sabían que en quechua no existe el verbo "tener"? En su lugar decimos "hay en mí" (ñuqapa kan). Esto refleja la filosofía andina: no poseemos las cosas, las cosas existen con nosotros. El idioma es sabiduría pura. 🌎💡',
+    tags: ['quechua', 'filosofía', 'andino'],
+    likes: 567,
+    comments: 89,
+    shares: 73,
+    liked: true,
+  },
+  {
+    id: '5',
+    user: 'Andrea Huamán',
+    initial: 'A',
+    time: 'Hace 2 días',
+    lang: 'QUECHUA',
+    content: 'El Inti Raymi (Fiesta del Sol) se acerca. En quechua: "Inti" = Sol, "Raymi" = fiesta. Esta ceremonia ancestral celebra al dios Sol y agradece por las cosechas. ¡Los invito a conocerla! ☀️🎉',
+    tags: ['intiraymi', 'cusco', 'sol', 'festividad'],
+    likes: 445,
+    comments: 56,
+    shares: 34,
+    liked: false,
+    hasImage: true,
+  },
+];
+
+/* ========================================
+   NAVEGACIÓN
+   ======================================== */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function switchTab(btn, screenId) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  // Find all nav items across all bottom-navs and activate the one in same position
+  const allNavs = document.querySelectorAll('.bottom-nav');
+  allNavs.forEach(nav => {
+    const items = nav.querySelectorAll('.nav-item');
+    items.forEach(i => i.classList.remove('active'));
+  });
+  // Activate all items in the same position across all navs
+  const parent = btn.parentElement;
+  const index = Array.from(parent.children).indexOf(btn);
+  allNavs.forEach(nav => {
+    const items = nav.querySelectorAll('.nav-item');
+    if (items[index]) items[index].classList.add('active');
+  });
+  showScreen(screenId);
+}
+
+/* ========================================
+   ENCUESTA
+   ======================================== */
+let surveyStep = 1;
+const totalSteps = 5;
+
+const surveySteps = {
+  1: () => `
+    <div class="survey-icon">👋</div>
+    <h2 class="survey-title">¡Bienvenido a Lengua Viva!</h2>
+    <p class="survey-subtitle">Antes de empezar, cuéntanos sobre ti para personalizar tu experiencia.</p>
+    <div class="survey-input-group">
+      <span class="icon">👤</span>
+      <input type="text" class="survey-input" id="input-name" placeholder="¿Cómo te llamas?" style="padding-left:44px" value="${state.userName !== 'Aprendiz' ? state.userName : ''}">
+    </div>
+    <div class="survey-input-group">
+      <span class="icon">📧</span>
+      <input type="email" class="survey-input" placeholder="Tu email (opcional)" style="padding-left:44px">
+    </div>
+  `,
+  2: () => `
+    <div class="survey-icon">🌎</div>
+    <h2 class="survey-title">¿Qué lengua quieres aprender?</h2>
+    <p class="survey-subtitle">Cada lengua es un universo de sabiduría.</p>
+    <div class="option-card selected" data-lang="quechua" onclick="selectOption(this,'lang')">
+      <div class="opt-icon">🏔️</div>
+      <div class="opt-info">
+        <div class="opt-name">Quechua</div>
+        <div class="opt-detail">Runasimi · ~10M hablantes · Andes</div>
+      </div>
+      <div class="opt-check">✓</div>
+    </div>
+    <div class="option-card" data-lang="shipibo" onclick="selectOption(this,'lang')">
+      <div class="opt-icon">🌿</div>
+      <div class="opt-info">
+        <div class="opt-name">Shipibo-Conibo</div>
+        <div class="opt-detail">JShipibo · ~35K hablantes · Amazonía</div>
+      </div>
+      <div class="opt-check">✓</div>
+    </div>
+  `,
+  3: () => `
+    <div class="survey-icon">📊</div>
+    <h2 class="survey-title">¿Cuánto sabes del idioma?</h2>
+    <p class="survey-subtitle">Así ajustaremos la dificultad.</p>
+    <div class="option-card selected" onclick="selectOption(this,'level')">
+      <div class="opt-icon">🌱</div>
+      <div class="opt-info">
+        <div class="opt-name">Principiante Total</div>
+        <div class="opt-detail">Nunca he escuchado este idioma</div>
+      </div>
+      <div class="opt-check">✓</div>
+    </div>
+    <div class="option-card" onclick="selectOption(this,'level')">
+      <div class="opt-icon">📖</div>
+      <div class="opt-info">
+        <div class="opt-name">Conozco algunas palabras</div>
+        <div class="opt-detail">He escuchado algo pero no hablo</div>
+      </div>
+      <div class="opt-check">✓</div>
+    </div>
+    <div class="option-card" onclick="selectOption(this,'level')">
+      <div class="opt-icon">💬</div>
+      <div class="opt-info">
+        <div class="opt-name">Básico</div>
+        <div class="opt-detail">Puedo decir frases simples</div>
+      </div>
+      <div class="opt-check">✓</div>
+    </div>
+    <div class="option-card" onclick="selectOption(this,'level')">
+      <div class="opt-icon">🏡</div>
+      <div class="opt-info">
+        <div class="opt-name">Hablante heredado</div>
+        <div class="opt-detail">Mis abuelos/padres lo hablaban</div>
+      </div>
+      <div class="opt-check">✓</div>
+    </div>
+  `,
+  4: () => `
+    <div class="survey-icon">⏰</div>
+    <h2 class="survey-title">¿Cuánto tiempo al día?</h2>
+    <p class="survey-subtitle">Un poco cada día es mejor que mucho una vez.</p>
+    <div class="options-grid">
+      <div class="grid-option" onclick="selectGrid(this)">
+        <div class="big-num">5</div>
+        <div class="unit">min/día</div>
+        <div class="label">Casual</div>
+      </div>
+      <div class="grid-option selected" onclick="selectGrid(this)">
+        <div class="big-num">10</div>
+        <div class="unit">min/día</div>
+        <div class="label">Regular</div>
+      </div>
+      <div class="grid-option" onclick="selectGrid(this)">
+        <div class="big-num">15</div>
+        <div class="unit">min/día</div>
+        <div class="label">Serio</div>
+      </div>
+      <div class="grid-option" onclick="selectGrid(this)">
+        <div class="big-num">20</div>
+        <div class="unit">min/día</div>
+        <div class="label">Intenso</div>
+      </div>
+    </div>
+  `,
+  5: () => `
+    <div class="survey-icon">🎯</div>
+    <h2 class="survey-title">¡Todo listo, ${state.userName}!</h2>
+    <p class="survey-subtitle">Tu plan personalizado está preparado.</p>
+    <div style="background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px">
+      <span style="font-size:22px">🌍</span>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted)">IDIOMA</div>
+        <div style="font-weight:700">Quechua (Runasimi)</div>
+      </div>
+    </div>
+    <div style="background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px">
+      <span style="font-size:22px">📊</span>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted)">NIVEL</div>
+        <div style="font-weight:700">Principiante Total</div>
+      </div>
+    </div>
+    <div style="background:white;border-radius:12px;padding:14px;margin-bottom:16px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px">
+      <span style="font-size:22px">⏰</span>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted)">TIEMPO DIARIO</div>
+        <div style="font-weight:700">10 minutos</div>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:28px">🏔️</span>
+      <p style="color:white;font-size:13px;line-height:1.5">Tu plan personalizado está listo. ¡Comencemos tu viaje por las lenguas del Perú!</p>
+    </div>
+  `,
+};
+
+function renderSurveyStep() {
+  const body = document.getElementById('survey-body');
+  body.innerHTML = `<div style="animation:screenInUp 0.4s ease-out">${surveySteps[surveyStep]()}</div>`;
+  document.getElementById('survey-step').textContent = `${surveyStep}/${totalSteps}`;
+  document.getElementById('survey-progress').style.width = `${(surveyStep/totalSteps)*100}%`;
+  document.getElementById('survey-next').textContent = surveyStep === totalSteps ? '¡Empezar ahora! 🎉' : 'Siguiente →';
+}
+
+function surveyNext() {
+  if (surveyStep === 1) {
+    const name = document.getElementById('input-name');
+    if (name && name.value) state.userName = name.value;
+  }
+  if (surveyStep < totalSteps) {
+    surveyStep++;
+    renderSurveyStep();
+  } else {
+    updateHomeUI();
+    showScreen('home-screen');
+  }
+}
+
+function surveyBack() {
+  if (surveyStep > 1) {
+    surveyStep--;
+    renderSurveyStep();
+  } else {
+    showScreen('welcome-screen');
+  }
+}
+
+function selectOption(el, type) {
+  el.parentElement.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function selectGrid(el) {
+  el.parentElement.querySelectorAll('.grid-option').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+/* ========================================
+   HOME UI UPDATE
+   ======================================== */
+function updateHomeUI() {
+  document.getElementById('greeting-name').textContent = `¡Allin p'unchaw, ${state.userName}!`;
+  document.getElementById('home-streak').textContent = state.streak;
+  document.getElementById('home-xp').textContent = state.xp;
+  document.getElementById('home-gems').textContent = state.gems;
+  document.getElementById('home-hearts').textContent = state.hearts;
+  document.getElementById('profile-name').textContent = state.userName;
+  document.getElementById('profile-avatar-letter').textContent = state.userName[0]?.toUpperCase() || 'A';
+  document.getElementById('profile-streak').textContent = state.streak;
+  document.getElementById('profile-xp').textContent = state.xp;
+}
+
+/* ========================================
+   LESSON MAP
+   ======================================== */
+function openLessonMap(langId) {
+  state.currentLang = langId;
+  const lang = {
+    quechua: { name: 'Quechua', native: 'Runasimi', flag: '🏔️', color: '#C84B31' },
+    shipibo: { name: 'Shipibo-Conibo', native: 'JShipibo', flag: '🌿', color: '#66BB6A' },
+  }[langId];
+  
+  document.getElementById('map-lang-name').textContent = lang.name;
+  document.getElementById('map-lang-native').textContent = lang.native;
+  document.getElementById('map-header').style.background = `linear-gradient(135deg, ${lang.color}, ${lang.color}dd)`;
+  
+  renderLessonMap(langId);
+  showScreen('map-screen');
+}
+
+function renderLessonMap(langId) {
+  const filteredModules = modules.filter(m => m.languageId === langId);
+  const container = document.getElementById('map-content');
+  
+  let html = '';
+  filteredModules.forEach(mod => {
+    const completedCount = mod.lessons.filter(l => state.completedLessons.includes(l)).length;
+    const progress = completedCount / mod.lessons.length;
+    
+    html += `
+      <div class="module-card">
+        <div class="module-icon" style="background:${mod.color}20">${mod.icon}</div>
+        <div class="module-info">
+          <h3>${mod.title}</h3>
+          <p>${mod.description}</p>
+          <div class="module-bar"><div class="module-bar-fill" style="background:${mod.color};width:${progress*100}%"></div></div>
+          <div class="module-count">${completedCount}/${mod.lessons.length} lecciones</div>
+        </div>
+      </div>
+      <div class="lesson-path">
+    `;
+    
+    mod.lessons.forEach((lessonId, i) => {
+      const lesson = lessons[lessonId];
+      const isCompleted = state.completedLessons.includes(lessonId);
+      const isUnlocked = i === 0 || state.completedLessons.includes(mod.lessons[i-1]);
+      const isCurrent = !isCompleted && isUnlocked;
+      const offset = i % 2 === 1 ? 'offset' : '';
+      
+      let circleClass = 'locked';
+      let content = '🔒';
+      if (isCompleted) { circleClass = 'completed'; content = '⭐'; }
+      else if (isCurrent) { circleClass = 'current'; content = lesson ? lesson.icon : '📖'; }
+      
+      html += `
+        <div class="lesson-node ${offset}" onclick="${isUnlocked ? `startLesson('${lessonId}')` : ''}" style="cursor:${isUnlocked ? 'pointer' : 'default'}; opacity:${isUnlocked ? '1' : '0.6'}">
+          <div class="lesson-circle ${circleClass}">${content}</div>
+          <div class="lesson-info">
+            <h4>${lesson ? lesson.title : 'Lección ' + (i+1)}</h4>
+            <p>${lesson ? lesson.description : 'Contenido próximamente'}</p>
+            ${isCompleted ? '<div class="done-badge">✓ Completada</div>' : ''}
+            ${isUnlocked && !isCompleted && lesson ? `<div class="meta"><span>⏱ ${lesson.questions.length * 1} min</span><span class="xp">+${lesson.xpReward} XP</span></div>` : ''}
+          </div>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+  });
+  
+  container.innerHTML = html;
+}
+
+/* ========================================
+   LESSON PLAYER
+   ======================================== */
+function startLesson(lessonId) {
+  const lesson = lessons[lessonId];
+  if (!lesson) {
+    // Demo lesson
+    alert('¡Esta lección estará disponible pronto! 🚀');
+    return;
+  }
+  
+  state.currentLesson = lesson;
+  state.currentQuestionIndex = 0;
+  state.currentScore = 0;
+  state.currentMistakes = 0;
+  state.answered = false;
+  
+  showScreen('lesson-screen');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const lesson = state.currentLesson;
+  const q = lesson.questions[state.currentQuestionIndex];
+  const progress = ((state.currentQuestionIndex + 1) / lesson.questions.length) * 100;
+  
+  document.getElementById('player-progress').style.width = progress + '%';
+  document.getElementById('player-count').textContent = `${state.currentQuestionIndex + 1}/${lesson.questions.length}`;
+  
+  let optionsHtml = q.options.map((opt, i) => `
+    <div class="answer-option" onclick="selectAnswer(${i})" data-index="${i}">
+      <div class="opt-number">${i + 1}</div>
+      <div style="font-size:15px;font-weight:500">${opt}</div>
+    </div>
+  `).join('');
+  
+  document.getElementById('player-body').innerHTML = `
+    <div style="animation:screenInUp 0.4s ease-out">
+      <div class="question-type-badge">${q.type}</div>
+      <div class="question-prompt">${q.prompt}</div>
+      <div class="answer-options" id="answer-options">${optionsHtml}</div>
+      <div id="explanation-container"></div>
+    </div>
+  `;
+  
+  const btn = document.getElementById('btn-continue');
+  btn.className = 'btn-continue inactive';
+  btn.textContent = 'Selecciona una opción';
+  state.answered = false;
+}
+
+function selectAnswer(index) {
+  if (state.answered) return;
+  state.answered = true;
+  
+  const q = state.currentLesson.questions[state.currentQuestionIndex];
+  const correct = index === q.correct;
+  const options = document.querySelectorAll('.answer-option');
+  
+  options.forEach((opt, i) => {
+    opt.style.cursor = 'default';
+    if (i === q.correct) opt.classList.add('correct');
+    if (i === index && !correct) opt.classList.add('wrong');
+  });
+  
+  if (correct) {
+    state.currentScore += 10;
+    state.answered = 'correct';
+  } else {
+    state.currentMistakes++;
+    state.answered = 'wrong';
+  }
+  
+  document.getElementById('explanation-container').innerHTML = `
+    <div class="explanation-box ${correct ? 'correct' : 'wrong'}" style="animation:screenInUp 0.3s ease-out">
+      <h4>${correct ? '¡Correcto! 🎉' : '¡Casi! Aprende esto:'}</h4>
+      <p>${q.explanation}</p>
+    </div>
+  `;
+  
+  const btn = document.getElementById('btn-continue');
+  const isLast = state.currentQuestionIndex === state.currentLesson.questions.length - 1;
+  btn.className = `btn-continue ${correct ? 'correct-btn' : 'wrong-btn'}`;
+  btn.textContent = isLast ? 'Ver resultados 🏆' : 'Continuar →';
+}
+
+function continueLesson() {
+  if (!state.answered) return;
+  
+  if (state.currentQuestionIndex < state.currentLesson.questions.length - 1) {
+    state.currentQuestionIndex++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function showResults() {
+  const lesson = state.currentLesson;
+  const total = lesson.questions.length;
+  const correct = total - state.currentMistakes;
+  const percentage = Math.round((correct / total) * 100);
+  const xp = state.currentScore;
+  
+  // Add to completed
+  if (!state.completedLessons.includes(lesson.id)) {
+    state.completedLessons.push(lesson.id);
+  }
+  
+  // Update stats
+  state.xp += xp;
+  state.gems += 5;
+  
+  let trophy = '💪';
+  let trophyClass = '';
+  let title = '¡No te rindas!';
+  let subtitle = 'La práctica hace al maestro';
+  
+  if (percentage >= 80) {
+    trophy = '🏆';
+    trophyClass = 'gold';
+    title = '¡Excelente! ¡Eres un Amawta!';
+    subtitle = 'Dominas este nivel';
+  } else if (percentage >= 50) {
+    trophy = '⭐';
+    trophyClass = 'gold';
+    title = '¡Buen trabajo!';
+    subtitle = 'Sigue practicando';
+  }
+  
+  document.getElementById('player-body').innerHTML = `
+    <div class="results-screen">
+      <div class="results-trophy ${trophyClass}">${trophy}</div>
+      <h2 class="results-title">${title}</h2>
+      <p class="results-subtitle">${subtitle}</p>
+      <div class="results-stats">
+        <div class="result-stat">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-val">${xp}</div>
+          <div class="stat-lbl">XP Ganados</div>
+        </div>
+        <div class="result-stat">
+          <div class="stat-icon">✅</div>
+          <div class="stat-val">${correct}</div>
+          <div class="stat-lbl">Correctas</div>
+        </div>
+        <div class="result-stat">
+          <div class="stat-icon">❌</div>
+          <div class="stat-val">${state.currentMistakes}</div>
+          <div class="stat-lbl">Errores</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('player-progress').style.width = '100%';
+  
+  const btn = document.getElementById('btn-continue');
+  btn.className = 'btn-continue correct-btn';
+  btn.textContent = 'Continuar aprendiendo →';
+  btn.onclick = () => {
+    showConfetti();
+    showXPPopup(xp);
+    updateHomeUI();
+    setTimeout(() => {
+      showScreen('map-screen');
+      renderLessonMap(state.currentLang);
+    }, 1500);
+  };
+}
+
+/* ========================================
+   SOCIAL FEED
+   ======================================== */
+function renderFeed() {
+  const container = document.getElementById('social-feed');
+  container.innerHTML = posts.map(post => `
+    <div class="post-card">
+      <div class="post-header">
+        <div class="post-avatar">${post.initial}</div>
+        <div class="post-user">
+          <h4>${post.user}</h4>
+          <div class="post-time">${post.time}</div>
+        </div>
+        <div class="post-lang-badge">${post.lang}</div>
+      </div>
+      <div class="post-body"><p>${post.content}</p></div>
+      ${post.hasImage ? `
+        <div class="post-image">
+          <div class="placeholder-icon">📷</div>
+          <div class="placeholder-text">${post.tags[0] || 'cultura'}</div>
+        </div>
+      ` : ''}
+      <div class="post-tags">
+        ${post.tags.map(t => `<span class="post-tag">#${t}</span>`).join('')}
+      </div>
+      <div class="post-actions">
+        <button class="post-action ${post.liked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
+          <span class="action-icon">${post.liked ? '❤️' : '🤍'}</span>
+          <span id="likes-${post.id}">${post.likes}</span>
+        </button>
+        <button class="post-action">
+          <span class="action-icon">💬</span>
+          <span>${post.comments}</span>
+        </button>
+        <button class="post-action">
+          <span class="action-icon">↗️</span>
+          <span>${post.shares}</span>
+        </button>
+        <button class="post-action" style="margin-left:auto">
+          <span class="action-icon">🔖</span>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleLike(postId) {
+  const post = posts.find(p => p.id === postId);
+  if (post) {
+    post.liked = !post.liked;
+    post.likes += post.liked ? 1 : -1;
+    renderFeed();
+  }
+}
+
+function publishPost() {
+  const text = document.getElementById('post-text').value;
+  if (!text.trim()) return;
+  
+  posts.unshift({
+    id: 'new-' + Date.now(),
+    user: state.userName,
+    initial: state.userName[0]?.toUpperCase() || 'U',
+    time: 'Ahora',
+    lang: 'QUECHUA',
+    content: text,
+    tags: ['cultura', 'perú'],
+    likes: 0,
+    comments: 0,
+    shares: 0,
+    liked: false,
+  });
+  
+  document.getElementById('post-text').value = '';
+  renderFeed();
+}
+
+/* ========================================
+   EFECTOS
+   ======================================== */
+function showConfetti() {
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  document.getElementById('app').appendChild(container);
+  
+  const colors = ['#C84B31', '#FFB300', '#66BB6A', '#7E57C2', '#29B6F6'];
+  for (let i = 0; i < 30; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = Math.random() * 0.5 + 's';
+    piece.style.animationDuration = (1 + Math.random()) + 's';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    container.appendChild(piece);
+  }
+  
+  setTimeout(() => container.remove(), 2500);
+}
+
+function showXPPopup(amount) {
+  const popup = document.createElement('div');
+  popup.className = 'xp-popup';
+  popup.textContent = `+${amount} XP ⭐`;
+  document.getElementById('app').appendChild(popup);
+  setTimeout(() => popup.remove(), 1800);
+}
+
+/* ========================================
+   CATEGORY FILTERS
+   ======================================== */
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.cat-chip')) {
+    const chip = e.target.closest('.cat-chip');
+    chip.parentElement.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+  }
+  if (e.target.closest('.cat-btn')) {
+    const btn = e.target.closest('.cat-btn');
+    if (btn.parentElement.classList.contains('cat-selector')) {
+      btn.parentElement.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+  }
+});
+
+/* ========================================
+   INIT
+   ======================================== */
+renderSurveyStep();
+renderFeed();
+updateHomeUI();
+
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1694f8b497ddfbf',t:'MTc4MzI4NTM0Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
