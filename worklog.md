@@ -53,3 +53,33 @@ Stage Summary:
 - Las frases de Kuntur mezclan quechua y español (allinllachu, sumaq, allin, rikuypuni) reforzando el aprendizaje.
 - Imágenes optimizadas (~50KB c/u) para carga rápida.
 - La mascota añade personalidad y refuerzo emocional positivo/negativo, mejorando la retención y engagement del usuario.
+
+---
+Task ID: 11 (Eliminar fondo verde de Kuntur)
+Agent: Z.ai Code (main)
+Task: Eliminar el fondo verde de las 8 imágenes de la mascota Kuntur
+
+Work Log:
+- Intento 1 (SDK z-ai image-edit): Usé el modelo de IA para "remover el fondo verde". Las imágenes se procesaron en ~16s c/u, pero el VLM reveló que la IA reemplazó el verde con blanco (3 canales RGB, 0% transparente) en lugar de hacerlo transparente. Enfoque descartado.
+- Análisis del color de fondo: Muestreé las esquinas de las imágenes originales y descubrí que el "verde" es en realidad verde lima/amarillento: RGB(181, 207, 105). La fórmula naive de "greenness = G - max(R,B)" solo daba ~27, insuficiente para detectarlo.
+- Intento 2 (chroma key por distancia al color de fondo): Implementé un script que:
+  1. Muestrea el color de fondo promedio de la esquina superior izquierda (10x10 píxeles) de cada imagen.
+  2. Para cada píxel calcula la distancia euclidiana al color de fondo.
+  3. distancia < 45 → totalmente transparente (alpha=0).
+  4. distancia 45-75 → anti-aliasing suave (alpha interpolado).
+  5. distancia > 75 → opaco (el personaje).
+- Resultado: 63-76% de píxeles transparentes por imagen. El personaje se preserva intacto con anti-aliasing limpio en los bordes.
+- Verificación de transparencia: Componiendo feliz.png sobre un fondo rojo puro, el VLM confirmó que el fondo se ve rojo (transparencia real confirmada, no blanco).
+- Optimización: Las imágenes se redimensionaron a 400px y se guardaron como PNG RGBA optimizado (88-189 KB c/u).
+- Verificación visual con Agent Browser + VLM en 4 contextos:
+  1. Ruta de aprendizaje (Kuntur feliz sobre fondo crema): "blends cleanly with the page with no colored box" ✓
+  2. Feedback correcto (Kuntur riendo sobre barra verde clara): "blends cleanly with the light green bar with no box" ✓
+  3. Feedback incorrecto (Kuntur triste sobre barra rosa): "blends cleanly with the pink bar with no box" ✓
+  4. Sin corazones (Kuntur enojado sobre barra roja): "blends cleanly with the red/pink feedback bar" ✓
+- `bun run lint` pasa limpio. Sin errores de consola ni runtime.
+
+Stage Summary:
+- El fondo verde de las 8 imágenes de Kuntur fue eliminado definitivamente usando chroma key programático (más preciso que la IA para fondos de color sólido).
+- Kuntur ahora se integra limpiamente sobre cualquier color de fondo en la app (verde, rojo, rosa, crema) sin cajas ni halos de color.
+- Las imágenes son PNG RGBA con ~65-76% de transparencia, optimizadas a 400px (88-189 KB c/u).
+- Script reutilizable en scripts/chroma-key-kuntur.ts por si se añaden más emociones de Kuntur en el futuro.
