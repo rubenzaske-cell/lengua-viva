@@ -25,10 +25,18 @@ export function SurveyView() {
   const [selectedMulti, setSelectedMulti] = useState<string[]>([]);
   const [timeValue, setTimeValue] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+  // Cuando el usuario selecciona una opción, Kuntur se pone a "escribir" el plan.
+  // Mientras escribe, el botón Continuar NO aparece.
+  const [isWriting, setIsWriting] = useState(false);
 
   const question: SurveyQuestion | undefined = SURVEY_QUESTIONS[qIndex];
   const total = SURVEY_QUESTIONS.length;
   const progressPct = (qIndex / total) * 100;
+
+  // Al cambiar de pregunta, resetear el estado de escritura
+  useEffect(() => {
+    setIsWriting(false);
+  }, [qIndex]);
 
   // Reset selección al cambiar de pregunta
   useEffect(() => {
@@ -46,6 +54,7 @@ export function SurveyView() {
   if (!question) return null;
 
   const canAdvance = (() => {
+    if (isWriting) return false; // No avanzar mientras Kuntur escribe
     if (question.type === "single") return selectedSingle !== null;
     if (question.type === "multi") return true; // opcional
     if (question.type === "time") return true; // opcional
@@ -62,12 +71,16 @@ export function SurveyView() {
       }
     }
     setSelectedSingle(id);
+    // Activar la animación de Kuntur escribiendo el plan
+    setIsWriting(true);
   };
 
   const handleToggleMulti = (id: string) => {
     setSelectedMulti((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
+    // Activar la animación de Kuntur escribiendo el plan
+    setIsWriting(true);
   };
 
   const handleAdvance = async () => {
@@ -152,12 +165,15 @@ export function SurveyView() {
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
         <div className="w-full max-w-2xl flex flex-col items-center">
           {/* Kuntur haciendo la pregunta — key estable para que el video
-              NO se reinicie al cambiar de pregunta. Solo cambia el speech y mood. */}
+              NO se reinicie al cambiar de pregunta. Solo cambia el speech y mood.
+              Cuando el usuario selecciona una opción, Kuntur se pone a "escribir" el plan. */}
           <KunturMascot
             key="kuntur-survey"
             mood={question.kunturMood}
-            size={140}
+            size={isWriting ? 130 : 140}
             speech={question.kunturSays}
+            writing={isWriting}
+            onWritingComplete={() => setIsWriting(false)}
           />
 
           {/* Opciones */}
@@ -235,7 +251,7 @@ export function SurveyView() {
                       {["07:00", "12:00", "18:00", "21:00"].map((t) => (
                         <button
                           key={t}
-                          onClick={() => setTimeValue(t)}
+                          onClick={() => { setTimeValue(t); setIsWriting(true); }}
                           className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all ${
                             timeValue === t
                               ? "border-duo-green bg-duo-green/10 text-duo-green"
@@ -264,20 +280,28 @@ export function SurveyView() {
         </div>
       </div>
 
-      {/* Barra inferior */}
+      {/* Barra inferior — el botón Continuar SOLO aparece cuando Kuntur termina de escribir */}
       <div className="border-t-2 border-muted/50 bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto max-w-2xl flex items-center justify-end gap-4">
-          <button
-            onClick={handleAdvance}
-            disabled={!canAdvance || submitting}
-            className="duo-btn duo-btn-primary"
-          >
-            {submitting
-              ? "Guardando..."
-              : qIndex + 1 >= total
-              ? "¡Crear mi plan!"
-              : "Continuar"}
-          </button>
+        <div className="mx-auto max-w-2xl flex items-center justify-end gap-4 min-h-[52px]">
+          {isWriting ? (
+            // Mientras Kuntur escribe, mostrar mensaje en lugar del botón
+            <span className="text-sm font-bold text-duo-purple flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-duo-purple animate-pulse" />
+              Kuntur está creando tu plan...
+            </span>
+          ) : (
+            <button
+              onClick={handleAdvance}
+              disabled={!canAdvance || submitting}
+              className="duo-btn duo-btn-primary"
+            >
+              {submitting
+                ? "Guardando..."
+                : qIndex + 1 >= total
+                ? "¡Crear mi plan!"
+                : "Continuar"}
+            </button>
+          )}
         </div>
       </div>
     </div>

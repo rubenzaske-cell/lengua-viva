@@ -574,3 +574,39 @@ Stage Summary:
 - El video de Kuntur se reproduce de forma CONTINUA entre preguntas de la encuesta (sin reinicios visibles, sin saltos).
 - La animación del video (pico moviéndose, parpadeo) sigue activa y fluida, solo que el contenedor no se mueve.
 - Experiencia mucho más pulida y profesional.
+
+---
+Task ID: 24 (Kuntur escribe el plan galáctico al seleccionar opción de encuesta)
+Agent: Z.ai Code (main)
+Task: Al seleccionar una opción de la encuesta, Kuntur se pone a escribir (creando el plan). Mientras escribe, el botón Continuar NO aparece. Solo aparece cuando termina.
+
+Work Log:
+- Analicé el video de referencia del usuario (hailuo-2.3-fast_b_Claro._Esa_idea_pued.mp4, 10.875s, 1080x1080). Extraje frames a 2fps y identifiqué que la animación de escritura (Kuntur con tablilla y lápiz) ocurre de 1.0s a 5.5s. Después hay un branding "Arena" que no se necesita.
+- Extraje la porción de escritura (1.0s-5.5s) con ffmpeg y apliqué chroma key para quitar el fondo verde: `colorkey=0xA5B948:0.08:0.12,format=yuva420p`. Resultado: kuntur-writing.webm (1.1MB, 720x720 cuadrado, 4.5s, transparencia alpha).
+- Verifiqué transparencia: sobre fondo rojo, el VLM confirmó "condor character is visible writing on a tablet; background is red (transparent); character is solid and crisp".
+- Actualicé KunturMascot con nuevas props:
+  - `writing: boolean` — cuando es true, muestra el video de escritura (sin loop) en vez del idle (con loop)
+  - `onWritingComplete: () => void` — callback que se dispara cuando el video de escritura termina (una sola vez, con flag writingFiredRef)
+  - Burbuja especial morada "✨ Creando tu plan..." con 3 puntos animados (bounce) cuando writing=true
+  - El video de escritura es cuadrado (720x720), el idle es vertical (720x1280), así que el tamaño se ajusta según el modo
+  - Cuando writing=true, el typewriter del speech se desactiva (no escribe la pregunta mientras escribe el plan)
+- Actualicé SurveyView:
+  - Nuevo estado `isWriting` que se activa al seleccionar una opción (handleSelectSingle, handleToggleMulti, quick time buttons)
+  - Se resetea a false al cambiar de pregunta (useEffect en qIndex)
+  - KunturMascot recibe `writing={isWriting}` y `onWritingComplete={() => setIsWriting(false)}`
+  - `canAdvance` retorna false cuando isWriting=true
+  - Barra inferior: cuando isWriting=true, muestra "Kuntur está creando tu plan..." con punto pulsante en vez del botón Continuar. Cuando isWriting=false, muestra el botón Continuar.
+- `bun run lint` pasa limpio.
+- Verificación con Agent Browser:
+  1. Antes de seleccionar: botón Continuar disabled visible (normal) ✓
+  2. Al seleccionar Quechua: video cambia a kuntur-writing.webm, botón Continuar DESAPARECE, aparece "Kuntur está creando tu plan..." ✓
+  3. Captura visual mid-escritura: VLM confirmó "condor mascot holding a tablet and writing; purple speech bubble saying 'Creando tu plan'; no Continue button visible; message 'Kuntur está creando tu plan...'" ✓
+  4. Después de ~5s (video termina): video vuelve a kuntur-idle.webm, botón Continuar APARECE, mensaje desaparece ✓
+- Sin errores de consola.
+
+Stage Summary:
+- Al seleccionar cualquier opción de la encuesta, Kuntur automáticamente se pone a escribir en su tablilla (video del estudio) como si estuviera creando el plan galáctico del usuario.
+- Mientras Kuntur escribe (~4.5s), el botón Continuar NO aparece — en su lugar hay un mensaje "Kuntur está creando tu plan..." con un punto pulsante.
+- Cuando el video de escritura termina, Kuntur vuelve a su animación idle y el botón Continuar aparece automáticamente.
+- Burbuja especial morada "✨ Creando tu plan..." con puntos animados durante la escritura.
+- El video de escritura se extrajo del video de referencia del usuario (solo la parte de escritura, sin el branding final), con fondo verde removido y transparencia alpha.

@@ -18,6 +18,11 @@ interface KunturMascotProps {
   className?: string;
   animate?: boolean;
   speech?: string;
+  /** Cuando es true, Kuntur se pone a "escribir" (creando el plan galáctico).
+   *  Muestra el video de escritura y una burbuja "Creando tu plan..." con puntos animados. */
+  writing?: boolean;
+  /** Callback cuando el video de escritura termina (una sola vez). */
+  onWritingComplete?: () => void;
 }
 
 const MOOD_ALT: Record<KunturMood, string> = {
@@ -91,48 +96,78 @@ export function KunturMascot({
   className = "",
   animate = true,
   speech,
+  writing = false,
+  onWritingComplete,
 }: KunturMascotProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { text: typedText, typing } = useTypewriter(speech, !!speech);
+  const { text: typedText, typing } = useTypewriter(speech, !!speech && !writing);
+  const writingFiredRef = useRef(false);
 
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     v.play().catch(() => {});
-  }, []);
+  }, [writing]);
 
-  // Video vertical 720x1280 (aspecto 9:16). El size controla la ALTURA
-  // para que encaje en los espacios donde antes había un SVG casi cuadrado.
-  // El ancho se ajusta proporcionalmente.
-  const videoHeight = size;
-  const videoWidth = size * (720 / 1280);
+  // Detectar cuando el video de escritura termina (una sola vez)
+  useEffect(() => {
+    if (!writing) {
+      writingFiredRef.current = false;
+      return;
+    }
+    const v = videoRef.current;
+    if (!v) return;
+    const handleEnded = () => {
+      if (!writingFiredRef.current) {
+        writingFiredRef.current = true;
+        onWritingComplete?.();
+      }
+    };
+    v.addEventListener("ended", handleEnded);
+    return () => v.removeEventListener("ended", handleEnded);
+  }, [writing, onWritingComplete]);
+
+  // Idle: vertical 720x1280 (9:16). size = altura.
+  // Writing: cuadrado 720x720 (1:1). size = ancho Y altura.
+  const videoHeight = writing ? size : size;
+  const videoWidth = writing ? size : size * (720 / 1280);
 
   return (
     <div className={`flex flex-col items-center ${className}`} style={{ width: videoWidth }}>
-      {speech && (
+      {/* Burbuja de diálogo */}
+      {writing ? (
+        // Burbuja especial "Creando tu plan..." con puntos animados
+        <div className="relative mb-2 max-w-[240px] min-h-[36px] bg-gradient-to-r from-duo-purple/15 to-duo-blue/15 border-2 border-duo-purple/40 rounded-2xl px-4 py-2 text-sm font-extrabold text-center shadow-sm flex items-center justify-center gap-1">
+          <span className="text-duo-purple">✨ Creando tu plan</span>
+          <span className="flex gap-0.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-duo-purple animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-duo-purple animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-duo-purple animate-bounce" style={{ animationDelay: "300ms" }} />
+          </span>
+          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-card border-b-2 border-r-2 border-duo-purple/40 rotate-45" />
+        </div>
+      ) : speech ? (
         <div
           className="relative mb-2 max-w-[240px] min-h-[36px] bg-white dark:bg-card border-2 border-duo-green/30 rounded-2xl px-4 py-2 text-sm font-bold text-center shadow-sm flex items-center justify-center"
         >
           <span>
             {typedText}
-            {/* Cursor parpadeante mientras escribe */}
             {typing && (
               <span className="inline-block w-[2px] h-4 bg-duo-green ml-0.5 align-middle animate-pulse" />
             )}
           </span>
           <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-card border-b-2 border-r-2 border-duo-green/30 rotate-45" />
         </div>
-      )}
-      {/* El video NO se mueve cuando hay speech (Kuntur estático mientras escribe).
-          La animación del video (pico, parpadeo) sigue reproduciéndose sin interrupción. */}
+      ) : null}
+      {/* Video: idle (loop) o writing (una sola vez) */}
       <div
         style={{ width: videoWidth, height: videoHeight }}
       >
         <video
           ref={videoRef}
-          src="/kuntur/kuntur-idle.webm"
+          src={writing ? "/kuntur/kuntur-writing.webm" : "/kuntur/kuntur-idle.webm"}
           autoPlay
-          loop
+          loop={!writing}
           muted
           playsInline
           className="w-full h-full object-contain"
