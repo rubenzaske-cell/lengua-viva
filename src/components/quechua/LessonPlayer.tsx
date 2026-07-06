@@ -6,6 +6,7 @@ import type { Exercise } from "@/lib/quechua/content";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Heart, Volume2, Check, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
+import { KunturMascot, randomPhrase } from "@/components/quechua/KunturMascot";
 
 type Feedback = "none" | "correct" | "wrong";
 
@@ -554,6 +555,20 @@ function FeedbackBar(props: {
 }) {
   const { feedback, isAnswered, onCheck, onContinue } = props;
 
+  if (props.noHearts) {
+    return (
+      <div className="border-t-4 border-duo-red bg-duo-red/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto max-w-2xl flex items-center gap-3">
+          <KunturMascot mood="enojado" size={56} animate={false} />
+          <div className="flex-1">
+            <p className="font-extrabold text-duo-red text-lg leading-tight">¡Sin corazones!</p>
+            <p className="text-xs font-bold text-muted-foreground">Compra más en la tienda o espera a que se regeneren.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (feedback === "none") {
     return (
       <div className="border-t-2 border-muted/50 bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
@@ -563,10 +578,10 @@ function FeedbackBar(props: {
           </button>
           <button
             onClick={onCheck}
-            disabled={!isAnswered || props.noHearts}
+            disabled={!isAnswered}
             className="duo-btn duo-btn-primary flex-1 max-w-xs"
           >
-            {props.noHearts ? "Sin corazones" : "Comprobar"}
+            Comprobar
           </button>
         </div>
       </div>
@@ -592,23 +607,34 @@ function FeedbackBar(props: {
     >
       <div className="mx-auto max-w-2xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <div className={`flex items-center gap-2 mb-1 ${correct ? "text-duo-green-dark" : "text-duo-red"}`}>
-              {correct ? <Check className="w-7 h-7" /> : <X className="w-7 h-7" />}
-              <span className="text-2xl font-extrabold">
-                {correct ? "¡Correcto!" : "¡Casi!"}
-              </span>
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <KunturMascot
+              mood={correct ? "risa" : "triste"}
+              size={56}
+              animate={false}
+              className="shrink-0"
+            />
+            <div className="min-w-0">
+              <div className={`flex items-center gap-2 mb-0.5 ${correct ? "text-duo-green-dark" : "text-duo-red"}`}>
+                {correct ? <Check className="w-6 h-6" /> : <X className="w-6 h-6" />}
+                <span className="text-xl font-extrabold">
+                  {correct ? "¡Correcto!" : "¡Casi!"}
+                </span>
+              </div>
+              {!correct && correctAnswer && (
+                <p className="text-xs font-bold text-foreground truncate">
+                  Respuesta: <span className="text-duo-green-dark">{correctAnswer}</span>
+                </p>
+              )}
+              {correct && (
+                <p className="text-xs font-bold text-duo-green-dark truncate">{randomPhrase("correct")}</p>
+              )}
             </div>
-            {!correct && correctAnswer && (
-              <p className="text-sm font-bold text-foreground">
-                Respuesta correcta: <span className="text-duo-green-dark">{correctAnswer}</span>
-              </p>
-            )}
           </div>
           <button
             onClick={onContinue}
             disabled={props.submitting}
-            className={`duo-btn ${correct ? "duo-btn-primary" : "duo-btn-danger"}`}
+            className={`duo-btn ${correct ? "duo-btn-primary" : "duo-btn-danger"} shrink-0`}
           >
             {props.submitting ? "Guardando..." : "Continuar"}
           </button>
@@ -668,22 +694,28 @@ function CompletionScreen({
   onContinue: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center p-6">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center p-6 overflow-y-auto">
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        className="text-center"
+        className="text-center w-full max-w-md"
       >
-        <div className="text-7xl mb-4">{perfect ? "🏆" : "🎉"}</div>
+        <div className="flex justify-center mb-2">
+          <KunturMascot
+            mood={perfect ? "risa" : "feliz"}
+            size={140}
+            speech={perfect ? "¡Sumaq! ¡Perfecto!" : "¡Allin! ¡Buen trabajo!"}
+          />
+        </div>
         <h1 className="text-3xl font-extrabold text-duo-yellow mb-2">
           {perfect ? "¡Perfecto!" : "¡Lección completada!"}
         </h1>
-        <p className="text-muted-foreground font-bold mb-8">
-          {perfect ? "Sin errores. ¡Eres imparable!" : "¡Buen trabajo, sigue así!"}
+        <p className="text-muted-foreground font-bold mb-6">
+          {perfect ? "Sin errores. ¡Eres imparable!" : "¡Sigue así, vas mejorando!"}
         </p>
 
-        <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto mb-8">
+        <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto mb-6">
           <div className="bg-duo-yellow/15 border-2 border-duo-yellow/30 rounded-2xl p-4">
             <div className="text-3xl mb-1">⭐</div>
             <div className="text-xs font-bold text-muted-foreground uppercase">XP ganado</div>
@@ -697,12 +729,20 @@ function CompletionScreen({
         </div>
 
         {newAch.length > 0 && (
-          <div className="mb-6 bg-duo-purple/10 border-2 border-duo-purple/30 rounded-2xl p-4 max-w-xs mx-auto">
-            <div className="text-sm font-bold text-duo-purple mb-1">
-              ¡{newAch.length} nuevo{newAch.length > 1 ? "s" : ""} logro{newAch.length > 1 ? "s" : ""}!
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4 }}
+            className="mb-6 bg-duo-purple/10 border-2 border-duo-purple/30 rounded-2xl p-4 max-w-xs mx-auto flex items-center gap-3"
+          >
+            <KunturMascot mood="sorprendido" size={44} animate={false} />
+            <div className="text-left">
+              <div className="text-sm font-extrabold text-duo-purple">
+                ¡{newAch.length} nuevo{newAch.length > 1 ? "s" : ""} logro{newAch.length > 1 ? "s" : ""}!
+              </div>
+              <div className="text-xs text-muted-foreground font-bold">Míralos en la pestaña Logros</div>
             </div>
-            <div className="text-2xl">🎖️</div>
-          </div>
+          </motion.div>
         )}
 
         <button onClick={onContinue} className="duo-btn duo-btn-primary w-full max-w-xs">

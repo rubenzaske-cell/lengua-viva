@@ -25,3 +25,31 @@ Stage Summary:
 - 5 tipos de ejercicio con pronunciación TTS. Contenido quechua real (Runa Simi / chanka).
 - Stack: Next.js 16 App Router, TypeScript, Tailwind v4, shadcn/ui, Prisma (SQLite), Zustand, Framer Motion, Web Speech API.
 - 100% verificado en navegador (desktop y móvil). Sin errores de runtime.
+
+---
+Task ID: 10 (Kuntur mascot integration)
+Agent: Z.ai Code (main)
+Task: Integrar la mascota Kuntur (cóndor) con 8 emociones en toda la app
+
+Work Log:
+- Copié las 8 imágenes de Kuntur desde /upload a /public/kuntur/ con nombres limpios (feliz, enamorado, triste, enojado, sorprendido, guino, timido, risa).
+- Optimicé las imágenes con sharp: redimensionadas a 400px de ancho y compresión PNG nivel 9. Resultado: de ~1MB cada una a ~50KB (reducción 95%).
+- Creé el componente `KunturMascot.tsx` con: 8 estados de ánimo, burbuja de diálogo opcional, animaciones contextuales (risa se balancea, triste se inclina, enojado tiembla, sorprendido pulsa), y frases aleatorias en quechua/español por categoría (greeting, correct, wrong, streak, encourage, perfect).
+- Integré Kuntur en:
+  - **Pantalla de carga** (page.tsx): mood tímido mientras carga el estado.
+  - **Ruta de aprendizaje** (LearnPath): Kuntur feliz/enamorado en el header con burbuja de diálogo contextual (saludo, racha, meta cumplida). Mood enamorado cuando streak >= 3.
+  - **Reproductor de lecciones** (LessonPlayer):
+    - Feedback correcto → Kuntur riendo + frase de ánimo en quechua.
+    - Feedback incorrecto → Kuntur triste + respuesta correcta.
+    - Sin corazones → Kuntur enojado + mensaje de tienda.
+    - Pantalla de completado → Kuntur risa (perfecto) o feliz (normal) con burbuja de diálogo, Kuntur sorprendido al desbloquear logros.
+  - **Perfil** (ProfileView): Kuntur guiñando (streak >= 3) o feliz junto al avatar.
+  - **Ligas** (LeagueView): Kuntur risa (top 5) o tímido según el puesto.
+- `bun run lint` pasa limpio (0 errores, 0 warnings).
+- Verificación con Agent Browser: confirmé que las imágenes cargan (loaded: true) en ruta, feedback correcto (risa), feedback incorrecto (triste), pantalla de completado (feliz), liga (tímido) y perfil (feliz). Sin errores de consola ni runtime.
+
+Stage Summary:
+- Kuntur, la mascota cóndor, ya está vivo en toda la app con 8 emociones reactivas al contexto del usuario.
+- Las frases de Kuntur mezclan quechua y español (allinllachu, sumaq, allin, rikuypuni) reforzando el aprendizaje.
+- Imágenes optimizadas (~50KB c/u) para carga rápida.
+- La mascota añade personalidad y refuerzo emocional positivo/negativo, mejorando la retención y engagement del usuario.

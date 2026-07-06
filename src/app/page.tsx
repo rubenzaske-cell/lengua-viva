@@ -10,6 +10,7 @@ import { LeagueView } from "@/components/quechua/LeagueView";
 import { ProfileView } from "@/components/quechua/ProfileView";
 import { ShopView } from "@/components/quechua/ShopView";
 import { AchievementsView } from "@/components/quechua/AchievementsView";
+import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
@@ -67,14 +68,8 @@ export default function Home() {
           animate={{ scale: 1, opacity: 1 }}
           className="text-center"
         >
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
-            className="text-7xl mb-4"
-          >
-            🦙
-          </motion.div>
-          <h1 className="text-2xl font-extrabold text-duo-green mb-1">RunaSimi</h1>
+          <KunturMascot mood="timido" size={120} />
+          <h1 className="text-2xl font-extrabold text-duo-green mb-1 mt-2">RunaSimi</h1>
           <p className="text-sm font-bold text-muted-foreground">Cargando tu camino...</p>
         </motion.div>
       </div>

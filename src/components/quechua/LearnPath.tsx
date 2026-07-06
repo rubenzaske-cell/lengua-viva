@@ -5,6 +5,7 @@ import { useAppStore } from "@/lib/quechua/store";
 import { Check, Lock, Star, Crown, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMemo } from "react";
+import { KunturMascot, KUNTUR_PHRASES } from "@/components/quechua/KunturMascot";
 
 // Offsets en píxeles para crear el camino serpenteante
 const OFFSETS = [0, 60, 100, 60, 0, -60, -100, -60];
@@ -47,10 +48,23 @@ export function LearnPath() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
-      {/* Encabezado */}
+      {/* Encabezado con Kuntur */}
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-extrabold text-foreground flex items-center justify-center gap-2">
-          <span className="text-3xl">🦙</span> RunaSimi
+        <KunturMascot
+          mood={stats && stats.streak >= 3 ? "enamorado" : "feliz"}
+          size={110}
+          speech={
+            stats && stats.streak >= 7
+              ? "¡Racha imparable! 🔥"
+              : stats && stats.streak >= 3
+              ? "¡Vas en racha! Sigue así 💪"
+              : stats && stats.dailyXp >= (stats.dailyGoal ?? 30)
+              ? "¡Meta del día cumplida! ⭐"
+              : KUNTUR_PHRASES.greeting[0]
+          }
+        />
+        <h1 className="text-2xl font-extrabold text-foreground mt-3">
+          RunaSimi
         </h1>
         <p className="text-sm font-semibold text-muted-foreground mt-1">
           Aprende quechua jugando · {stats?.xp ?? 0} XP totales

@@ -5,6 +5,7 @@ import { LEAGUES } from "@/lib/quechua/content";
 import { Trophy, TrendingUp, TrendingDown, Crown, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { KunturMascot } from "@/components/quechua/KunturMascot";
 
 interface LeaderMember {
   id: string;
@@ -79,7 +80,14 @@ export function LeagueView() {
           animate={{ scale: 1, opacity: 1 }}
           className="inline-block bg-gradient-to-br from-duo-yellow/20 to-duo-orange/20 border-2 border-duo-yellow/40 rounded-3xl px-8 py-5"
         >
-          <div className="text-6xl mb-2">{data.league?.emoji}</div>
+          <div className="flex items-center justify-center gap-4 mb-2">
+            <div className="text-6xl">{data.league?.emoji}</div>
+            <KunturMascot
+              mood={data.rank <= data.promotionZone ? "risa" : "timido"}
+              size={70}
+              animate={false}
+            />
+          </div>
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
             Liga · Semana {data.week}
           </div>

@@ -5,6 +5,7 @@ import { ACHIEVEMENTS, CURRICULUM } from "@/lib/quechua/content";
 import { getLevel, todayStr } from "@/lib/quechua/gamification";
 import { Flame, Star, Gem, Heart, Trophy, Target, TrendingUp, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
+import { KunturMascot } from "@/components/quechua/KunturMascot";
 
 export function ProfileView() {
   const stats = useAppStore((s) => s.stats);
@@ -56,8 +57,12 @@ export function ProfileView() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-6"
       >
-        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-duo-green to-duo-green-dark text-5xl text-white shadow-lg mb-3">
-          🧑
+        <div className="flex items-end justify-center gap-3 mb-3">
+          <KunturMascot
+            mood={stats.streak >= 3 ? "guino" : "feliz"}
+            size={96}
+            animate={false}
+          />
         </div>
         <h1 className="text-2xl font-extrabold">Aprendiz de Quechua</h1>
         <div className="inline-flex items-center gap-2 mt-2 bg-duo-green/10 border-2 border-duo-green/30 rounded-full px-4 py-1">
