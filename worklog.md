@@ -225,3 +225,55 @@ Stage Summary:
 - Aviso cuando la liga tiene 1 solo usuario, invitando a compartir la app.
 - Schema Prisma con relaciones correctas y cascade delete.
 - API protegida con requireUserId() que devuelve 401 si no hay usuario.
+
+---
+Task ID: 15 (Kuntur animado vivo estilo Duolingo)
+Agent: Z.ai Code (main)
+Task: Animar a Kuntur para que se vea vivo en tiempo real, como la mascota de Duolingo (parpadeos, boca al hablar, gestos, bostezos, movimiento de pupilas y cabeza)
+
+Work Log:
+- Reconstruí completamente el componente `KunturMascot.tsx` como un SVG vectorial animado (antes usaba imágenes PNG estáticas). Mantuve la misma API (mood, size, speech, animate) para que todas las vistas existentes sigan funcionando sin cambios.
+- Diseño SVG del cóndor (estilo Duolingo: plano con contornos bold):
+  - Cuerpo oscuro (#3b4a52) con panza, alas y patas naranjas
+  - Gola blanca con plumas del cuello (bumps alrededor)
+  - Cabeza circular oscura
+  - Ojos grandes con blancos, pupilas oscuras y reflejos blancos
+  - Pico naranja de dos partes (superior fijo + inferior móvil)
+  - Rubor rosa en mejillas para moods tiernos
+  - Cejas para expresiones (enojado, triste, sorprendido, tímido)
+- Animaciones implementadas con Framer Motion + state:
+  1. **Parpadeo**: cada 2-5s (aleatorio), cierra los ojos 140ms. scaleY de los ojos a 0.1.
+  2. **Parpadeo doble ocasional**: cada 9-22s, dos parpadeos seguidos (gesto improvisado).
+  3. **Bostezo repentino**: cada 18-43s, abre mucho la boca (mouthOpen=14), saca lengua, inclina cabeza, entrecierra ojos (scaleY 0.3) por 2s.
+  4. **Seguimiento de pupilas**: el ratón mueve las pupilas (hasta 4.5px) hacia el cursor cuando está a <420px. Actualizado vía refs DOM directo (sin re-renders) con requestAnimationFrame.
+  5. **Sacudidas (saccades)**: cuando el ratón no está cerca, las pupilas miran a posiciones aleatorias cada 1.4-3.8s.
+  6. **Boca hablando**: cuando hay `speech`, el pico inferior anima y: [0,7,0,6,0] y el interior de la boca pulsa ry/cy en ciclo de 0.6s repetido.
+  7. **Balanceo de cabeza**: rotación sutil [0,1.8,0,-1.8,0] grados en 6s (siempre activo).
+  8. **Respiración**: el cuerpo escala [1,1.025,1] en 3.6s.
+  9. **Rebote idle**: y:[0,-4,0] en 2.5s (solo si animate=true).
+- Mapeo de los 8 moods a expresiones SVG:
+  - feliz: ojos redondos, rubor, boca suave
+  - risa: ojos curvos cerrados (^_^), boca abierta con lengua
+  - triste: ojos a 0.72 scaleY, cejas inclinadas arriba-adentro
+  - enojado: cejas inclinadas abajo-adentro (20°)
+  - sorprendido: ojos a 1.18 scaleY (muy abiertos), cejas arriba, boca abierta
+  - guino: ojo derecho cerrado (curva), izquierdo normal
+  - timido: cejas ligeramente inclinadas, rubor
+  - enamorado: ojos con forma de corazón rojo
+- Optimización: las pupilas se actualizan vía refs DOM (setAttribute) en lugar de state, para evitar re-renders del SVG en cada mousemove. Las pupilas se renderizan sin cx/cy en JSX (se setean en mount) para que React no los resetee en re-renders.
+- `bun run lint` pasa limpio (0 errores, 0 warnings).
+- Verificación con Agent Browser + VLM:
+  1. Render correcto: "cute cartoon condor with dark head, white neck ruff, orange beak, big eyes, Duolingo-style" ✓
+  2. Header con burbuja: "condor mascot with speech bubble saying ¡Allinllachu! Soy Kuntur" ✓
+  3. Animación general (5 frames): "eyes, pupil position, and head angle change across screenshots, indicating animation" ✓
+  4. Parpadeo (8 frames): "the eyes blink (close briefly) in some screenshots" ✓
+  5. Boca hablando (10 frames): "frames 1-5 CLOSED, frames 6-10 OPEN — beak opens and closes as if talking" ✓
+- Sin errores de consola ni runtime.
+
+Stage Summary:
+- Kuntur ahora es un SVG vectorial animado que se ve VIVO en tiempo real, idéntico en espíritu a la mascota de Duolingo.
+- Animaciones en tiempo real: parpadeo (simple + doble), seguimiento de pupilas con el ratón, sacudidas de mirada, boca que se abre y cierra al hablar, bostezos repentinos con lengua, balanceo de cabeza, respiración del cuerpo, rebote idle.
+- Los 8 moods se renderizan con expresiones SVG distintas (ojos, cejas, pico, mejillas, corazones).
+- Mantiene la misma API que antes, así que todas las vistas (ruta, lección, perfil, liga, completado) ahora muestran a un Kuntur animado sin cambios adicionales.
+- Las pupilas siguen al ratón del usuario para máxima conexión.
+- Ya no depende de las imágenes PNG estáticas (aunque estas siguen en /public/kuntur para referencia).
