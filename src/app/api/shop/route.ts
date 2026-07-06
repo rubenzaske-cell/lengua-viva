@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const state = await db.userState.findUnique({ where: { id: "default" } });
   if (!state) return NextResponse.json({ error: "no state" }, { status: 500 });
   if (state.gems < item.cost) {
-    return NextResponse.json({ error: "Gemas insuficientes" }, { status: 400 });
+    return NextResponse.json({ error: "Intis insuficientes" }, { status: 400 });
   }
 
   switch (item.type) {

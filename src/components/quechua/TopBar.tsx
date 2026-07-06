@@ -1,9 +1,10 @@
 "use client";
 
 import { useAppStore } from "@/lib/quechua/store";
-import { Flame, Heart, Gem, Target } from "lucide-react";
+import { Flame, Heart, Target } from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatMs, nextHeartInMs } from "@/lib/quechua/gamification";
+import { IntiCoin } from "@/components/quechua/IntiCoin";
 
 export function TopBar() {
   const stats = useAppStore((s) => s.stats);
@@ -35,14 +36,14 @@ export function TopBar() {
           </span>
         </button>
 
-        {/* Gemas */}
+        {/* Intis (monedas del sol) */}
         <button
           onClick={() => setView("shop")}
           className="flex items-center gap-1 shrink-0 group"
-          aria-label="Gemas"
+          aria-label="Intis"
         >
-          <Gem className="w-5 h-5 text-duo-blue" fill="currentColor" />
-          <span className="font-extrabold text-base text-duo-blue group-hover:scale-110 transition-transform">
+          <IntiCoin size={22} className="group-hover:scale-110 transition-transform" />
+          <span className="font-extrabold text-base text-duo-yellow group-hover:scale-110 transition-transform">
             {stats.gems}
           </span>
         </button>

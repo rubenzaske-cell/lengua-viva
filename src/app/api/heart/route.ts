@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (action === "refill") {
     const cost = 350;
     if (state.gems < cost) {
-      return NextResponse.json({ error: "Gemas insuficientes" }, { status: 400 });
+      return NextResponse.json({ error: "Intis insuficientes" }, { status: 400 });
     }
     if (state.hearts >= state.maxHearts) {
       return NextResponse.json({ error: "Ya tienes todos los corazones" }, { status: 400 });

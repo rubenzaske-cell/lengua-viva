@@ -83,3 +83,37 @@ Stage Summary:
 - Kuntur ahora se integra limpiamente sobre cualquier color de fondo en la app (verde, rojo, rosa, crema) sin cajas ni halos de color.
 - Las imágenes son PNG RGBA con ~65-76% de transparencia, optimizadas a 400px (88-189 KB c/u).
 - Script reutilizable en scripts/chroma-key-kuntur.ts por si se añaden más emociones de Kuntur en el futuro.
+
+---
+Task ID: 12 (Monedas Inti reemplazan diamantes)
+Agent: Z.ai Code (main)
+Task: Reemplazar los diamantes/gemas por monedas Inti de oro con diseño del sol, estilo Duolingo 2D plano
+
+Work Log:
+- Generé la moneda Inti con el SDK de generación de imágenes (z-ai image). Prompt: moneda de oro circular con degradado, borde dorado oscuro estilo 3D (como botones Duolingo), diseño de sol Inca en el centro (cara redonda con rayos triangulares), contornos negros bold, 2D plano vectorial, fondo blanco sólido. Tamaño 1024x1024.
+- Verifiqué con VLM: "Yes, it is a 2D flat cartoon gold coin with a sun design. The sun design is clearly visible in the center, the background is white, and it has a Duolingo-style appearance."
+- Procesé la imagen con chroma key (mismo enfoque que Kuntur): muestreé el color de fondo blanco de las esquinas (RGB 253,253,253), apliqué distancia euclidiana con HARD_DIST=50 (transparente) y SOFT_DIST=90 (anti-alias). Resultado: 22% transparente (el fondo es pequeño porque la moneda llena el frame). Verificado componiendo sobre rojo: el VLM confirmó "red" en las esquinas.
+- Redimensioné a 256px y optimicé PNG (120 KB).
+- Creé el componente reutilizable `IntiCoin.tsx` que renderiza la imagen con tamaño configurable.
+- Reemplacé el ícono Gem/diamantes en toda la app:
+  - **TopBar**: contador de intis con moneda dorada (antes diamante azul). Color cambiado a duo-yellow.
+  - **ShopView**: contador de intis en el header, botones de precio con moneda Inti (antes diamante azul), mensajes toast "Intis insuficientes", pista "Gana intis completando lecciones y logros". Botones de precio ahora duo-btn-yellow.
+  - **ProfileView**: tarjeta de estadísticas "Intis" con moneda (antes "Gemas" con diamante azul). Manejo especial para renderizar IntiCoin (img) en lugar de ícono lucide.
+  - **LessonPlayer**: pantalla de completado muestra moneda Inti + "Intis" (antes 💠 + "Gemas"). Tarjeta ahora con fondo duo-yellow.
+  - **content.ts**: logro "Ahorrador" cambia de "100 gemas 💠" a "100 intis ☀️".
+  - **API routes**: mensajes de error "Gemas insuficientes" → "Intis insuficientes" (shop, heart).
+- Mantuve el campo backend `gems` por simplicidad (solo cambió la capa de presentación).
+- `bun run lint` pasa limpio (0 errores, 0 warnings).
+- Verificación con Agent Browser + VLM en 4 contextos:
+  1. TopBar: "a gold coin with a sun design showing 67" ✓
+  2. Tienda: "currency counter shows a gold sun coin; price buttons show gold sun coins" ✓
+  3. Perfil: "the card showing Intis has a gold sun coin icon" ✓
+  4. Pantalla de completado: "the currency card shows a gold sun coin icon, labeled Intis" ✓
+- Sin errores de consola ni runtime.
+
+Stage Summary:
+- Los diamantes/💎 fueron reemplazados por monedas Inti de oro con diseño del sol (estilo Duolingo 2D plano) en TODA la app.
+- La moneda es temáticamente coherente: Inti es el dios sol inca, perfecto para una app de quechua.
+- Componente IntiCoin reutilizable creado. Imagen optimizada (120 KB, 256px, PNG transparente).
+- La moneda se ve dorada/amarilla (duo-yellow) en vez de azul, dándole más calidez andina a la interfaz.
+- Script reutilizable en scripts/process-inti-coin.ts.

@@ -3,15 +3,16 @@
 import { useState } from "react";
 import { SHOP_ITEMS } from "@/lib/quechua/content";
 import { useAppStore } from "@/lib/quechua/store";
-import { Gem, Check, Heart, Zap, Snowflake } from "lucide-react";
+import { Check, Heart, Zap, Snowflake, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { IntiCoin } from "@/components/quechua/IntiCoin";
 
 const TYPE_ICON = {
   hearts: Heart,
   frozen: Snowflake,
   boost: Zap,
-  cosmetic: Gem,
+  cosmetic: Sparkles,
 };
 
 export function ShopView() {
@@ -25,7 +26,7 @@ export function ShopView() {
     const item = SHOP_ITEMS.find((i) => i.id === itemId);
     if (!item || !stats) return;
     if (stats.gems < item.cost) {
-      toast.error("Gemas insuficientes", { description: `Necesitas ${item.cost - stats.gems} gemas más` });
+      toast.error("Intis insuficientes", { description: `Necesitas ${item.cost - stats.gems} intis más` });
       return;
     }
     setBusy(itemId);
@@ -48,7 +49,7 @@ export function ShopView() {
         setXpBoostUntil(data.boost);
         toast.success("¡Doble XP activado!", { description: "Por 15 minutos" });
       } else {
-        toast.success(`¡${item.name} comprado!`, { description: `-${item.cost} 💠` });
+        toast.success(`¡${item.name} comprado!`, { description: `-${item.cost} intis` });
       }
     } catch {
       toast.error("Error de conexión");
@@ -64,9 +65,9 @@ export function ShopView() {
       <div className="text-center mb-6">
         <div className="text-6xl mb-2">🛒</div>
         <h1 className="text-2xl font-extrabold">Tienda</h1>
-        <div className="inline-flex items-center gap-2 mt-2 bg-duo-blue/10 border-2 border-duo-blue/30 rounded-full px-4 py-1">
-          <Gem className="w-5 h-5 text-duo-blue" fill="currentColor" />
-          <span className="font-extrabold text-duo-blue">{stats.gems} gemas</span>
+        <div className="inline-flex items-center gap-2 mt-2 bg-duo-yellow/15 border-2 border-duo-yellow/40 rounded-full px-4 py-1">
+          <IntiCoin size={22} />
+          <span className="font-extrabold text-duo-yellow">{stats.gems} intis</span>
         </div>
       </div>
 
@@ -81,7 +82,7 @@ export function ShopView() {
         </div>
         {stats.hearts < stats.maxHearts && (
           <p className="text-xs text-muted-foreground font-semibold mt-1">
-            Se regeneran 1 cada 30 min · o cárgalos con gemas abajo
+            Se regeneran 1 cada 30 min · o cárgalos con intis abajo
           </p>
         )}
       </div>
@@ -117,16 +118,16 @@ export function ShopView() {
               <button
                 onClick={() => buy(item.id)}
                 disabled={disabled || isBusy}
-                className={`duo-btn ${canAfford ? "duo-btn-blue" : "duo-btn-secondary"} shrink-0`}
+                className={`duo-btn ${canAfford ? "duo-btn-yellow" : "duo-btn-secondary"} shrink-0`}
                 style={{ padding: "0.5rem 1rem", fontSize: "0.85rem" }}
               >
                 {isBusy ? (
                   "..."
                 ) : (
-                  <>
-                    <Gem className="w-4 h-4" fill="currentColor" />
+                  <span className="flex items-center gap-1">
+                    <IntiCoin size={16} />
                     {item.cost}
-                  </>
+                  </span>
                 )}
               </button>
             </motion.div>
@@ -136,7 +137,7 @@ export function ShopView() {
 
       <div className="mt-6 text-center">
         <p className="text-xs text-muted-foreground font-semibold">
-          💡 Gana gemas completando lecciones y logros
+          ☀️ Gana intis completando lecciones y logros
         </p>
       </div>
     </div>

@@ -3,9 +3,10 @@
 import { useAppStore } from "@/lib/quechua/store";
 import { ACHIEVEMENTS, CURRICULUM } from "@/lib/quechua/content";
 import { getLevel, todayStr } from "@/lib/quechua/gamification";
-import { Flame, Star, Gem, Heart, Trophy, Target, TrendingUp, Calendar } from "lucide-react";
+import { Flame, Star, Heart, Trophy, Target, TrendingUp, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
+import { IntiCoin } from "@/components/quechua/IntiCoin";
 
 export function ProfileView() {
   const stats = useAppStore((s) => s.stats);
@@ -44,7 +45,7 @@ export function ProfileView() {
     { icon: Flame, label: "Días de racha", value: stats.streak, color: "text-duo-orange", bg: "bg-duo-orange/10" },
     { icon: Star, label: "XP totales", value: stats.xp, color: "text-duo-yellow", bg: "bg-duo-yellow/10" },
     { icon: Trophy, label: "Coronas", value: totalCrowns, color: "text-duo-purple", bg: "bg-duo-purple/10" },
-    { icon: Gem, label: "Gemas", value: stats.gems, color: "text-duo-blue", bg: "bg-duo-blue/10" },
+    { icon: null, isCoin: true, label: "Intis", value: stats.gems, color: "text-duo-yellow", bg: "bg-duo-yellow/10" },
     { icon: Target, label: "Lecciones", value: `${completedLessons}/${totalLessons}`, color: "text-duo-green", bg: "bg-duo-green/10" },
     { icon: Heart, label: "Corazones", value: `${stats.hearts}/${stats.maxHearts}`, color: "text-duo-red", bg: "bg-duo-red/10" },
   ];
@@ -98,7 +99,11 @@ export function ProfileView() {
               animate={{ opacity: 1, scale: 1 }}
               className={`${card.bg} rounded-2xl p-4 border-2 border-border`}
             >
-              <Icon className={`w-7 h-7 ${card.color} mb-2`} fill="currentColor" />
+              {card.isCoin ? (
+                <div className="mb-2"><IntiCoin size={28} /></div>
+              ) : (
+                <Icon className={`w-7 h-7 ${card.color} mb-2`} fill="currentColor" />
+              )}
               <div className={`text-2xl font-extrabold ${card.color}`}>{card.value}</div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{card.label}</div>
             </motion.div>

@@ -888,7 +888,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "streak_30", name: "Inquebrantable", description: "Mantén una racha de 30 días", emoji: "💎", target: 30, metric: "streak", tier: "gold" },
   { id: "perfect_1", name: "Impecable", description: "Completa una lección sin errores", emoji: "✨", target: 1, metric: "perfect", tier: "bronze" },
   { id: "perfect_5", name: "Perfeccionista", description: "Completa 5 lecciones sin errores", emoji: "🏆", target: 5, metric: "perfect", tier: "gold" },
-  { id: "gems_100", name: "Ahorrador", description: "Acumula 100 gemas", emoji: "💠", target: 100, metric: "gems", tier: "silver" },
+  { id: "gems_100", name: "Ahorrador", description: "Acumula 100 intis", emoji: "☀️", target: 100, metric: "gems", tier: "silver" },
 ];
 
 // Ligas
