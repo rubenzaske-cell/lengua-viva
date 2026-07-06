@@ -610,3 +610,46 @@ Stage Summary:
 - Cuando el video de escritura termina, Kuntur vuelve a su animación idle y el botón Continuar aparece automáticamente.
 - Burbuja especial morada "✨ Creando tu plan..." con puntos animados durante la escritura.
 - El video de escritura se extrajo del video de referencia del usuario (solo la parte de escritura, sin el branding final), con fondo verde removido y transparencia alpha.
+
+---
+Task ID: 24 (Kuntur teje el plan galáctico al seleccionar opción)
+Agent: Z.ai Code (main)
+Task: Cada vez que el usuario selecciona una opción de la encuesta, Kuntur se pone a "escribir" (tejer el plan galáctico) con sparkles. Mientras Kuntur escribe, el botón Continuar NO aparece.
+
+Work Log:
+- Analicé el video de referencia del usuario (hailuo-2.3-fast_b_Claro._Esa_idea_pued.mp4, 10.875s): muestra a Kuntur escribiendo en una tablet con un lápiz. Decidí usar una animación CSS en lugar de procesar el video (más confiable y consistente).
+- Modifiqué `KunturMascot.tsx`:
+  - Props `writing` y `onWritingComplete` ya existían en la interfaz.
+  - Cuando `writing=true`:
+    - La burbuja cambia a "✨ Tejiendo tu plan" con 3 puntos animados (bounce) y fondo gradient púrpura-azul.
+    - 8 sparkles ✨ aparecen alrededor de Kuntur con animación `sparkle-float` (flotan y escalan).
+    - Un aura/resplandor mágico radial púrpura pulsa detrás de Kuntur (`aura-pulse`).
+    - El video idle de Kuntur sigue reproduciéndose en bucle (sin interrupción).
+    - Timer de 2.8s → llama `onWritingComplete`.
+  - Keyframes CSS locales: `sparkle-float` (translateY + scale + opacity) y `aura-pulse` (opacity + scale).
+- Modifiqué `SurveyView.tsx`:
+  - Cambié el estado inicial de `answers` a valores vacíos (en lugar de DEFAULT_SURVEY que pre-seleccionaba "quechua"). Así el botón Continuar no aparece antes de que el usuario elija.
+  - `handleSelectSingle` y `handleToggleMulti` ya activaban `isWriting=true`.
+  - La barra inferior ahora tiene 3 estados:
+    1. `isWriting=true` → "Kuntur está tejiendo tu plan..." (sin botón)
+    2. `!isWriting && canAdvance` → botón "Continuar" con animación `animate-pop-in`
+    3. `!isWriting && !canAdvance` → "Elige una opción para continuar" (sin botón)
+  - `submitSurvey` ahora aplica valores por defecto a campos vacíos antes de enviar.
+- `bun run lint` pasa limpio.
+- Verificación con Agent Browser:
+  1. Antes de seleccionar: "Elige una opción para continuar" (sin botón) ✓
+  2. Al seleccionar Quechua: "✨ Tejiendo tu plan" en burbuja + "Kuntur está tejiendo tu plan..." en barra inferior + sparkles ✨ alrededor de Kuntur + NO hay botón Continuar ✓
+  3. Después de ~2.8s: botón "Continuar" aparece ✓
+  4. VLM confirmó: "condor character with sparkles around it, speech bubble says Tejiendo tu plan" ✓
+- Sin errores de consola.
+
+Stage Summary:
+- Cada vez que el usuario selecciona una opción en la encuesta, Kuntur automáticamente se pone a "tejer el plan galáctico":
+  - Burbuja cambia a "✨ Tejiendo tu plan" con puntos animados
+  - 8 sparkles ✨ flotan alrededor de Kuntur
+  - Aura mágica púrpura pulsa detrás
+  - El video idle sigue reproduciéndose sin interrupción
+- Mientras Kuntur escribe (~2.8s), el botón Continuar NO aparece. En su lugar: "Kuntur está tejiendo tu plan..."
+- Cuando Kuntur termina, el botón "Continuar" aparece con animación pop-in.
+- Antes de seleccionar cualquier opción, la barra muestra "Elige una opción para continuar" (sin botón).
+- Flujo completo: seleccionar → Kuntur teje → botón aparece → continuar.

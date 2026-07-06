@@ -20,7 +20,10 @@ export function SurveyView() {
   const user = useAppStore((s) => s.user);
 
   const [qIndex, setQIndex] = useState(0);
-  const [answers, setAnswers] = useState<SurveyAnswers>(DEFAULT_SURVEY);
+  // Empezar con respuestas vacías (no usar DEFAULT_SURVEY que pre-selecciona)
+  const [answers, setAnswers] = useState<SurveyAnswers>({
+    language: "", goal: "", level: "", pace: "", dailyGoal: 0, reminderTime: null, interests: [],
+  });
   const [selectedSingle, setSelectedSingle] = useState<string | null>(null);
   const [selectedMulti, setSelectedMulti] = useState<string[]>([]);
   const [timeValue, setTimeValue] = useState<string>("");
@@ -113,11 +116,21 @@ export function SurveyView() {
 
   const submitSurvey = async (finalAnswers: SurveyAnswers) => {
     setSubmitting(true);
+    // Aplicar valores por defecto a campos vacíos
+    const safe: SurveyAnswers = {
+      language: finalAnswers.language || DEFAULT_SURVEY.language,
+      goal: finalAnswers.goal || DEFAULT_SURVEY.goal,
+      level: finalAnswers.level || DEFAULT_SURVEY.level,
+      pace: finalAnswers.pace || DEFAULT_SURVEY.pace,
+      dailyGoal: finalAnswers.dailyGoal || DEFAULT_SURVEY.dailyGoal,
+      reminderTime: finalAnswers.reminderTime,
+      interests: finalAnswers.interests,
+    };
     try {
       const r = await fetch("/api/survey", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(finalAnswers),
+        body: JSON.stringify(safe),
       });
       const data = await r.json();
       if (!r.ok) {
@@ -280,20 +293,22 @@ export function SurveyView() {
         </div>
       </div>
 
-      {/* Barra inferior — el botón Continuar SOLO aparece cuando Kuntur termina de escribir */}
+      {/* Barra inferior — el botón Continuar SOLO aparece cuando Kuntur termina de escribir
+          y el usuario ya seleccionó una opción (o puede saltar la pregunta) */}
       <div className="border-t-2 border-muted/50 bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-2xl flex items-center justify-end gap-4 min-h-[52px]">
           {isWriting ? (
-            // Mientras Kuntur escribe, mostrar mensaje en lugar del botón
+            // Mientras Kuntur escribe el plan, mostrar indicador (sin botón)
             <span className="text-sm font-bold text-duo-purple flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-duo-purple animate-pulse" />
-              Kuntur está creando tu plan...
+              Kuntur está tejiendo tu plan...
             </span>
-          ) : (
+          ) : canAdvance ? (
+            // Kuntur terminó y hay selección (o se puede saltar) → mostrar botón
             <button
               onClick={handleAdvance}
-              disabled={!canAdvance || submitting}
-              className="duo-btn duo-btn-primary"
+              disabled={submitting}
+              className="duo-btn duo-btn-primary animate-pop-in"
             >
               {submitting
                 ? "Guardando..."
@@ -301,6 +316,11 @@ export function SurveyView() {
                 ? "¡Crear mi plan!"
                 : "Continuar"}
             </button>
+          ) : (
+            // Aún no selecciona nada en pregunta de selección única
+            <span className="text-sm font-bold text-muted-foreground">
+              {question.type === "single" ? "Elige una opción para continuar" : ""}
+            </span>
           )}
         </div>
       </div>
