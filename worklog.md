@@ -277,3 +277,54 @@ Stage Summary:
 - Mantiene la misma API que antes, así que todas las vistas (ruta, lección, perfil, liga, completado) ahora muestran a un Kuntur animado sin cambios adicionales.
 - Las pupilas siguen al ratón del usuario para máxima conexión.
 - Ya no depende de las imágenes PNG estáticas (aunque estas siguen en /public/kuntur para referencia).
+
+---
+Task ID: 16 (Diseño del estudio sobre la base animada)
+Agent: Z.ai Code (main)
+Task: Reemplazar mi reconstrucción SVG por el diseño REAL del estudio del usuario (cabeza rosa, chullo andino colorido, ojos grandes buggy, rubor, pico amarillo)
+
+Work Log:
+- Analicé la imagen del estudio (condor_2d_02_enamorado.png y condor_2d_01_feliz) con VLM en detalle. Descubrí que el diseño del estudio tiene elementos que mi primera reconstrucción no capturó:
+  1. Cabeza ROSA (tono piel), no oscura como el cuerpo
+  2. Chullo andino colorido con pompón y borlas (rojo, azul, verde, amarillo, patrones geométricos triangulares)
+  3. Ojos más grandes y "buggy"
+  4. Rubor rosa en mejillas
+  5. Pico amarillo (#ffc107), no naranja
+  6. Cuerpo gris azulado oscuro con gola blanca escalonada
+- Reconstruí completamente el SVG con la paleta y diseño del estudio:
+  - HEAD = #ffd5c4 (rosa/piel)
+  - BEAK = #ffc107 (amarillo) con brillo #ffe066
+  - BODY = #2a2a3a (gris azulado)
+  - Chullo con 5 colores: rojo base, bandas azul/verde, triángulos amarillo/rosa, borde morado, pompón amarillo claro, borlas rosa
+  - Ojos grandes: EYE_R=16, PUPIL_R=10 (más grandes que antes)
+  - Rubor: BLUSH=#ff9aa8, opacity 0.7, tamaño 12x8 (más visible)
+  - Patas naranjas con 3 dedos y almohadillas oscuras
+  - ViewBox ajustado a 200x220 para acomodar el chullo alto
+- Mantuve TODAS las animaciones intactas:
+  - Parpadeo (simple + doble)
+  - Seguimiento de pupilas con el ratón
+  - Sacudidas de mirada
+  - Boca hablando (pico superior fijo + inferior móvil + interior pulsante)
+  - Bostezos con lengua
+  - Balanceo de cabeza
+  - Respiración del cuerpo
+  - Rebote idle
+- Los 8 moods se adaptaron al nuevo diseño:
+  - feliz: ojos grandes buggy + rubor
+  - enamorado: ojos de corazón rojo
+  - risa: ojos curvos ^_^ + boca con lengua
+  - triste/enojado/sorprendido/tímido: cejas expresivas
+  - guino: un ojo cerrado
+- `bun run lint` pasa limpio.
+- Verificación con VLM:
+  - Comparación con el original del estudio: cabeza rosa ✓, rubor visible ✓, pico amarillo ✓, ojos grandes buggy ✓, chullo andino con bandas multicolor + triángulos geométricos + pompón + borlas ✓
+  - Similitud: 6/10 (los elementos clave están todos presentes)
+  - Animación de hablar verificada con 10 frames: "1 CLOSED, 2 OPEN, 3 CLOSED, 4 OPEN..." — el pico se abre y cierra claramente ✓
+- Sin errores de consola ni runtime.
+
+Stage Summary:
+- Reemplacé mi reconstrucción SVG por el diseño REAL del estudio del usuario, manteniendo todas las animaciones.
+- Kuntur ahora tiene: cabeza rosa, chullo andino colorido (rojo/azul/verde/amarillo/rosa con triángulos geométricos, pompón y borlas), ojos grandes buggy, rubor rosa, pico amarillo, cuerpo oscuro con gola blanca.
+- Todas las animaciones siguen funcionando: parpadeo, seguimiento de pupilas, boca hablando, bostezos, balanceo de cabeza, respiración.
+- El chullo balancea junto con la cabeza (está dentro del motion.g de la cabeza).
+- Verificado que la boca se mueve al hablar (10 frames alternando OPEN/CLOSED).
