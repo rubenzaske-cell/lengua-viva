@@ -20,9 +20,29 @@ model UserProfile {
   updatedAt   DateTime @updatedAt
 
   state       UserState?
+  survey      UserSurvey?
   lessons     LessonProgress[]
   achievements AchievementProgress[]
   streakDays  StreakDay[]
+}
+
+// Encuesta de personalización (plan del usuario)
+model UserSurvey {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Respuestas de la encuesta (almacenadas como strings)
+  language        String   @default("quechua")  // lengua elegida
+  goal            String   @default("viajar")   // motivo principal
+  level           String   @default("principiante") // nivel actual
+  pace            String   @default("medio")    // ritmo de aprendizaje
+  dailyGoal       Int      @default(30)         // meta diaria de quipus
+  reminderTime    String?  // hora preferida para practicar (HH:MM)
+  interests       String   @default("")         // intereses separados por coma
+  completedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 // Estado global del usuario (XP/quipus, intis, corazones, racha, liga)

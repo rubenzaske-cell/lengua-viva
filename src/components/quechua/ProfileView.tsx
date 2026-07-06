@@ -17,6 +17,7 @@ export function ProfileView() {
   const setView = useAppStore((s) => s.setView);
   const user = useAppStore((s) => s.user);
   const setUser = useAppStore((s) => s.setUser);
+  const survey = useAppStore((s) => s.survey);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(user?.name ?? "");
   const [savingProfile, setSavingProfile] = useState(false);
@@ -236,6 +237,57 @@ export function ProfileView() {
           />
         </div>
       </div>
+
+      {/* Plan personalizado */}
+      {survey && (
+        <div className="bg-gradient-to-br from-duo-green/10 to-duo-blue/10 border-2 border-duo-green/30 rounded-2xl p-4 mb-6">
+          <h3 className="font-extrabold mb-3 flex items-center gap-2">
+            <span className="text-xl">🎯</span> Mi Plan Personalizado
+          </h3>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <div className="text-xs text-muted-foreground font-bold uppercase">Lengua</div>
+              <div className="font-extrabold capitalize">{survey.language}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-bold uppercase">Meta diaria</div>
+              <div className="font-extrabold flex items-center gap-1">
+                <QuipuKnot size={14} /> {survey.dailyGoal} quipus
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-bold uppercase">Objetivo</div>
+              <div className="font-extrabold capitalize">{survey.goal}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-bold uppercase">Ritmo</div>
+              <div className="font-extrabold capitalize">{survey.pace}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-bold uppercase">Nivel</div>
+              <div className="font-extrabold capitalize">{survey.level}</div>
+            </div>
+            {survey.reminderTime && (
+              <div>
+                <div className="text-xs text-muted-foreground font-bold uppercase">Recordatorio</div>
+                <div className="font-extrabold">{survey.reminderTime}</div>
+              </div>
+            )}
+          </div>
+          {survey.interests.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-border">
+              <div className="text-xs text-muted-foreground font-bold uppercase mb-2">Intereses</div>
+              <div className="flex flex-wrap gap-1.5">
+                {survey.interests.map((tag) => (
+                  <span key={tag} className="text-xs font-bold bg-duo-green/15 text-duo-green-dark px-2 py-1 rounded-full capitalize">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Botones rápidos */}
       <div className="grid grid-cols-2 gap-3">

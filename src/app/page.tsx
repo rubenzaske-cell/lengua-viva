@@ -11,6 +11,7 @@ import { ProfileView } from "@/components/quechua/ProfileView";
 import { ShopView } from "@/components/quechua/ShopView";
 import { AchievementsView } from "@/components/quechua/AchievementsView";
 import { Onboarding } from "@/components/quechua/Onboarding";
+import { SurveyView } from "@/components/quechua/SurveyView";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -29,6 +30,10 @@ export default function Home() {
   const needsOnboarding = useAppStore((s) => s.needsOnboarding);
   const setNeedsOnboarding = useAppStore((s) => s.setNeedsOnboarding);
   const setUser = useAppStore((s) => s.setUser);
+  const survey = useAppStore((s) => s.survey);
+  const setSurvey = useAppStore((s) => s.setSurvey);
+  const needsSurvey = useAppStore((s) => s.needsSurvey);
+  const setNeedsSurvey = useAppStore((s) => s.setNeedsSurvey);
 
   // Cargar estado inicial
   const loadState = async () => {
@@ -43,6 +48,13 @@ export default function Home() {
         setProgress(data.progress);
         setAchievements(data.achievements);
         setNeedsOnboarding(false);
+        // Cargar encuesta si existe
+        if (data.survey) {
+          setSurvey(data.survey);
+          setNeedsSurvey(false);
+        } else {
+          setNeedsSurvey(true);
+        }
       }
     } catch {
       // reintentar silenciosamente
@@ -89,6 +101,11 @@ export default function Home() {
   // Onboarding: crear perfil de usuario real
   if (needsOnboarding || !stats) {
     return <Onboarding />;
+  }
+
+  // Encuesta de personalización (después de onboarding, antes de la app)
+  if (needsSurvey || !survey) {
+    return <SurveyView />;
   }
 
   // Reproductor de lección a pantalla completa

@@ -49,6 +49,20 @@ interface AppState {
   user: { id: string; name: string; avatar: string } | null;
   setUser: (u: { id: string; name: string; avatar: string } | null) => void;
 
+  // Encuesta de personalización (plan del usuario)
+  survey: {
+    language: string;
+    goal: string;
+    level: string;
+    pace: string;
+    dailyGoal: number;
+    reminderTime: string | null;
+    interests: string[];
+  } | null;
+  setSurvey: (s: NonNullable<AppState["survey"]>) => void;
+  needsSurvey: boolean;
+  setNeedsSurvey: (b: boolean) => void;
+
   // Estado del usuario (sincronizado con DB)
   stats: UserStats | null;
   setStats: (s: UserStats) => void;
@@ -87,6 +101,11 @@ export const useAppStore = create<AppState>((set) => ({
 
   user: null,
   setUser: (u) => set({ user: u }),
+
+  survey: null,
+  setSurvey: (s) => set({ survey: s, needsSurvey: false }),
+  needsSurvey: false,
+  setNeedsSurvey: (b) => set({ needsSurvey: b }),
 
   stats: null,
   setStats: (s) => set({ stats: s }),

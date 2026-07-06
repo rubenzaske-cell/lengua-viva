@@ -488,3 +488,54 @@ Stage Summary:
 - Loop: escribe → pausa 2.5s con texto completo → borra → reinicia.
 - Aplica a todas las vistas donde Kuntur habla (onboarding, ruta, completado, etc.).
 - El video de animación sigue reproduciéndose sincronizado (el pico se mueve mientras "habla").
+
+---
+Task ID: 22 (Sistema de encuestas para personalizar el plan del usuario)
+Agent: Z.ai Code (main)
+Task: Crear sistema de encuestas estilo Duolingo donde Kuntur hace preguntas y el usuario responde según sus gustos. La app se adapta según el plan personalizado.
+
+Work Log:
+- Schema Prisma: añadí modelo `UserSurvey` con campos (language, goal, level, pace, dailyGoal, reminderTime, interests, completedAt) en relación 1:1 con UserProfile. Push a BD + regeneré cliente Prisma.
+- Creé `src/lib/quechua/survey.ts` con:
+  - 10 lenguas originarias del Perú (Quechua, Aimara, Asháninka, Shipibo-Konibo, Awajún, Matsigenka, Yine, Kukama, Wampis, Ese Eja). Solo Quechua con `available: true`, las demás "próximamente".
+  - 7 preguntas de encuesta: lengua, objetivo (viajar/cultura/trabajo/estudio/curiosidad), nivel (principiante→avanzado), ritmo (relajado/medio/intenso), meta diaria (10-100 quipus), intereses (multi: saludos, familia, naturaleza, comida, animales, números, viajes, cultura, música, trabajo), hora de recordatorio.
+  - Cada pregunta tiene `kunturSays` (texto que Kuntur "dice" con efecto máquina de escribir) y `kunturMood` (emoción de Kuntur).
+  - Funciones helper: `getKunturGreetingForPlan(plan)` (saludo según objetivo), `getKunturPaceMessage(pace)`.
+- API `/api/survey`: GET devuelve preguntas + defaults, POST guarda respuestas (upsert en UserSurvey) y actualiza dailyGoal del UserState.
+- Actualicé `auth.ts`: añadí `survey` al GameSnapshot, incluyo survey en getSnapshot, e hice `createCurrentUser` idempotente (si ya existe browserId, actualiza en vez de fallar con unique constraint).
+- Store Zustand: añadí `survey`, `setSurvey`, `needsSurvey`, `setNeedsSurvey`.
+- Creé `SurveyView.tsx` estilo Duolingo:
+  - Barra de progreso con "X/7"
+  - Kuntur hace cada pregunta con burbuja (efecto máquina de escribir) y mood contextual
+  - Opciones tipo exercise-option con emoji, label, description
+  - Single choice (lengua, objetivo, nivel, ritmo, meta), multi choice (intereses), time picker (recordatorio)
+  - Lenguas no disponibles muestran toast "¡Próximamente!" al hacer click
+  - Botón Continuar → ¡Crear mi plan! al final
+  - Animaciones de transición entre preguntas (slide horizontal)
+- Integré en `page.tsx`: flujo loading → onboarding → encuesta → app. Si el usuario no tiene survey, muestra SurveyView antes de la app.
+- Adaptación de la app según el plan:
+  - LearnPath: Kuntur saluda según el objetivo del usuario (ej: "¡Aprendemos para tus viajes! ✈️" si eligió viajar)
+  - ProfileView: nueva tarjeta "🎯 Mi Plan Personalizado" que muestra lengua, meta diaria, objetivo, ritmo, nivel, recordatorio e intereses (tags)
+  - dailyGoal del UserState se actualiza según la encuesta
+- `bun run lint` pasa limpio.
+- Verificación con Agent Browser (flujo completo):
+  1. Onboarding: crear usuario "Carlos" ✓
+  2. Encuesta aparece automáticamente después de onboarding ✓
+  3. Pregunta 1: Kuntur pregunta "¿Qué lengua del Perú quieres aprender?" con 10 lenguas (solo Quechua activo) ✓
+  4. Respondí las 7 preguntas: Quechua, Para viajar, Principiante, Medio, 30 quipus, [Saludos, Familia, Naturaleza], 07:00 ✓
+  5. Al crear el plan: toast "¡Plan personalizado! 🎉" y carga la app ✓
+  6. LearnPath: Kuntur saluda "¡Aprendemos para tus viajes! ✈️" (personalizado) ✓
+  7. Meta diaria 0/30 (la elegida) ✓
+  8. Perfil: sección "🎯 Mi Plan Personalizado" con todos los datos ✓
+- Sin errores de consola ni runtime.
+
+Stage Summary:
+- Sistema de encuestas completo estilo Duolingo donde Kuntur hace 7 preguntas personalizadas al usuario.
+- El usuario elige: lengua (10 opciones del Perú, solo Quechua activo), objetivo, nivel, ritmo, meta diaria, intereses y hora de recordatorio.
+- La app se adapta según las respuestas:
+  - Kuntur saluda de forma personalizada según el objetivo (viajar, cultura, trabajo, etc.)
+  - La meta diaria se ajusta a lo elegido (10-100 quipus)
+  - El perfil muestra el plan completo con todos los detalles
+- Las lenguas originarias del Perú (Aimara, Asháninka, Shipibo, Awajún, Matsigenka, Yine, Kukama, Wampis, Ese Eja) están listadas pero marcadas como "próximamente" hasta perfeccionar el Quechua.
+- Bug arreglado: createCurrentUser idempotente (ya no falla si el browserId ya existe).
+- Bug arreglado: regeneré el cliente Prisma después de añadir el modelo UserSurvey.

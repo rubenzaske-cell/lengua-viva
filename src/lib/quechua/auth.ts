@@ -46,9 +46,36 @@ export async function getCurrentUser(): Promise<{ id: string; name: string; avat
   return { id: profile.id, name: profile.name, avatar: profile.avatar, browserId: bid, isNew: false };
 }
 
-// Crea un nuevo usuario con nombre y avatar
+// Crea un nuevo usuario con nombre y avatar (idempotente: si ya existe, actualiza)
 export async function createCurrentUser(name: string, avatar: string): Promise<string> {
   const bid = await getBrowserId();
+  // Verificar si ya existe un perfil con este browserId
+  const existing = await db.userProfile.findUnique({
+    where: { browserId: bid },
+    include: { state: true, lessons: true },
+  });
+
+  if (existing) {
+    // Ya existe: actualizar nombre/avatar
+    await db.userProfile.update({
+      where: { id: existing.id },
+      data: { name: name.trim() || "Aprendiz", avatar: avatar || "🧑" },
+    });
+    // Asegurar que tenga estado y primera lección desbloqueada
+    if (!existing.state) {
+      await db.userState.create({ data: { userId: existing.id } });
+    }
+    const firstLessonId = CURRICULUM[0].lessons[0].id;
+    const hasFirstLesson = existing.lessons.some((l) => l.lessonId === firstLessonId);
+    if (!hasFirstLesson) {
+      await db.lessonProgress.create({
+        data: { userId: existing.id, lessonId: firstLessonId, status: "ACTIVE" },
+      });
+    }
+    return existing.id;
+  }
+
+  // No existe: crear nuevo perfil
   const profile = await db.userProfile.create({
     data: {
       browserId: bid,
@@ -114,6 +141,15 @@ export interface GameSnapshot {
   >;
   achievements: Record<string, { progress: number; target: number; unlockedAt: string | null }>;
   streakDays: string[];
+  survey: {
+    language: string;
+    goal: string;
+    level: string;
+    pace: string;
+    dailyGoal: number;
+    reminderTime: string | null;
+    interests: string[];
+  } | null;
 }
 
 // Regenera corazones según el tiempo pasado
@@ -278,7 +314,7 @@ export async function getSnapshot(): Promise<GameSnapshot | null> {
 
   const profile = await db.userProfile.findUnique({
     where: { id: userId },
-    include: { state: true },
+    include: { state: true, survey: true },
   });
   if (!profile || !profile.state) return null;
 
@@ -333,5 +369,16 @@ export async function getSnapshot(): Promise<GameSnapshot | null> {
     progress,
     achievements,
     streakDays: streakRows.map((s) => s.date),
+    survey: profile.survey
+      ? {
+          language: profile.survey.language,
+          goal: profile.survey.goal,
+          level: profile.survey.level,
+          pace: profile.survey.pace,
+          dailyGoal: profile.survey.dailyGoal,
+          reminderTime: profile.survey.reminderTime,
+          interests: profile.survey.interests ? profile.survey.interests.split(",").filter(Boolean) : [],
+        }
+      : null,
   };
 }

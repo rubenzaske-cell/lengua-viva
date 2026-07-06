@@ -6,6 +6,7 @@ import { Check, Lock, Crown, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMemo } from "react";
 import { KunturMascot, KUNTUR_PHRASES } from "@/components/quechua/KunturMascot";
+import { getKunturGreetingForPlan } from "@/lib/quechua/survey";
 import { QuipuKnot } from "@/components/quechua/QuipuKnot";
 
 // Offsets en píxeles para crear el camino serpenteante
@@ -15,6 +16,7 @@ export function LearnPath() {
   const progress = useAppStore((s) => s.progress);
   const startLesson = useAppStore((s) => s.startLesson);
   const stats = useAppStore((s) => s.stats);
+  const survey = useAppStore((s) => s.survey);
 
   // Construir lista plana de lecciones con su unidad
   const allLessons = useMemo(() => {
@@ -61,6 +63,8 @@ export function LearnPath() {
               ? "¡Vas en racha! Sigue así 💪"
               : stats && stats.dailyXp >= (stats.dailyGoal ?? 30)
               ? "¡Meta del día cumplida! 🎋"
+              : survey
+              ? getKunturGreetingForPlan(survey)
               : KUNTUR_PHRASES.greeting[0]
           }
         />
