@@ -367,3 +367,31 @@ Stage Summary:
 - Mantiene la misma API que antes, así TODAS las vistas (onboarding, ruta, lección, perfil, liga, completado) ahora muestran el video del estudio sin necesitar cambios.
 - La versión SVG se conservó como KunturMascotSVG por si se necesita en el futuro.
 - El parámetro `mood` ya no cambia la expresión visual (el video es una sola animación idle), pero se mantiene para accesibilidad (alt text) y compatibilidad de API.
+
+---
+Task ID: 18 (Texturas nítidas del video de Kuntur)
+Agent: Z.ai Code (main)
+Task: Corregir la semi-transparencia que opacaba las texturas del personaje en el video de Kuntur
+
+Work Log:
+- Diagnosticado el problema: el filtro `chromakey` con `blend=0.05` generaba valores alpha intermedios (semi-transparencia) en los bordes y en áreas del personaje con tonos cercanos al verde del fondo. Esto hacía que las texturas se vieran "medio blancas/traslúcidas".
+- Solución aplicada: forzar el **alpha a binario** (0 o 255, sin valores intermedios) usando el filtro `geq` después del chromakey:
+  ```
+  chromakey=0xA7BB48:0.15:0.05,format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(gt(alpha(X,Y),64),255,0)',format=yuva420p
+  ```
+  - `chromakey` quita el verde del fondo (con tolerancia 0.15 y blend 0.05)
+  - `format=rgba` convierte a RGBA para poder manipular el alpha
+  - `geq` reconstruye cada píxel: RGB se mantiene igual, pero el alpha se fuerza a 255 si era >64, o 0 si era ≤64 (alpha binario)
+  - `format=yuva420p` para WebM VP9 con alpha
+- El procesado tardó ~60s (geq es lento pero efectivo). Resultado: 3.8MB WebM con texturas 100% nítidas.
+- Verificación con VLM sobre fondo rojo: "the condor character is visible. Its textures and colors are crisp/sharp (not faded or translucent). The background is red (transparent)." ✓
+- Verificación en la app real: "crisp, sharp colors and textures—no fading, washing out, or translucency. Its colors are vibrant and distinct, with clear details in the hat's patterns, facial features. The background is transparent (no green box)." ✓
+- Video reproduciéndose correctamente: paused=false, currentTime avanza, readyState=4 ✓
+- `bun run lint` pasa limpio. Sin errores de consola.
+
+Stage Summary:
+- Corregí la semi-transparencia que opacaba las texturas de Kuntur.
+- Ahora el video tiene alpha binario (0 o 255): cada píxel es 100% opaco (parte del personaje) o 100% transparente (fondo). No hay valores intermedios.
+- Las texturas, colores y detalles (sombrero andino, patrones geométricos, cara, pico, patas) se ven nítidos y vibrantes.
+- El fondo sigue siendo transparente, integrándose limpiamente sobre cualquier color de la app.
+- Video: 3.8MB (más grande que antes porque el alpha binario comprime peor, pero la calidad visual es óptima).
