@@ -328,3 +328,42 @@ Stage Summary:
 - Todas las animaciones siguen funcionando: parpadeo, seguimiento de pupilas, boca hablando, bostezos, balanceo de cabeza, respiración.
 - El chullo balancea junto con la cabeza (está dentro del motion.g de la cabeza).
 - Verificado que la boca se mueve al hablar (10 frames alternando OPEN/CLOSED).
+
+---
+Task ID: 17 (Video del estudio como animación de Kuntur)
+Agent: Z.ai Code (main)
+Task: Reemplazar la mascota SVG animada por el video de animación del estudio del usuario
+
+Work Log:
+- Analicé el video del usuario (upload/video.mp4, 8s, 720x1280 vertical, 24fps, 1.4MB) extrayendo 8 frames (1 por segundo) y analizando con VLM.
+- Descripción del video: animación idle en bucle de Kuntur con: parpadeo (frames 5-6), pico abriendo/cerrando (frames 2-3-4-8), ligera inclinación de cabeza (frame 3), movimiento de ojos. Diseño del estudio: cara rosa, chullo andino colorido con patrones geométricos y pompón, pico naranja, cuerpo oscuro con gola blanca, patas naranjas. Fondo verde lima RGB(167,187,72).
+- Procesé el video con ffmpeg para quitar el fondo verde (chroma key) y exportarlo como WebM VP9 con transparencia alpha:
+  - Primer intento: colorkey filter — el personaje desapareció (demasiado agresivo).
+  - Segundo intento: chromakey con tolerancia 0.35:0.2 — fondo rojo pero cóndor no visible.
+  - Tercer intento (exitoso): chromakey=0xA7BB48:0.15:0.05 + format=yuva420p + libvpx-vp9. Resultado: 2.4MB WebM con transparencia real, cóndor intacto.
+  - Verificado: rendericé el video sobre fondo rojo y el VLM confirmó "background is red (transparent), condor visible, character intact".
+- Creé el componente `KunturVideoMascot` y luego consolidé todo en `KunturMascot.tsx`:
+  - Renderiza un elemento <video> con autoPlay, loop, muted, playsInline
+  - WebM con transparencia se integra sobre cualquier color de fondo
+  - Mantiene la misma API que el SVG anterior (mood, size, speech, animate) para que ninguna vista necesite cambios
+  - El parámetro `size` controla la altura del video (porque es vertical 9:16), el ancho se calcula proporcionalmente
+  - useEffect con v.play() para asegurar reproducción en navegadores que lo requieren
+- Renombré la versión SVG a `KunturMascotSVG.tsx` (export `KunturMascotSVG`) por si se necesita como alternativa. Eliminé las frases duplicadas del SVG (solo se mantienen en KunturMascot).
+- Eliminé `KunturVideoMascot.tsx` (consolidado en KunturMascot).
+- `bun run lint` pasa limpio.
+- Verificación con Agent Browser:
+  - Onboarding: video de Kuntur visible con sombrero colorido, borlas, patas naranjas ✓
+  - Video reproduciéndose: paused=false, currentTime avanza, readyState=4 ✓
+  - Ruta de aprendizaje: video visible con burbuja "¡Allinllachu! Soy Kuntur 🦅" ✓
+  - Transparencia: "background is transparent, showing the app's light/cream background (no solid green box)" ✓
+  - Posición correcta: top=153 (visible en viewport, no desbordado) ✓
+- Sin errores de consola ni runtime.
+
+Stage Summary:
+- Reemplacé la mascota SVG animada por el VIDEO REAL del estudio del usuario.
+- El video (8s, bucle infinito) muestra la animación idle oficial de Kuntur: parpadeo, pico abriéndose, movimiento de cabeza y ojos.
+- Procesé el video con chroma key (ffmpeg) para eliminar el fondo verde lima, exportándolo como WebM VP9 con transparencia alpha real (2.4MB).
+- El video se integra limpiamente sobre cualquier color de la app (verde, rojo, crema) sin caja de color.
+- Mantiene la misma API que antes, así TODAS las vistas (onboarding, ruta, lección, perfil, liga, completado) ahora muestran el video del estudio sin necesitar cambios.
+- La versión SVG se conservó como KunturMascotSVG por si se necesita en el futuro.
+- El parámetro `mood` ya no cambia la expresión visual (el video es una sola animación idle), pero se mantiene para accesibilidad (alt text) y compatibilidad de API.
