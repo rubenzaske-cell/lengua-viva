@@ -1,5 +1,5 @@
 // RunaSimi - Aprende Quechua (Duolingo-style)
-// Prisma schema
+// Prisma schema - Base de datos REAL con múltiples usuarios reales
 
 generator client {
   provider = "prisma-client-js"
@@ -10,11 +10,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Estado global del usuario (app de un solo usuario, sin auth)
+// Perfil de usuario real (un perfil por navegador, identificado por cookie)
+model UserProfile {
+  id          String   @id @default(cuid())
+  browserId   String   @unique // identificador del navegador (cookie)
+  name        String
+  avatar      String   @default("🧑")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  state       UserState?
+  lessons     LessonProgress[]
+  achievements AchievementProgress[]
+  streakDays  StreakDay[]
+}
+
+// Estado global del usuario (XP/quipus, intis, corazones, racha, liga)
 model UserState {
-  id              String   @id @default("default")
-  xp              Int      @default(0)
-  gems            Int      @default(50)
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  xp              Int      @default(0)        // quipus tejidos totales
+  gems            Int      @default(50)       // intis
   hearts          Int      @default(5)
   maxHearts       Int      @default(5)
   heartsLastRegen DateTime @default(now())
@@ -23,7 +41,7 @@ model UserState {
   dailyXp         Int      @default(0)
   dailyXpDate     String?
   dailyGoal       Int      @default(30)
-  league          String   @default("BRONZE")
+  league          String   @default("BRONCE")
   leagueXp        Int      @default(0)
   leagueWeek      Int      @default(1)
   frozenCount     Int      @default(0)
@@ -34,43 +52,44 @@ model UserState {
 // Progreso por lección
 model LessonProgress {
   id          String    @id @default(cuid())
-  lessonId    String    @unique
+  userId      String
+  user        UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
   status      String    @default("LOCKED") // LOCKED | ACTIVE | COMPLETED
-  crowns      Int       @default(0) // 0-3 (mastery levels)
+  crowns      Int       @default(0)
   lastScore   Int       @default(0)
   bestScore   Int       @default(0)
   completedAt DateTime?
   attempts    Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, lessonId])
 }
 
 // Progreso de logros
 model AchievementProgress {
   id            String    @id @default(cuid())
-  achievementId String    @unique
+  userId        String
+  user          UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
   progress      Int       @default(0)
   target        Int       @default(1)
   unlockedAt    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, achievementId])
 }
 
-// Historial de días con racha (para calendario)
+// Historial de días con racha
 model StreakDay {
   id        String   @id @default(cuid())
-  date      String   @unique // YYYY-MM-DD
+  userId    String
+  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String   // YYYY-MM-DD
   xp        Int      @default(0)
   createdAt DateTime @default(now())
-}
 
-// Compañeros de liga (bots simulados para leaderboard)
-model LeagueMember {
-  id        String   @id @default(cuid())
-  name      String
-  avatar    String   @default("🦝")
-  leagueXp  Int      @default(0)
-  league    String   @default("BRONZE")
-  week      Int      @default(1)
-  createdAt DateTime @default(now())
+  @@unique([userId, date])
 }

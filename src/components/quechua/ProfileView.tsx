@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useAppStore } from "@/lib/quechua/store";
 import { ACHIEVEMENTS, CURRICULUM } from "@/lib/quechua/content";
 import { getLevel, todayStr } from "@/lib/quechua/gamification";
@@ -14,6 +15,29 @@ export function ProfileView() {
   const progress = useAppStore((s) => s.progress);
   const achievements = useAppStore((s) => s.achievements);
   const setView = useAppStore((s) => s.setView);
+  const user = useAppStore((s) => s.user);
+  const setUser = useAppStore((s) => s.setUser);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(user?.name ?? "");
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  const saveProfile = async () => {
+    setSavingProfile(true);
+    try {
+      const r = await fetch("/api/auth", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName, avatar: user?.avatar ?? "🧑" }),
+      });
+      const data = await r.json();
+      if (data.user) setUser(data.user);
+      setEditing(false);
+    } catch {
+      // ignore
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   if (!stats) return null;
 
@@ -60,13 +84,43 @@ export function ProfileView() {
         className="text-center mb-6"
       >
         <div className="flex items-end justify-center gap-3 mb-3">
+          <div className="text-6xl">{user?.avatar ?? "🧑"}</div>
           <KunturMascot
             mood={stats.streak >= 3 ? "guino" : "feliz"}
-            size={96}
+            size={64}
             animate={false}
           />
         </div>
-        <h1 className="text-2xl font-extrabold">Aprendiz de Quechua</h1>
+        {editing ? (
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <input
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              maxLength={20}
+              className="px-3 py-1 rounded-lg border-2 border-duo-green bg-background font-bold text-center"
+              autoFocus
+              onKeyDown={(e) => { if (e.key === "Enter") saveProfile(); }}
+            />
+            <button onClick={saveProfile} disabled={savingProfile} className="duo-btn duo-btn-primary" style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}>
+              {savingProfile ? "..." : "Guardar"}
+            </button>
+            <button onClick={() => { setEditing(false); setEditName(user?.name ?? ""); }} className="duo-btn duo-btn-secondary" style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}>
+              Cancelar
+            </button>
+          </div>
+        ) : (
+          <h1 className="text-2xl font-extrabold flex items-center justify-center gap-2">
+            {user?.name ?? "Aprendiz"}
+            <button
+              onClick={() => { setEditing(true); setEditName(user?.name ?? ""); }}
+              className="text-muted-foreground hover:text-duo-green transition-colors"
+              aria-label="Editar nombre"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            </button>
+          </h1>
+        )}
         <div className="inline-flex items-center gap-2 mt-2 bg-duo-green/10 border-2 border-duo-green/30 rounded-full px-4 py-1">
           <span className="text-duo-green font-extrabold text-sm">Nivel {level.level}</span>
           <span className="text-muted-foreground text-sm font-bold">· {level.title}</span>

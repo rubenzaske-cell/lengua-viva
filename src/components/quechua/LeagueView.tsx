@@ -27,6 +27,7 @@ interface LeagueData {
   week: number;
   promotionZone: number;
   demotionZone: number;
+  isEmpty?: boolean;
 }
 
 export function LeagueView() {
@@ -106,13 +107,18 @@ export function LeagueView() {
           </span>
         </div>
         <p className="text-sm text-muted-foreground font-semibold">
-          Tu puesto: <span className="font-extrabold text-foreground">#{data.rank}</span> de {data.total}
+          Tu puesto: <span className="font-extrabold text-foreground">#{data.rank}</span> de {data.total} {data.total === 1 ? "jugador" : "jugadores"}
           {data.rank <= data.promotionZone && data.nextLeague ? (
             <span className="text-duo-green font-bold"> · ¡Ascenderías a {data.nextLeague.name} {data.nextLeague.emoji}!</span>
           ) : data.rank > data.total - data.demotionZone && data.prevLeague ? (
             <span className="text-duo-red font-bold"> · ¡Cuidado, descenderías a {data.prevLeague.name}!</span>
           ) : null}
         </p>
+        {data.isEmpty && (
+          <div className="mt-3 bg-duo-blue/10 border border-duo-blue/30 rounded-xl p-3 text-xs font-bold text-duo-blue">
+            📢 ¡Eres el primero en esta liga! Comparte la app con tus amigos para competir con jugadores reales.
+          </div>
+        )}
       </div>
 
       {/* Ranking */}

@@ -156,3 +156,72 @@ Stage Summary:
 - Logros temáticos: "Tejedor" (100 quipus), "Maestro Tejedor" (500), "Leyenda" (1000).
 - Componente QuipuKnot reutilizable creado. Imagen optimizada (58 KB, 256px, PNG transparente).
 - El campo backend `xp` se mantuvo por simplicidad (solo cambió la capa de presentación y textos).
+
+---
+Task ID: 14 (Base de datos real, sin personas ficticias)
+Agent: Z.ai Code (main)
+Task: Eliminar los bots ficticios del leaderboard y usar base de datos real con usuarios reales
+
+Work Log:
+- Rediseñé el schema Prisma para multiusuario real:
+  - Nuevo modelo `UserProfile` (id, browserId, name, avatar) — un perfil por navegador
+  - `UserState` ahora tiene `userId` (relación 1:1 con UserProfile) en vez de id="default"
+  - `LessonProgress`, `AchievementProgress`, `StreakDay` ahora tienen `userId` con relaciones a UserProfile
+  - Eliminé el modelo `LeagueMember` (los bots ficticios)
+  - Restricciones únicas: `@@unique([userId, lessonId])`, `@@unique([userId, achievementId])`, `@@unique([userId, date])`
+  - `onDelete: Cascade` para limpiar data al eliminar un usuario
+  - Reseté la BD con `--force-reset` y regeneré el cliente Prisma
+- Creé `src/lib/quechua/auth.ts` reemplazando a `server.ts`:
+  - `getBrowserId()`: lee/crea una cookie httpOnly `runasimi_uid` (randomBytes hex, 1 año de validez)
+  - `getCurrentUser()`: devuelve el perfil del navegador actual o marca `isNew: true`
+  - `createCurrentUser(name, avatar)`: crea UserProfile + UserState inicial + desbloquea primera lección
+  - `updateCurrentUserProfile(name, avatar)`: actualiza nombre/avatar
+  - `requireUserId()`: lanza error si no hay usuario (para endpoints protegidos)
+  - `getSnapshot()`: devuelve el snapshot del usuario actual (con user, stats, progress, achievements)
+  - Todas las funciones (regenHearts, updateStreak, addDailyXp, recalcAchievements, unlockNextLesson) ahora reciben `userId` como parámetro
+- Creé API `/api/auth`:
+  - POST: crea nuevo usuario (onboarding)
+  - PUT: actualiza perfil (nombre/avatar)
+- Actualicé todas las APIs para usar el userId dinámico del contexto:
+  - `/api/state`: devuelve `{needsOnboarding: true}` si no hay usuario, o el snapshot
+  - `/api/progress`, `/api/heart`, `/api/shop`, `/api/leaderboard`: usan `requireUserId()` y devuelven 401 si no hay usuario
+- `/api/leaderboard` ahora consulta **USUARIOS REALES**:
+  - Busca todos los UserState en la misma liga y semana que el usuario actual
+  - Incluye el perfil del usuario (nombre, avatar)
+  - Ordena por leagueXp descendente
+  - Calcula zonas de ascenso/descenso dinámicamente según el número de miembros (25% cada una)
+  - Devuelve `isEmpty: true` si solo hay 1 miembro (para mostrar aviso)
+  - POST (avanzar semana): recalcula con datos reales del ranking
+- Eliminé `server.ts` (reemplazado por auth.ts)
+- Actualicé el store Zustand: añadí `needsOnboarding`, `setNeedsOnboarding`, `user`, `setUser`
+- Creé el componente `Onboarding.tsx`:
+  - Pantalla de bienvenida con Kuntur
+  - Input para nombre (máx 20 chars)
+  - Grid de 20 avatares (humanos + animales: 🦙🦅🐱🐼🦊)
+  - Botón "¡Empezar a aprender!" que crea el perfil vía POST /api/auth
+  - Al crear, carga el snapshot y oculta el onboarding
+- Actualicé `page.tsx`: maneja 3 estados (loading → onboarding → app)
+- Actualicé `ProfileView.tsx`:
+  - Muestra el avatar real del usuario (ej: 🦙) + nombre real (ej: "Carlos")
+  - Botón de editar (lápiz) junto al nombre → input inline para cambiar nombre
+  - PUT /api/auth para guardar cambios
+- Actualicé `LeagueView.tsx`:
+  - Mensaje "X jugador(es)" (no "X miembros")
+  - Si isEmpty: aviso "¡Eres el primero en esta liga! Comparte la app con tus amigos para competir con jugadores reales"
+- `bun run lint` pasa limpio (0 errores, 0 warnings).
+- Verificación con Agent Browser (2 sesiones paralelas para simular usuarios reales):
+  1. Sesión 1 (Carlos): ve onboarding → crea perfil "Carlos" con 🦙 → entra a la app → perfil muestra "🦙 Carlos [editar]" → liga muestra "#1 de 1 jugador · Carlos (tú)" + aviso de compartir
+  2. Sesión 2 (María, otra cookie): ve onboarding → crea perfil "María" con 👩 → entra a la app → liga muestra "#2 de 2 jugadores · Carlos 🦙 (#1) + María 👂 (#2)"
+  3. Sesión 1 recargada: ahora Carlos ve "#1 de 2 jugadores" con María incluida → ¡usuarios reales compartiendo la misma BD!
+- Sin errores de consola ni runtime.
+
+Stage Summary:
+- Eliminé completamente los bots ficticios (LeagueMember). Ahora el leaderboard solo muestra usuarios reales.
+- Sistema multiusuario real: cada navegador es un usuario identificado por cookie httpOnly, con nombre y avatar personalizables.
+- Onboarding obligatorio la primera vez: pantalla con Kuntur pidiendo nombre + avatar.
+- Base de datos compartida: todos los usuarios que visitan la app se agregan a la BD real y aparecen en el leaderboard.
+- Perfil editable: el usuario puede cambiar su nombre con el botón lápiz.
+- Las ligas ahora tienen zonas de ascenso/descenso dinámicas (25% del total real de miembros).
+- Aviso cuando la liga tiene 1 solo usuario, invitando a compartir la app.
+- Schema Prisma con relaciones correctas y cascade delete.
+- API protegida con requireUserId() que devuelve 401 si no hay usuario.

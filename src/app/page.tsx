@@ -10,6 +10,7 @@ import { LeagueView } from "@/components/quechua/LeagueView";
 import { ProfileView } from "@/components/quechua/ProfileView";
 import { ShopView } from "@/components/quechua/ShopView";
 import { AchievementsView } from "@/components/quechua/AchievementsView";
+import { Onboarding } from "@/components/quechua/Onboarding";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -25,15 +26,24 @@ export default function Home() {
   const refreshKey = useAppStore((s) => s.refreshKey);
   const setXpBoostUntil = useAppStore((s) => s.setXpBoostUntil);
   const xpBoostUntil = useAppStore((s) => s.xpBoostUntil);
+  const needsOnboarding = useAppStore((s) => s.needsOnboarding);
+  const setNeedsOnboarding = useAppStore((s) => s.setNeedsOnboarding);
+  const setUser = useAppStore((s) => s.setUser);
 
   // Cargar estado inicial
   const loadState = async () => {
     try {
       const r = await fetch("/api/state");
       const data = await r.json();
-      setStats(data.stats);
-      setProgress(data.progress);
-      setAchievements(data.achievements);
+      if (data.needsOnboarding) {
+        setNeedsOnboarding(true);
+      } else {
+        setUser(data.user);
+        setStats(data.stats);
+        setProgress(data.progress);
+        setAchievements(data.achievements);
+        setNeedsOnboarding(false);
+      }
     } catch {
       // reintentar silenciosamente
     } finally {
@@ -60,7 +70,7 @@ export default function Home() {
   }, [refreshKey]);
 
   // Pantalla de carga inicial
-  if (loading || !stats) {
+  if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
         <motion.div
@@ -74,6 +84,11 @@ export default function Home() {
         </motion.div>
       </div>
     );
+  }
+
+  // Onboarding: crear perfil de usuario real
+  if (needsOnboarding || !stats) {
+    return <Onboarding />;
   }
 
   // Reproductor de lección a pantalla completa

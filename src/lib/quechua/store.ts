@@ -41,6 +41,14 @@ interface AppState {
   view: AppView;
   setView: (v: AppView) => void;
 
+  // Onboarding (¿necesita crear perfil?)
+  needsOnboarding: boolean;
+  setNeedsOnboarding: (b: boolean) => void;
+
+  // Perfil del usuario real
+  user: { id: string; name: string; avatar: string } | null;
+  setUser: (u: { id: string; name: string; avatar: string } | null) => void;
+
   // Estado del usuario (sincronizado con DB)
   stats: UserStats | null;
   setStats: (s: UserStats) => void;
@@ -73,6 +81,12 @@ interface AppState {
 export const useAppStore = create<AppState>((set) => ({
   view: "learn",
   setView: (v) => set({ view: v }),
+
+  needsOnboarding: false,
+  setNeedsOnboarding: (b) => set({ needsOnboarding: b }),
+
+  user: null,
+  setUser: (u) => set({ user: u }),
 
   stats: null,
   setStats: (s) => set({ stats: s }),

@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSnapshot } from "@/lib/quechua/server";
+import { getSnapshot, requireUserId } from "@/lib/quechua/auth";
 
 // POST /api/heart
-// body: { action: "refill" } (cuesta gemas) o { action: "check" } (solo regenera)
+// body: { action: "refill" } (cuesta gemas) o { action: "check" }
 export async function POST(req: NextRequest) {
+  let userId: string;
+  try {
+    userId = await requireUserId();
+  } catch {
+    return NextResponse.json({ error: "Usuario no encontrado" }, { status: 401 });
+  }
+
   const { action } = await req.json();
-  const state = await db.userState.findUnique({ where: { id: "default" } });
+  const state = await db.userState.findUnique({ where: { userId } });
   if (!state) return NextResponse.json({ error: "no state" }, { status: 500 });
 
   if (action === "refill") {
@@ -18,7 +25,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Ya tienes todos los corazones" }, { status: 400 });
     }
     await db.userState.update({
-      where: { id: "default" },
+      where: { userId },
       data: {
         gems: { decrement: cost },
         hearts: state.maxHearts,

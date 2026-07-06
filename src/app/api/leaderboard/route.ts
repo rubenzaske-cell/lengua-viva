@@ -1,16 +1,27 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { LEAGUES } from "@/lib/quechua/content";
-import { ensureLeagueMembers } from "@/lib/quechua/server";
+import { requireUserId, getSnapshot } from "@/lib/quechua/auth";
 
-// GET /api/leaderboard
+// GET /api/leaderboard - ranking de USUARIOS REALES en la misma liga que el usuario actual
 export async function GET() {
-  const state = await db.userState.findUnique({ where: { id: "default" } });
-  if (!state) return NextResponse.json({ error: "no state" }, { status: 500 });
-  await ensureLeagueMembers();
+  let userId: string;
+  try {
+    userId = await requireUserId();
+  } catch {
+    return NextResponse.json({ error: "Usuario no encontrado" }, { status: 401 });
+  }
 
-  const members = await db.leagueMember.findMany({
-    where: { league: state.league, week: state.leagueWeek },
+  const state = await db.userState.findUnique({ where: { userId } });
+  if (!state) return NextResponse.json({ error: "no state" }, { status: 500 });
+
+  // Buscar usuarios reales en la misma liga y semana
+  const peers = await db.userState.findMany({
+    where: {
+      league: state.league,
+      leagueWeek: state.leagueWeek,
+    },
+    include: { user: true },
     orderBy: { leagueXp: "desc" },
   });
 
@@ -19,62 +30,80 @@ export async function GET() {
   const nextLeague = leagueIdx + 1 < LEAGUES.length ? LEAGUES[leagueIdx + 1] : null;
   const prevLeague = leagueIdx - 1 >= 0 ? LEAGUES[leagueIdx - 1] : null;
 
-  // Construir ranking con el usuario incluido
-  const all = [
-    ...members.map((m) => ({ id: m.id, name: m.name, avatar: m.avatar, xp: m.leagueXp, isUser: false })),
-    { id: "me", name: "Tú", avatar: "🧑", xp: state.leagueXp, isUser: true },
-  ].sort((a, b) => b.xp - a.xp);
+  // Construir ranking con usuarios reales
+  const members = peers.map((p) => ({
+    id: p.userId,
+    name: p.user.name,
+    avatar: p.user.avatar,
+    xp: p.leagueXp,
+    isUser: p.userId === userId,
+  }));
 
-  const rank = all.findIndex((m) => m.isUser) + 1;
-  const top5 = all.slice(0, 5);
-  const bottom3 = all.slice(-3);
+  // Ordenar por XP descendente
+  members.sort((a, b) => b.xp - a.xp);
+
+  const rank = members.findIndex((m) => m.isUser) + 1;
+  const total = members.length;
+
+  // Zonas de ascenso/descenso ajustadas al número de miembros
+  const promotionZone = Math.max(1, Math.min(5, Math.ceil(total * 0.25)));
+  const demotionZone = Math.max(0, Math.min(3, Math.ceil(total * 0.25)));
 
   return NextResponse.json({
     league,
     nextLeague,
     prevLeague,
-    members: all,
+    members,
     rank,
-    total: all.length,
-    top5,
-    bottom3,
+    total,
     week: state.leagueWeek,
-    promotionZone: 5, // top 5 ascienden
-    demotionZone: 3, // bottom 3 descienden
+    promotionZone,
+    demotionZone,
+    isEmpty: total <= 1,
   });
 }
 
-// POST: simular fin de semana (avanzar semana y recalcular ligas) — para demo
+// POST /api/leaderboard - avanzar de semana (recalcular liga)
 export async function POST() {
-  const state = await db.userState.findUnique({ where: { id: "default" } });
+  let userId: string;
+  try {
+    userId = await requireUserId();
+  } catch {
+    return NextResponse.json({ error: "Usuario no encontrado" }, { status: 401 });
+  }
+
+  const state = await db.userState.findUnique({ where: { userId } });
   if (!state) return NextResponse.json({ error: "no state" }, { status: 500 });
 
   const leagueIdx = LEAGUES.findIndex((l) => l.id === state.league);
-  // Promoción si está en top 5
-  const members = await db.leagueMember.findMany({
-    where: { league: state.league, week: state.leagueWeek },
+
+  // Calcular el ranking real del usuario entre sus peers
+  const peers = await db.userState.findMany({
+    where: { league: state.league, leagueWeek: state.leagueWeek },
   });
-  const all = [
-    ...members.map((m) => m.leagueXp),
-    state.leagueXp,
-  ].sort((a, b) => b - a);
-  const userRank = all.indexOf(state.leagueXp) + 1;
+  const sorted = peers.sort((a, b) => b.leagueXp - a.leagueXp);
+  const userRank = sorted.findIndex((p) => p.userId === userId) + 1;
+  const total = sorted.length;
+  const promoZone = Math.max(1, Math.min(5, Math.ceil(total * 0.25)));
+  const demoZone = Math.max(0, Math.min(3, Math.ceil(total * 0.25)));
 
   let newLeagueIdx = leagueIdx;
-  if (userRank <= 5 && leagueIdx + 1 < LEAGUES.length) newLeagueIdx = leagueIdx + 1;
-  else if (userRank > all.length - 3 && leagueIdx - 1 >= 0) newLeagueIdx = leagueIdx - 1;
+  if (userRank > 0 && userRank <= promoZone && leagueIdx + 1 < LEAGUES.length) {
+    newLeagueIdx = leagueIdx + 1;
+  } else if (userRank > 0 && userRank > total - demoZone && leagueIdx - 1 >= 0) {
+    newLeagueIdx = leagueIdx - 1;
+  }
 
   const newLeague = LEAGUES[newLeagueIdx];
   await db.userState.update({
-    where: { id: "default" },
+    where: { userId },
     data: {
       league: newLeague.id,
       leagueWeek: { increment: 1 },
       leagueXp: 0,
     },
   });
-  // Limpiar bots de la semana anterior (la nueva semana genera bots nuevos en ensureLeagueMembers)
-  await db.leagueMember.deleteMany({ where: { week: state.leagueWeek } });
 
-  return NextResponse.json({ ok: true, newLeague: newLeague.id });
+  const snapshot = await getSnapshot();
+  return NextResponse.json({ ok: true, newLeague: newLeague.id, snapshot });
 }

@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { SHOP_ITEMS } from "@/lib/quechua/content";
-import { getSnapshot } from "@/lib/quechua/server";
+import { getSnapshot, requireUserId } from "@/lib/quechua/auth";
 
 // POST /api/shop
 // body: { itemId }
 export async function POST(req: NextRequest) {
+  let userId: string;
+  try {
+    userId = await requireUserId();
+  } catch {
+    return NextResponse.json({ error: "Usuario no encontrado" }, { status: 401 });
+  }
+
   const { itemId } = await req.json();
   const item = SHOP_ITEMS.find((i) => i.id === itemId);
   if (!item) return NextResponse.json({ error: "Item no encontrado" }, { status: 404 });
 
-  const state = await db.userState.findUnique({ where: { id: "default" } });
+  const state = await db.userState.findUnique({ where: { userId } });
   if (!state) return NextResponse.json({ error: "no state" }, { status: 500 });
   if (state.gems < item.cost) {
     return NextResponse.json({ error: "Intis insuficientes" }, { status: 400 });
@@ -23,7 +30,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Ya tienes todos los corazones" }, { status: 400 });
         }
         await db.userState.update({
-          where: { id: "default" },
+          where: { userId },
           data: {
             gems: { decrement: item.cost },
             hearts: state.maxHearts,
@@ -32,7 +39,7 @@ export async function POST(req: NextRequest) {
         });
       } else if (item.id === "extra_heart") {
         await db.userState.update({
-          where: { id: "default" },
+          where: { userId },
           data: {
             gems: { decrement: item.cost },
             maxHearts: { increment: 1 },
@@ -43,7 +50,7 @@ export async function POST(req: NextRequest) {
       break;
     case "frozen":
       await db.userState.update({
-        where: { id: "default" },
+        where: { userId },
         data: {
           gems: { decrement: item.cost },
           frozenCount: { increment: item.id === "frozen_3" ? 3 : 1 },
@@ -51,9 +58,8 @@ export async function POST(req: NextRequest) {
       });
       break;
     case "boost":
-      // Doble XP: lo manejamos en cliente con timestamp, pero registramos gasto
       await db.userState.update({
-        where: { id: "default" },
+        where: { userId },
         data: { gems: { decrement: item.cost } },
       });
       break;
