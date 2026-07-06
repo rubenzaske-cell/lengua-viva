@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 export type KunturMood =
@@ -33,14 +33,65 @@ const MOOD_ALT: Record<KunturMood, string> = {
 };
 
 /**
+ * Efecto máquina de escribir: escribe el texto letra por letra en bucle.
+ * - Escribe a ~40ms por carácter (con pequeña variación aleatoria para naturalidad).
+ * - Al terminar, espera 2.5s con el texto completo, luego borra y reinicia.
+ * - Devuelve { text, typing } donde `typing` indica si está escribiendo (para sincronizar el pico).
+ */
+function useTypewriter(text: string | undefined, enabled: boolean) {
+  const [displayed, setDisplayed] = useState("");
+  const [typing, setTyping] = useState(false);
+
+  useEffect(() => {
+    if (!enabled || !text) {
+      setDisplayed(text ?? "");
+      setTyping(false);
+      return;
+    }
+    let i = 0;
+    let cancelled = false;
+    setDisplayed("");
+    setTyping(true);
+
+    const typeNext = () => {
+      if (cancelled) return;
+      if (i <= text.length) {
+        setDisplayed(text.slice(0, i));
+        i++;
+        // Velocidad variable: 35-55ms por carácter para naturalidad
+        const delay = 35 + Math.random() * 20;
+        setTimeout(typeNext, delay);
+      } else {
+        // Terminó de escribir: pausa con texto completo, luego reinicia
+        setTyping(false);
+        setTimeout(() => {
+          if (cancelled) return;
+          i = 0;
+          setDisplayed("");
+          setTyping(true);
+          setTimeout(typeNext, 200);
+        }, 2500);
+      }
+    };
+    // Pequeño delay inicial antes de empezar a escribir
+    const startTimer = setTimeout(typeNext, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(startTimer);
+    };
+  }, [text, enabled]);
+
+  return { text: displayed, typing };
+}
+
+/**
  * Kuntur — mascota animada del estudio.
  * Usa el video de animación idle en bucle (WebM VP9 con transparencia alpha).
  * El video tiene fondo transparente (chroma key del verde) para integrarse sobre cualquier color.
  * Mantiene la misma API que la versión SVG anterior (mood, size, speech, animate).
  *
- * Nota: el video es una sola animación idle (parpadeo, pico, cabeza). El parámetro `mood`
- * solo afecta el alt text por accesibilidad. Las animaciones de reacción contextual
- * (risa en correcto, triste en incorrecto) se gestionan fuera con motion divs.
+ * Cuando hay `speech`, el texto se escribe letra por letra (efecto máquina de escribir)
+ * en bucle, dando la sensación de que Kuntur está hablando.
  */
 export function KunturMascot({
   mood = "feliz",
@@ -50,6 +101,7 @@ export function KunturMascot({
   speech,
 }: KunturMascotProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { text: typedText, typing } = useTypewriter(speech, !!speech);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -69,9 +121,15 @@ export function KunturMascot({
         <motion.div
           initial={{ opacity: 0, scale: 0.8, y: 5 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="relative mb-2 max-w-[220px] bg-white dark:bg-card border-2 border-duo-green/30 rounded-2xl px-4 py-2 text-sm font-bold text-center shadow-sm"
+          className="relative mb-2 max-w-[240px] min-h-[36px] bg-white dark:bg-card border-2 border-duo-green/30 rounded-2xl px-4 py-2 text-sm font-bold text-center shadow-sm flex items-center justify-center"
         >
-          {speech}
+          <span>
+            {typedText}
+            {/* Cursor parpadeante mientras escribe */}
+            {typing && (
+              <span className="inline-block w-[2px] h-4 bg-duo-green ml-0.5 align-middle animate-pulse" />
+            )}
+          </span>
           <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-card border-b-2 border-r-2 border-duo-green/30 rotate-45" />
         </motion.div>
       )}

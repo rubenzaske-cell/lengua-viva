@@ -447,3 +447,44 @@ Stage Summary:
 - Corregido: ahora SOLO se quita el fondo verde, sin tocar absolutamente nada del personaje.
 - El filtro colorkey con similarity=0.08 es lo suficientemente preciso para eliminar solo el verde exacto del fondo (#A5B948) y dejar 100% intactos todos los colores, texturas y partes del cóndor (cara rosa, sombrero colorido, pico, cuerpo oscuro, patas naranjas).
 - Kuntur se ve completo, sólido y vibrante, con fondo transparente que se integra limpiamente sobre la app.
+
+---
+Task ID: 21 (Burbuja escribe lo que Kuntur dice - efecto máquina de escribir)
+Agent: Z.ai Code (main)
+Task: Hacer que la burbuja de Kuntur escriba automáticamente lo que está diciendo, letra por letra
+
+Work Log:
+- Creé el hook `useTypewriter(text, enabled)` dentro de KunturMascot.tsx:
+  - Escribe el texto letra por letra a ~40ms por carácter (35-55ms con variación aleatoria para naturalidad).
+  - Al terminar de escribir, espera 2.5s con el texto completo visible.
+  - Luego borra todo y reinicia el ciclo (loop infinito).
+  - Devuelve `{ text, typing }` donde `typing` indica si está escribiendo.
+  - Limpieza correcta con flag `cancelled` para evitar leaks al desmontar.
+- Integré el hook en el componente KunturMascot:
+  - La burbuja ahora muestra `typedText` (progresivo) en lugar de `speech` (completo).
+  - Cursor parpadeante verde (|) mientras escribe, usando `animate-pulse`.
+  - `min-h-[36px]` para que la burbuja no cambie de tamaño mientras escribe.
+  - `max-w-[240px]` para textos largos.
+- El efecto aplica automáticamente a TODAS las vistas que usan KunturMascot con `speech`:
+  - Onboarding: "¡Allinllachu! Soy Kuntur 🦅" se escribe solo
+  - Ruta de aprendizaje: saludos contextuales se escriben solos
+  - Pantalla de completado: "¡Sumaq! ¡Perfecto!" se escribe solo
+  - etc.
+- `bun run lint` pasa limpio.
+- Verificación con Agent Browser (eval del textContent de la burbuja cada 0.5s):
+  - Frame 1: "¡Allinllachu! Soy Kuntur" (completo)
+  - Frame 2: "¡All" (empezando a escribir)
+  - Frame 3: "¡Allinllachu! Soy" (escribiendo más)
+  - Frame 4-7: "¡Allinllachu! Soy Kuntur" (completo, pausando)
+  - Frame 8: "¡A" (reiniciando ciclo)
+  - Confirmado: el texto se escribe letra por letra en bucle ✓
+- Verificación visual con VLM (3 screenshots en momentos distintos): "Are they different lengths (indicating the text is being typed out progressively)? Yes" ✓
+- Sin errores de consola. Video sigue reproduciéndose correctamente.
+
+Stage Summary:
+- La burbuja de Kuntur ahora escribe automáticamente lo que está diciendo, letra por letra, en bucle infinito.
+- Efecto máquina de escribir con cursor parpadeante verde mientras escribe.
+- Velocidad natural con variación aleatoria (35-55ms por carácter).
+- Loop: escribe → pausa 2.5s con texto completo → borra → reinicia.
+- Aplica a todas las vistas donde Kuntur habla (onboarding, ruta, completado, etc.).
+- El video de animación sigue reproduciéndose sincronizado (el pico se mueve mientras "habla").
