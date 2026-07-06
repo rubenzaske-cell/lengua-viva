@@ -539,3 +539,38 @@ Stage Summary:
 - Las lenguas originarias del Perú (Aimara, Asháninka, Shipibo, Awajún, Matsigenka, Yine, Kukama, Wampis, Ese Eja) están listadas pero marcadas como "próximamente" hasta perfeccionar el Quechua.
 - Bug arreglado: createCurrentUser idempotente (ya no falla si el browserId ya existe).
 - Bug arreglado: regeneré el cliente Prisma después de añadir el modelo UserSurvey.
+
+---
+Task ID: 23 (Quitar temblor de Kuntur y reinicios de texto/animación)
+Agent: Z.ai Code (main)
+Task: Kuntur debe estar estático mientras escribe el diálogo (sin temblor), el texto se escribe UNA sola vez (no en bucle), y el video no debe reiniciarse al cambiar de pregunta
+
+Work Log:
+3 problemas identificados y corregidos:
+
+1. **Temblor de Kuntur mientras escribe**: El motion.div que envolvía el video tenía `animate={{ y: [0, -4, 0] }}` en bucle infinito (rebote vertical). Esto hacía que Kuntur se moviera constantemente, causando el "temblor".
+   - Solución: Reemplacé el motion.div por un div estático. El video ya no se mueve. La animación del video (pico, parpadeo del estudio) sigue reproduciéndose sin interrupción.
+   - También quité el motion.div de la burbuja (initial/animate con scale 0.8→1) que podía causar micro-movimientos. Ahora la burbuja es un div estático.
+
+2. **Diálogo se reescribía en bucle**: El hook useTypewriter tenía lógica de reinicio: al terminar de escribir, esperaba 2.5s, borraba todo, y volvía a escribir desde el principio.
+   - Solución: Eliminé la lógica de reinicio. Ahora el texto se escribe UNA sola vez y se queda estático al terminar (sin borrar ni reescribir).
+   - Verificado: capturé el textContent de la burbuja cada 1s durante 5s — en todos los frames el texto fue "¿Qué lengua del Perú quieres aprender? 🦅" (completo y estable, sin reinicio).
+
+3. **Video se reiniciaba al cambiar de pregunta**: En SurveyView, aunque el KunturMascot estaba fuera del AnimatePresence, al cambiar de pregunta el componente podía re-renderizarse y el video reiniciarse.
+   - Solución: Añadí `key="kuntur-survey"` al KunturMascot en SurveyView para asegurar que React mantenga la misma instancia del componente (y del video) entre preguntas.
+   - Verificado: medí el currentTime del video antes de cambiar de pregunta (1.5s) y después (4.3s) — el video siguió avanzando sin reiniciarse a 0.
+
+- `bun run lint` pasa limpio.
+- Verificación con Agent Browser:
+  - Texto se escribe una vez y se queda estático (5 frames idénticos) ✓
+  - Posición del video idéntica en 2 momentos (top: -63, sin temblor) ✓
+  - Video continúa reproduciéndose entre preguntas (1.5s → 4.3s, sin reinicio) ✓
+  - Condor visible y sólido, texto de burbuja completo ✓
+- Sin errores de consola.
+
+Stage Summary:
+- Kuntur ahora está COMPLETAMENTE ESTÁTICO mientras el texto se escribe (sin rebote, sin respiración, sin temblor).
+- El diálogo se escribe UNA SOLA VEZ y se queda estático al terminar (ya no se reescribe en bucle).
+- El video de Kuntur se reproduce de forma CONTINUA entre preguntas de la encuesta (sin reinicios visibles, sin saltos).
+- La animación del video (pico moviéndose, parpadeo) sigue activa y fluida, solo que el contenedor no se mueve.
+- Experiencia mucho más pulida y profesional.

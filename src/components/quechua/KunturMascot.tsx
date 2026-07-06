@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
 
 export type KunturMood =
   | "feliz"
@@ -33,9 +32,9 @@ const MOOD_ALT: Record<KunturMood, string> = {
 };
 
 /**
- * Efecto máquina de escribir: escribe el texto letra por letra en bucle.
+ * Efecto máquina de escribir: escribe el texto letra por letra UNA SOLA VEZ.
  * - Escribe a ~40ms por carácter (con pequeña variación aleatoria para naturalidad).
- * - Al terminar, espera 2.5s con el texto completo, luego borra y reinicia.
+ * - Al terminar, el texto se queda estático (NO reinicia el bucle).
  * - Devuelve { text, typing } donde `typing` indica si está escribiendo (para sincronizar el pico).
  */
 function useTypewriter(text: string | undefined, enabled: boolean) {
@@ -62,15 +61,8 @@ function useTypewriter(text: string | undefined, enabled: boolean) {
         const delay = 35 + Math.random() * 20;
         setTimeout(typeNext, delay);
       } else {
-        // Terminó de escribir: pausa con texto completo, luego reinicia
+        // Terminó de escribir: el texto se queda estático (sin reiniciar)
         setTyping(false);
-        setTimeout(() => {
-          if (cancelled) return;
-          i = 0;
-          setDisplayed("");
-          setTyping(true);
-          setTimeout(typeNext, 200);
-        }, 2500);
       }
     };
     // Pequeño delay inicial antes de empezar a escribir
@@ -118,9 +110,7 @@ export function KunturMascot({
   return (
     <div className={`flex flex-col items-center ${className}`} style={{ width: videoWidth }}>
       {speech && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8, y: 5 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+        <div
           className="relative mb-2 max-w-[240px] min-h-[36px] bg-white dark:bg-card border-2 border-duo-green/30 rounded-2xl px-4 py-2 text-sm font-bold text-center shadow-sm flex items-center justify-center"
         >
           <span>
@@ -131,11 +121,11 @@ export function KunturMascot({
             )}
           </span>
           <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-card border-b-2 border-r-2 border-duo-green/30 rotate-45" />
-        </motion.div>
+        </div>
       )}
-      <motion.div
-        animate={animate ? { y: [0, -4, 0] } : {}}
-        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+      {/* El video NO se mueve cuando hay speech (Kuntur estático mientras escribe).
+          La animación del video (pico, parpadeo) sigue reproduciéndose sin interrupción. */}
+      <div
         style={{ width: videoWidth, height: videoHeight }}
       >
         <video
@@ -149,7 +139,7 @@ export function KunturMascot({
           style={{ pointerEvents: "none" }}
           aria-label={MOOD_ALT[mood]}
         />
-      </motion.div>
+      </div>
     </div>
   );
 }

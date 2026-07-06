@@ -151,8 +151,10 @@ export function SurveyView() {
       {/* Contenido */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
         <div className="w-full max-w-2xl flex flex-col items-center">
-          {/* Kuntur haciendo la pregunta */}
+          {/* Kuntur haciendo la pregunta — key estable para que el video
+              NO se reinicie al cambiar de pregunta. Solo cambia el speech y mood. */}
           <KunturMascot
+            key="kuntur-survey"
             mood={question.kunturMood}
             size={140}
             speech={question.kunturSays}
