@@ -395,3 +395,29 @@ Stage Summary:
 - Las texturas, colores y detalles (sombrero andino, patrones geométricos, cara, pico, patas) se ven nítidos y vibrantes.
 - El fondo sigue siendo transparente, integrándose limpiamente sobre cualquier color de la app.
 - Video: 3.8MB (más grande que antes porque el alpha binario comprime peor, pero la calidad visual es óptima).
+
+---
+Task ID: 19 (Corregir transparencia excesiva - Kuntur desaparecido)
+Agent: Z.ai Code (main)
+Task: Corregir el procesado del video — el filtro geq anterior era demasiado agresivo y hacía desaparecer partes del personaje
+
+Work Log:
+- El usuario reportó que Kuntur "desapareció de tanta transparencia" — el filtro `geq` con threshold `alpha>64` era demasiado agresivo y eliminaba partes del personaje que tenían alpha ligeramente menor a 255.
+- Cambié a un enfoque más confiable: `colorkey` con `blend=0.0` produce alpha binario directo (sin valores intermedios) usando `similarity=0.35` para capturar todo el rango del verde de fondo:
+  ```
+  colorkey=0xA7BB48:0.35:0.0,format=yuva420p
+  ```
+  - `colorkey` (no chromakey) es más adecuado para fondos de color sólido
+  - `similarity=0.35` captura todo el rango del verde lima del fondo
+  - `blend=0.0` = sin anti-aliasing = alpha binario (0 o 255)
+  - `format=yuva420p` para WebM VP9 con alpha
+- El procesado tardó ~35s. Resultado: 3.6MB WebM con texturas 100% sólidas y nítidas, fondo transparente, sin partes del personaje eliminadas.
+- Verificación con VLM sobre fondo rojo: "condor character is fully visible and solid (not faded), textures are crisp, background is red (transparent)" ✓
+- Verificación en la app real: "fully visible, solid, and crisp (not faded, transparent, or washed-out). Its colors are vibrant" ✓
+- Video reproduciéndose: paused=false, currentTime=6.4, readyState=4 ✓
+- `bun run lint` pasa limpio. Sin errores de consola.
+
+Stage Summary:
+- Corregido: Kuntur ya no desaparece. El video ahora muestra al personaje 100% sólido y nítido.
+- El filtro `colorkey` con `blend=0.0` (en lugar de `geq` con threshold) produce alpha binario limpio sin dañar al personaje.
+- Texturas vibrantes, colores sólidos, fondo transparente — el video se ve exactamente como el original del estudio.
