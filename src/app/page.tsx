@@ -10,7 +10,7 @@ import { LeagueView } from "@/components/quechua/LeagueView";
 import { ProfileView } from "@/components/quechua/ProfileView";
 import { ShopView } from "@/components/quechua/ShopView";
 import { AchievementsView } from "@/components/quechua/AchievementsView";
-import { Onboarding } from "@/components/quechua/Onboarding";
+import { AuthScreen } from "@/components/quechua/AuthScreen";
 import { SurveyView } from "@/components/quechua/SurveyView";
 import { WelcomeScreen } from "@/components/quechua/WelcomeScreen";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
@@ -100,14 +100,14 @@ export default function Home() {
     );
   }
 
-  // Pantalla de bienvenida con video + audio promocional (antes del onboarding)
+  // Pantalla de bienvenida con video + audio promocional (antes del registro)
   if (needsOnboarding && !showWelcome) {
     return <WelcomeScreen onContinue={() => setShowWelcome(true)} />;
   }
 
-  // Onboarding: crear perfil de usuario real (después de la bienvenida)
+  // Registro / Login con correo electrónico (después de la bienvenida)
   if (needsOnboarding || !stats) {
-    return <Onboarding />;
+    return <AuthScreen />;
   }
 
   // Encuesta de personalización (después de onboarding, antes de la app)

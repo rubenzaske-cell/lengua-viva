@@ -34,16 +34,17 @@ export async function setBrowserId(bid: string): Promise<void> {
 }
 
 // Obtiene (o crea) el perfil del usuario actual
-export async function getCurrentUser(): Promise<{ id: string; name: string; avatar: string; browserId: string; isNew: boolean }> {
+export async function getCurrentUser(): Promise<{ id: string; name: string; avatar: string; country: string; nativeLanguage: string; browserId: string; isNew: boolean }> {
   const bid = await getBrowserId();
-  let profile = await db.userProfile.findUnique({
+  // Buscar por browserId (sesión) — ya no es unique, así que usamos findFirst
+  let profile = await db.userProfile.findFirst({
     where: { browserId: bid },
     include: { state: true },
   });
   if (!profile) {
-    return { id: "", name: "", avatar: "🧑", browserId: bid, isNew: true };
+    return { id: "", name: "", avatar: "🧑", country: "", nativeLanguage: "es", browserId: bid, isNew: true };
   }
-  return { id: profile.id, name: profile.name, avatar: profile.avatar, browserId: bid, isNew: false };
+  return { id: profile.id, name: profile.name, avatar: profile.avatar, country: profile.country, nativeLanguage: profile.nativeLanguage, browserId: bid, isNew: false };
 }
 
 // Crea un nuevo usuario con nombre, avatar, país e idioma nativo (idempotente: si ya existe, actualiza)

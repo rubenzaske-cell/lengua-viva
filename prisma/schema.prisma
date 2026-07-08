@@ -10,14 +10,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Perfil de usuario real (un perfil por navegador, identificado por cookie)
+// Perfil de usuario real (registro con email)
 model UserProfile {
   id              String   @id @default(cuid())
-  browserId       String   @unique // identificador del navegador (cookie)
+  email           String   @unique // correo electrónico del usuario
+  password        String   // hash de la contraseña
+  browserId       String   @default("") // cookie de sesión
   name            String
   avatar          String   @default("🧑")
-  country         String   @default("") // código de país (pe, ar, us, etc.)
-  nativeLanguage  String   @default("es") // idioma nativo (es, en, pt, etc.)
+  country         String   @default("")
+  nativeLanguage  String   @default("es")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
