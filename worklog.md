@@ -1100,3 +1100,38 @@ Stage Summary:
 - 10 idiomas soportados: español, inglés, portugués, francés, alemán, italiano, japonés, chino, quechua, aimara.
 - En el onboarding, la traducción es inmediata al seleccionar el idioma (antes de crear el perfil).
 - Después del onboarding, el hook useT() lee el idioma del perfil del usuario.
+
+---
+Task ID: 61 (Traducción completa de la encuesta al idioma nativo)
+Agent: Z.ai Code (main)
+Task: Cuando el usuario selecciona inglés, toda la app debe estar en inglés — incluyendo las viñetas y las palabras de la encuesta
+
+Work Log:
+- **survey.ts reescrito**: 
+  - `SurveyOption.label` y `SurveyOption.description` cambiados de `string` a `Record<string, string>` (traducciones por idioma)
+  - `SurveyQuestion.kunturSays` cambiado de `string` a `Record<string, string>`
+  - Helper `tr(es, en, pt, fr, de, it, ja, zh)` crea objeto de traducciones para cada string
+  - Todas las 7 preguntas y sus opciones traducidas a 8 idiomas
+- **SurveyView.tsx actualizado**:
+  - Importa `useT` y crea helper `tr(obj)` que lee el idioma del usuario
+  - `question.kunturSays` → `tr(question.kunturSays)` (pregunta de Kuntur en el idioma del usuario)
+  - `opt.label` → `tr(opt.label)` (opciones en el idioma del usuario)
+  - `opt.description` → `tr(opt.description)` (descripciones en el idioma del usuario)
+  - Textos guía (touchOptionToContinue, kunturWriting, etc.) usan `t.*` del hook useT
+  - Botones (Saltar pregunta, Continuar, Sin recordatorio) traducidos
+  - Frases motivadoras traducidas (en/pt/es)
+  - Toast de "próximamente" traducido
+- **Onboarding.tsx actualizado**: usa `getTranslations(nativeLanguage || "es")` para traducir en tiempo real
+- `bun run lint` pasa limpio.
+- Verificación con Agent Browser (usuario inglés):
+  1. Onboarding: "START LEARNING!" ✓
+  2. Encuesta Q1: "Which language of Peru do you want to learn? 🦅" ✓
+  3. Opciones: "Sierra (Runa Simi)", "Sur andino (coming soon)" ✓
+  4. VLM: "The screen is in English. All texts, Kuntur speech bubble, and options are in English." ✓
+- Sin errores de consola.
+
+Stage Summary:
+- La encuesta ahora se muestra completamente en el idioma nativo del usuario.
+- Las preguntas de Kuntur (viñetas), las opciones, las descripciones, los textos guía, los botones y las frases motivadoras están todos traducidos.
+- 8 idiomas soportados: español, inglés, portugués, francés, alemán, italiano, japonés, chino.
+- Un usuario de EE.UU. ve toda la interfaz en inglés; un brasileño en portugués; etc.

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/lib/quechua/store";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { LoadingPlan } from "@/components/quechua/LoadingPlan";
+import { useT } from "@/lib/quechua/useT";
 import { toast } from "sonner";
 import {
   SURVEY_QUESTIONS,
@@ -19,6 +20,10 @@ export function SurveyView() {
   const setProgress = useAppStore((s) => s.setProgress);
   const setAchievements = useAppStore((s) => s.setAchievements);
   const user = useAppStore((s) => s.user);
+  const t = useT();
+  const lang = user?.nativeLanguage || "es";
+  // Helper para traducir un objeto Record<string,string> al idioma del usuario
+  const tr = (obj: Record<string, string> | undefined): string => obj?.[lang] || obj?.es || "";
 
   const [qIndex, setQIndex] = useState(0);
   const [answers, setAnswers] = useState<SurveyAnswers>({
@@ -99,14 +104,14 @@ export function SurveyView() {
         "100": "¡Modo intenso activado! 🔥",
       },
     };
-    return messages[field]?.[selectedId] || "Tejiendo tu plan personalizado...";
+    return messages[field]?.[selectedId] || (lang === "en" ? "Weaving your personalized plan..." : lang === "pt" ? "Tecendo seu plano personalizado..." : "Tejiendo tu plan personalizado...");
   };
 
   const handleSelectSingle = (id: string) => {
     if (question.field === "language") {
       const opt = question.options.find((o) => o.id === id);
       if (opt?.description?.includes("próximamente")) {
-        toast("¡Próximamente!", { description: `${opt.label} estará disponible pronto. Por ahora solo Quechua.` });
+        toast(`${tr(opt.label)} - ${lang === "en" ? "Coming soon!" : lang === "pt" ? "Em breve!" : "¡Próximamente!"}`, { description: lang === "en" ? "Only Quechua available for now." : lang === "pt" ? "Apenas Quechua disponível." : "Por ahora solo Quechua." });
         return;
       }
     }
@@ -121,7 +126,7 @@ export function SurveyView() {
 
   const handleTimeSelect = (val: string) => {
     setTimeValue(val);
-    setWritingMessage(val ? `Recordatorio a las ${val} 🕐` : "Sin recordatorio, a tu ritmo 🌿");
+    setWritingMessage(val ? `${lang === "en" ? "Reminder at" : lang === "pt" ? "Lembrete às" : "Recordatorio a las"} ${val} 🕐` : (lang === "en" ? "No reminder, at your pace 🌿" : lang === "pt" ? "Sem lembrete, no seu ritmo 🌿" : "Sin recordatorio, a tu ritmo 🌿"));
     startWriting();
   };
 
@@ -168,12 +173,12 @@ export function SurveyView() {
   };
 
   const guideText = isWriting
-    ? "Kuntur está tejiendo tu plan..."
+    ? t.kunturWriting
     : question.type === "multi"
-    ? selectedMulti.length === 0 ? "Toca los temas que te interesan" : `${selectedMulti.length} seleccionado${selectedMulti.length > 1 ? "s" : ""} · toca más o presiona Continuar`
+    ? selectedMulti.length === 0 ? t.touchTopics : `${selectedMulti.length} ${t.selectedN} · ${t.touchMoreOrContinue}`
     : question.type === "time"
-    ? "Elige una hora o sin recordatorio"
-    : "Toca una opción para continuar";
+    ? t.chooseTime
+    : t.touchOptionToContinue;
 
   if (showLoading) { return <LoadingPlan onComplete={handleLoadingComplete} />; }
 
@@ -195,7 +200,7 @@ export function SurveyView() {
 
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
         <div className="w-full max-w-2xl flex flex-col items-center">
-          <KunturMascot key="kuntur-survey" mood={question.kunturMood} size={220} speech={question.kunturSays}
+          <KunturMascot key="kuntur-survey" mood={question.kunturMood} size={220} speech={tr(question.kunturSays)}
             writing={isWriting} writingKey={writingKey} writingMessage={writingMessage} onWritingComplete={handleWritingComplete} />
 
           <div className="w-full mt-6">
@@ -205,14 +210,14 @@ export function SurveyView() {
                   <div className="grid gap-2.5 sm:grid-cols-2">
                     {question.options.map((opt) => {
                       const isSelected = selectedSingle === opt.id;
-                      const isDisabled = question.field === "language" && opt.description?.includes("próximamente");
+                      const isDisabled = question.field === "language" && tr(opt.description).includes("próximamente") || question.field === "language" && tr(opt.description).includes("coming soon") || question.field === "language" && tr(opt.description).includes("em breve");
                       return (
                         <button key={opt.id} onClick={() => handleSelectSingle(opt.id)} disabled={isDisabled || isWriting}
                           className={`exercise-option flex items-center gap-3 ${isSelected ? "selected" : ""} ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}>
                           <span className="text-3xl shrink-0">{opt.emoji}</span>
                           <div className="text-left flex-1 min-w-0">
-                            <div className="font-extrabold text-base">{opt.label}</div>
-                            {opt.description && <div className="text-xs text-muted-foreground font-semibold">{opt.description}</div>}
+                            <div className="font-extrabold text-base">{tr(opt.label)}</div>
+                            {opt.description && <div className="text-xs text-muted-foreground font-semibold">{tr(opt.description)}</div>}
                           </div>
                           {isSelected && <span className="w-6 h-6 rounded-full bg-duo-blue text-white flex items-center justify-center shrink-0">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
@@ -231,7 +236,7 @@ export function SurveyView() {
                         <button key={opt.id} onClick={() => handleToggleMulti(opt.id)} disabled={isWriting}
                           className={`exercise-option flex flex-col items-center gap-1 text-center ${isSelected ? "selected" : ""}`}>
                           <span className="text-3xl">{opt.emoji}</span>
-                          <span className="text-xs font-bold">{opt.label}</span>
+                          <span className="text-xs font-bold">{tr(opt.label)}</span>
                         </button>
                       );
                     })}
@@ -248,7 +253,7 @@ export function SurveyView() {
                           className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all ${timeValue === t ? "border-duo-green bg-duo-green/10 text-duo-green" : "border-border bg-card text-muted-foreground hover:border-duo-green/40"}`}>{t}</button>
                       ))}
                       <button onClick={() => handleTimeSelect("")} disabled={isWriting}
-                        className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all ${!timeValue ? "border-muted-foreground bg-muted text-foreground" : "border-border bg-card text-muted-foreground hover:border-muted-foreground/40"}`}>Sin recordatorio</button>
+                        className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all ${!timeValue ? "border-muted-foreground bg-muted text-foreground" : "border-border bg-card text-muted-foreground hover:border-muted-foreground/40"}`}>{t.noReminder}</button>
                     </div>
                   </div>
                 )}
@@ -268,12 +273,12 @@ export function SurveyView() {
           ) : question.type === "multi" ? (
             <button onClick={() => {
               const interestsMsg = selectedMulti.length > 0
-                ? `¡${selectedMulti.length} temas que te apasionan! 🎯`
-                : "¡A explorar todos los temas! 🌿";
+                ? (lang === "en" ? `${selectedMulti.length} topics that passion you! 🎯` : lang === "pt" ? `${selectedMulti.length} tópicos que te apaixonam! 🎯` : `¡${selectedMulti.length} temas que te apasionan! 🎯`)
+                : (lang === "en" ? "Let's explore all topics! 🌿" : lang === "pt" ? "Vamos explorar todos os tópicos! 🌿" : "¡A explorar todos los temas! 🌿");
               setWritingMessage(interestsMsg);
               startWriting();
             }} className="duo-btn duo-btn-primary animate-pop-in">
-              {selectedMulti.length === 0 ? "Saltar pregunta" : `Continuar (${selectedMulti.length})`}
+              {selectedMulti.length === 0 ? t.skipQuestion : `${t.continueN} (${selectedMulti.length})`}
             </button>
           ) : (
             <span className="text-sm font-bold text-muted-foreground">{guideText}</span>
