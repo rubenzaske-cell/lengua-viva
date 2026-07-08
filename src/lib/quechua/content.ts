@@ -1,4 +1,4 @@
-// RunaSimi - Currículo de Quechua
+// Lengua Viva - Currículo de Quechua
 // Fuente de verdad del contenido de aprendizaje (no se guarda en DB, solo el progreso)
 
 export type ExerciseType =

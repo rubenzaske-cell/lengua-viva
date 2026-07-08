@@ -12,12 +12,14 @@ datasource db {
 
 // Perfil de usuario real (un perfil por navegador, identificado por cookie)
 model UserProfile {
-  id          String   @id @default(cuid())
-  browserId   String   @unique // identificador del navegador (cookie)
-  name        String
-  avatar      String   @default("🧑")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  browserId       String   @unique // identificador del navegador (cookie)
+  name            String
+  avatar          String   @default("🧑")
+  country         String   @default("") // código de país (pe, ar, us, etc.)
+  nativeLanguage  String   @default("es") // idioma nativo (es, en, pt, etc.)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   state       UserState?
   survey      UserSurvey?

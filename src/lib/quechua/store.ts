@@ -46,7 +46,7 @@ interface AppState {
   setNeedsOnboarding: (b: boolean) => void;
 
   // Perfil del usuario real
-  user: { id: string; name: string; avatar: string } | null;
+  user: { id: string; name: string; avatar: string; country: string; nativeLanguage: string } | null;
   setUser: (u: { id: string; name: string; avatar: string } | null) => void;
 
   // Encuesta de personalización (plan del usuario)

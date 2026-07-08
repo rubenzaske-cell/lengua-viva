@@ -46,22 +46,29 @@ export async function getCurrentUser(): Promise<{ id: string; name: string; avat
   return { id: profile.id, name: profile.name, avatar: profile.avatar, browserId: bid, isNew: false };
 }
 
-// Crea un nuevo usuario con nombre y avatar (idempotente: si ya existe, actualiza)
-export async function createCurrentUser(name: string, avatar: string): Promise<string> {
+// Crea un nuevo usuario con nombre, avatar, país e idioma nativo (idempotente: si ya existe, actualiza)
+export async function createCurrentUser(
+  name: string,
+  avatar: string,
+  country?: string,
+  nativeLanguage?: string,
+): Promise<string> {
   const bid = await getBrowserId();
-  // Verificar si ya existe un perfil con este browserId
   const existing = await db.userProfile.findUnique({
     where: { browserId: bid },
     include: { state: true, lessons: true },
   });
 
   if (existing) {
-    // Ya existe: actualizar nombre/avatar
     await db.userProfile.update({
       where: { id: existing.id },
-      data: { name: name.trim() || "Aprendiz", avatar: avatar || "🧑" },
+      data: {
+        name: name.trim() || "Aprendiz",
+        avatar: avatar || "🧑",
+        country: country || existing.country || "",
+        nativeLanguage: nativeLanguage || existing.nativeLanguage || "es",
+      },
     });
-    // Asegurar que tenga estado y primera lección desbloqueada
     if (!existing.state) {
       await db.userState.create({ data: { userId: existing.id } });
     }
@@ -81,6 +88,8 @@ export async function createCurrentUser(name: string, avatar: string): Promise<s
       browserId: bid,
       name: name.trim() || "Aprendiz",
       avatar: avatar || "🧑",
+      country: country || "",
+      nativeLanguage: nativeLanguage || "es",
     },
   });
   // Crear estado inicial
@@ -95,12 +104,23 @@ export async function createCurrentUser(name: string, avatar: string): Promise<s
   return profile.id;
 }
 
-// Actualiza nombre/avatar
-export async function updateCurrentUserProfile(name: string, avatar: string): Promise<void> {
+// Actualiza nombre/avatar/país/idioma nativo
+export async function updateCurrentUserProfile(
+  name: string,
+  avatar: string,
+  country?: string,
+  nativeLanguage?: string,
+): Promise<void> {
   const bid = await getBrowserId();
+  const data: { name: string; avatar: string; country?: string; nativeLanguage?: string } = {
+    name: name.trim() || "Aprendiz",
+    avatar: avatar || "🧑",
+  };
+  if (country !== undefined) data.country = country;
+  if (nativeLanguage !== undefined) data.nativeLanguage = nativeLanguage;
   await db.userProfile.update({
     where: { browserId: bid },
-    data: { name: name.trim() || "Aprendiz", avatar: avatar || "🧑" },
+    data,
   });
 }
 
@@ -112,7 +132,7 @@ export async function requireUserId(): Promise<string> {
 }
 
 export interface GameSnapshot {
-  user: { id: string; name: string; avatar: string };
+  user: { id: string; name: string; avatar: string; country: string; nativeLanguage: string };
   stats: {
     xp: number;
     gems: number;
@@ -349,7 +369,7 @@ export async function getSnapshot(): Promise<GameSnapshot | null> {
   }
 
   return {
-    user: { id: profile.id, name: profile.name, avatar: profile.avatar },
+    user: { id: profile.id, name: profile.name, avatar: profile.avatar, country: profile.country, nativeLanguage: profile.nativeLanguage },
     stats: {
       xp: profile.state.xp,
       gems: profile.state.gems,

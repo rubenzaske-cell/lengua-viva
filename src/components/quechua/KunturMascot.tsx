@@ -18,11 +18,10 @@ interface KunturMascotProps {
   className?: string;
   animate?: boolean;
   speech?: string;
-  /** Cuando es true, Kuntur se pone a "escribir" (creando el plan galáctico).
-   *  Muestra sparkles ✨ y una burbuja "Creando tu plan..." con puntos animados.
-   *  Después de ~2.8s llama a onWritingComplete. */
   writing?: boolean;
-  /** Callback cuando la animación de escritura termina. */
+  writingKey?: number;
+  /** Mensaje motivador personalizado que se muestra mientras Kuntur escribe */
+  writingMessage?: string;
   onWritingComplete?: () => void;
 }
 
@@ -37,202 +36,97 @@ const MOOD_ALT: Record<KunturMood, string> = {
   risa: "Kuntur riendo",
 };
 
-/**
- * Efecto máquina de escribir: escribe el texto letra por letra UNA SOLA VEZ.
- * Al terminar, el texto se queda estático (NO reinicia).
- */
 function useTypewriter(text: string | undefined, enabled: boolean) {
   const [displayed, setDisplayed] = useState("");
   const [typing, setTyping] = useState(false);
-
   useEffect(() => {
-    if (!enabled || !text) {
-      setDisplayed(text ?? "");
-      setTyping(false);
-      return;
-    }
-    let i = 0;
-    let cancelled = false;
-    setDisplayed("");
-    setTyping(true);
-
+    if (!enabled || !text) { setDisplayed(text ?? ""); setTyping(false); return; }
+    let i = 0; let cancelled = false;
+    setDisplayed(""); setTyping(true);
     const typeNext = () => {
       if (cancelled) return;
-      if (i <= text.length) {
-        setDisplayed(text.slice(0, i));
-        i++;
-        const delay = 35 + Math.random() * 20;
-        setTimeout(typeNext, delay);
-      } else {
-        setTyping(false);
-      }
+      if (i <= text.length) { setDisplayed(text.slice(0, i)); i++; setTimeout(typeNext, 35 + Math.random() * 20); }
+      else { setTyping(false); }
     };
     const startTimer = setTimeout(typeNext, 300);
-    return () => {
-      cancelled = true;
-      clearTimeout(startTimer);
-    };
+    return () => { cancelled = true; clearTimeout(startTimer); };
   }, [text, enabled]);
-
   return { text: displayed, typing };
 }
 
-// Posiciones de sparkles alrededor de Kuntur (en % relativo al contenedor)
-const SPARKLES = [
-  { top: "5%", left: "10%", delay: "0ms", size: 14 },
-  { top: "15%", left: "85%", delay: "200ms", size: 10 },
-  { top: "45%", left: "5%", delay: "400ms", size: 12 },
-  { top: "50%", left: "92%", delay: "100ms", size: 16 },
-  { top: "75%", left: "15%", delay: "300ms", size: 11 },
-  { top: "80%", left: "80%", delay: "500ms", size: 13 },
-  { top: "25%", left: "50%", delay: "150ms", size: 9 },
-  { top: "90%", left: "50%", delay: "350ms", size: 15 },
-];
-
 export function KunturMascot({
-  mood = "feliz",
-  size = 120,
-  className = "",
-  animate = true,
-  speech,
-  writing = false,
-  onWritingComplete,
+  mood = "feliz", size = 120, className = "", animate = true, speech,
+  writing = false, writingKey = 0, writingMessage, onWritingComplete,
 }: KunturMascotProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const idleRef = useRef<HTMLVideoElement>(null);
+  const writingRef = useRef<HTMLVideoElement>(null);
   const { text: typedText, typing } = useTypewriter(speech, !!speech && !writing);
 
-  // Asegurar que el video idle siempre se reproduzca
+  // El video idle se reproduce solo una vez al montar (NO se reinicia al cambiar props)
+  useEffect(() => { idleRef.current?.play().catch(() => {}); }, []);
   useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.play().catch(() => {});
-  }, []);
+    const v = writingRef.current; if (!v) return;
+    if (writing) { v.currentTime = 0; v.play().catch(() => {}); }
+  }, [writing, writingKey]);
 
-  // Timer para la animación de "escritura" del plan galáctico
   useEffect(() => {
     if (!writing) return;
-    const timer = setTimeout(() => {
-      onWritingComplete?.();
-    }, 2800); // 2.8s tejiendo el plan
+    const timer = setTimeout(() => { onWritingComplete?.(); }, 4000);
     return () => clearTimeout(timer);
-  }, [writing, onWritingComplete]);
+  }, [writing, writingKey, onWritingComplete]);
 
-  // Video vertical 720x1280 (9:16). size = altura.
-  const videoHeight = size;
-  const videoWidth = size * (720 / 1280);
+  const boxSize = size;
+  const msg = writingMessage || "Tejiendo tu plan...";
 
   return (
-    <div className={`flex flex-col items-center ${className}`} style={{ width: videoWidth, position: "relative" }}>
-      {/* Burbuja de diálogo */}
+    <div className={className} style={{ position: "relative", width: boxSize, height: boxSize }}>
+      {/* Video de Kuntur */}
+      <video ref={idleRef} src="/kuntur/kuntur-asking-combined.webm" loop muted playsInline
+        className="absolute inset-0 w-full h-full object-contain"
+        style={{ pointerEvents: "none", opacity: writing ? 0 : 1, transition: "opacity 0.15s ease" }}
+        aria-label={MOOD_ALT[mood]} />
+      <video ref={writingRef} src="/kuntur/kuntur-writing.webm" muted playsInline
+        className="absolute inset-0 w-full h-full object-contain"
+        style={{ pointerEvents: "none", opacity: writing ? 1 : 0, transition: "opacity 0.15s ease" }}
+        aria-hidden={!writing} />
+
+      {/* Burbuja NEGRA — al costado derecho de la cabeza de Kuntur (siempre igual) */}
       {writing ? (
-        // Burbuja especial "Creando tu plan galáctico..." con puntos animados
-        <div className="relative mb-2 max-w-[260px] min-h-[36px] bg-gradient-to-r from-duo-purple/15 to-duo-blue/15 border-2 border-duo-purple/40 rounded-2xl px-4 py-2 text-sm font-extrabold text-center shadow-sm flex items-center justify-center gap-1.5">
-          <span className="text-duo-purple">✨ Tejiendo tu plan</span>
-          <span className="flex gap-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-duo-purple animate-bounce" style={{ animationDelay: "0ms" }} />
-            <span className="w-1.5 h-1.5 rounded-full bg-duo-purple animate-bounce" style={{ animationDelay: "150ms" }} />
-            <span className="w-1.5 h-1.5 rounded-full bg-duo-purple animate-bounce" style={{ animationDelay: "300ms" }} />
-          </span>
-          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-card border-b-2 border-r-2 border-duo-purple/40 rotate-45" />
+        <div className="absolute z-20" style={{ top: "3%", left: "70%", width: "220px" }}>
+          <div className="relative min-h-[40px] bg-black rounded-2xl rounded-l-md px-4 py-2.5 text-sm font-extrabold text-white text-center shadow-lg flex items-center justify-center gap-1.5">
+            <span className="absolute bottom-[10px] left-[-12px] w-0 h-0
+              border-t-[8px] border-t-transparent
+              border-b-[8px] border-b-transparent
+              border-r-[14px] border-r-black" />
+            <span>{msg}</span>
+            <span className="flex gap-0.5 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "300ms" }} />
+            </span>
+          </div>
         </div>
       ) : speech ? (
-        <div
-          className="relative mb-2 max-w-[240px] min-h-[36px] bg-white dark:bg-card border-2 border-duo-green/30 rounded-2xl px-4 py-2 text-sm font-bold text-center shadow-sm flex items-center justify-center"
-        >
-          <span>
-            {typedText}
-            {typing && (
-              <span className="inline-block w-[2px] h-4 bg-duo-green ml-0.5 align-middle animate-pulse" />
-            )}
-          </span>
-          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-card border-b-2 border-r-2 border-duo-green/30 rotate-45" />
+        <div className="absolute z-20" style={{ top: "3%", left: "70%", width: "220px" }}>
+          <div className="relative min-h-[40px] bg-black rounded-2xl rounded-l-md px-4 py-2.5 text-sm font-extrabold text-white text-center shadow-lg flex items-center justify-center">
+            <span className="absolute bottom-[10px] left-[-12px] w-0 h-0
+              border-t-[8px] border-t-transparent
+              border-b-[8px] border-b-transparent
+              border-r-[14px] border-r-black" />
+            <span>{typedText}{typing && <span className="inline-block w-[2px] h-4 bg-white ml-0.5 align-middle animate-pulse" />}</span>
+          </div>
         </div>
       ) : null}
-
-      {/* Contenedor del video con sparkles cuando está escribiendo */}
-      <div style={{ width: videoWidth, height: videoHeight, position: "relative" }}>
-        {/* Video idle de Kuntur (siempre reproduciéndose en bucle) */}
-        <video
-          ref={videoRef}
-          src="/kuntur/kuntur-idle.webm"
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full h-full object-contain"
-          style={{ pointerEvents: "none" }}
-          aria-label={MOOD_ALT[mood]}
-        />
-
-        {/* Sparkles ✨ alrededor de Kuntur cuando está escribiendo el plan */}
-        {writing && (
-          <>
-            {SPARKLES.map((s, i) => (
-              <span
-                key={i}
-                className="absolute pointer-events-none select-none"
-                style={{
-                  top: s.top,
-                  left: s.left,
-                  fontSize: s.size,
-                  animation: `sparkle-float 1.4s ease-in-out ${s.delay} infinite`,
-                }}
-              >
-                ✨
-              </span>
-            ))}
-            {/* Aura/resplandor mágico detrás de Kuntur */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: "radial-gradient(circle at center, rgba(168,85,247,0.15) 0%, transparent 60%)",
-                animation: "aura-pulse 1.6s ease-in-out infinite",
-              }}
-            />
-          </>
-        )}
-      </div>
-
-      {/* Estilos locales para animaciones de sparkles */}
-      <style>{`
-        @keyframes sparkle-float {
-          0%, 100% { transform: translateY(0) scale(0.8); opacity: 0.6; }
-          50% { transform: translateY(-8px) scale(1.2); opacity: 1; }
-        }
-        @keyframes aura-pulse {
-          0%, 100% { opacity: 0.5; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.08); }
-        }
-      `}</style>
     </div>
   );
 }
 
 export const KUNTUR_PHRASES = {
-  greeting: [
-    "¡Allinllachu! Soy Kuntur 🦅",
-    "¡Listo para aprender quechua?",
-    "¡Vamos a volar juntos!",
-    "Sumaq p'unchaw — ¡buen día!",
-  ],
-  correct: [
-    "¡Sumaq! ¡Muy bien!",
-    "¡Rikuypuni! ¡Increíble!",
-    "¡Allin! ¡Perfecto!",
-    "¡Sigue así!",
-  ],
-  wrong: [
-    "¡No te rindas!",
-    "Casi... ¡inténtalo otra vez!",
-    "Tranquilo, se aprende del error",
-    "¡Tú puedes!",
-  ],
+  greeting: ["¡Allinllachu! Soy Kuntur 🦅", "¡Listo para aprender lenguas del Perú?", "¡Vamos a volar juntos!", "Sumaq p'unchaw — ¡buen día!"],
+  correct: ["¡Sumaq! ¡Muy bien!", "¡Rikuypuni! ¡Increíble!", "¡Allin! ¡Perfecto!", "¡Sigue así!"],
+  wrong: ["¡No te rindas!", "Casi... ¡inténtalo otra vez!", "Tranquilo, se aprende del error", "¡Tú puedes!"],
   streak: ["¡Tu racha arde! 🔥", "¡Imparable!", "¡Eres fuego!"],
-  encourage: [
-    "¡La práctica hace al maestro!",
-    "Poco a poco se llega lejos",
-    "Cada palabra cuenta",
-  ],
+  encourage: ["¡La práctica hace al maestro!", "Poco a poco se llega lejos", "Cada palabra cuenta"],
   startLesson: ["¡A practicar!", "¡Vamos!", "¡Tú puedes!"],
   perfect: ["¡Impecable! Sin errores 🏆", "¡Eres un crack!", "¡Perfecto!"],
 };

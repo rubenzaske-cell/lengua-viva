@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/lib/quechua/store";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
+import { LoadingPlan } from "@/components/quechua/LoadingPlan";
 import { toast } from "sonner";
 import {
   SURVEY_QUESTIONS,
@@ -20,7 +21,6 @@ export function SurveyView() {
   const user = useAppStore((s) => s.user);
 
   const [qIndex, setQIndex] = useState(0);
-  // Empezar con respuestas vacías (no usar DEFAULT_SURVEY que pre-selecciona)
   const [answers, setAnswers] = useState<SurveyAnswers>({
     language: "", goal: "", level: "", pace: "", dailyGoal: 0, reminderTime: null, interests: [],
   });
@@ -28,44 +28,81 @@ export function SurveyView() {
   const [selectedMulti, setSelectedMulti] = useState<string[]>([]);
   const [timeValue, setTimeValue] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  // Cuando el usuario selecciona una opción, Kuntur se pone a "escribir" el plan.
-  // Mientras escribe, el botón Continuar NO aparece.
   const [isWriting, setIsWriting] = useState(false);
+  const [writingKey, setWritingKey] = useState(0);
+  const [writingMessage, setWritingMessage] = useState("");
+  const [showLoading, setShowLoading] = useState(false);
+  const pendingSnapshotRef = useRef<{ survey: unknown; stats: unknown; progress: unknown; achievements: unknown } | null>(null);
 
   const question: SurveyQuestion | undefined = SURVEY_QUESTIONS[qIndex];
   const total = SURVEY_QUESTIONS.length;
   const progressPct = (qIndex / total) * 100;
 
-  // Al cambiar de pregunta, resetear el estado de escritura
   useEffect(() => {
-    setIsWriting(false);
-  }, [qIndex]);
-
-  // Reset selección al cambiar de pregunta
-  useEffect(() => {
-    if (!question) return;
-    if (question.type === "single") {
-      const current = answers[question.field] as string;
-      setSelectedSingle(current || null);
-    } else if (question.type === "multi") {
-      setSelectedMulti(answers.interests);
-    } else if (question.type === "time") {
-      setTimeValue(answers.reminderTime || "");
-    }
+    setSelectedSingle(null); setSelectedMulti([]); setTimeValue(""); setIsWriting(false);
   }, [qIndex]);
 
   if (!question) return null;
 
-  const canAdvance = (() => {
-    if (isWriting) return false; // No avanzar mientras Kuntur escribe
-    if (question.type === "single") return selectedSingle !== null;
-    if (question.type === "multi") return true; // opcional
-    if (question.type === "time") return true; // opcional
-    return false;
-  })();
+  const commitAndAdvance = () => {
+    const newAnswers = { ...answers };
+    if (question.type === "single" && selectedSingle) {
+      if (question.field === "dailyGoal") newAnswers.dailyGoal = Number(selectedSingle);
+      else (newAnswers as Record<string, unknown>)[question.field] = selectedSingle;
+    } else if (question.type === "multi") {
+      newAnswers.interests = selectedMulti;
+    } else if (question.type === "time") {
+      newAnswers.reminderTime = timeValue || null;
+    }
+    setAnswers(newAnswers);
+    if (qIndex + 1 >= total) { submitSurvey(newAnswers); return; }
+    setQIndex((i) => i + 1);
+  };
+
+  const handleWritingComplete = () => {
+    setIsWriting(false);
+    setTimeout(() => { commitAndAdvance(); }, 200);
+  };
+
+  const startWriting = () => { setWritingKey((k) => k + 1); setIsWriting(true); };
+
+  // Generar frase motivadora según la selección del usuario
+  const getMotivationalMessage = (field: string, selectedId: string): string => {
+    const messages: Record<string, Record<string, string>> = {
+      language: {
+        quechua: "¡Quechua! El idioma del Tawantinsuyu te espera 🦙",
+        aimara: "¡Aimara! La lengua del lago sagrado 🏔️",
+      },
+      goal: {
+        viajar: "¡Para tus viajes por los Andes! ✈️",
+        cultura: "¡Reconectando con tus raíces! 🦙",
+        trabajo: "¡Para servir mejor a tu comunidad! 💼",
+        estudio: "¡La sabiduría andina te llama! 📚",
+        curiosidad: "¡La curiosidad abre mundos! ✨",
+      },
+      level: {
+        principiante: "¡Desde cero, como los grandes! 🌱",
+        basico: "¡Ya tienes base, a potenciarla! 🌿",
+        intermedio: "¡Vas por buen camino! 🌳",
+        avanzado: "¡A perfeccionar tu maestría! 🏔️",
+      },
+      pace: {
+        relajado: "Sin prisa, paso firme 🐢",
+        medio: "Constancia es la clave 🚶",
+        intenso: "¡Aprendemos rápido! ⚡",
+      },
+      dailyGoal: {
+        "10": "5 minutos al día cambian todo 🎋",
+        "20": "10 minutos, progreso constante 🎋",
+        "30": "15 minutos, dedicación real 🎋",
+        "50": "25 minutos, serio y comprometido 🎋",
+        "100": "¡Modo intenso activado! 🔥",
+      },
+    };
+    return messages[field]?.[selectedId] || "Tejiendo tu plan personalizado...";
+  };
 
   const handleSelectSingle = (id: string) => {
-    // No permitir seleccionar lenguas no disponibles
     if (question.field === "language") {
       const opt = question.options.find((o) => o.id === id);
       if (opt?.description?.includes("próximamente")) {
@@ -74,49 +111,24 @@ export function SurveyView() {
       }
     }
     setSelectedSingle(id);
-    // Activar la animación de Kuntur escribiendo el plan
-    setIsWriting(true);
+    setWritingMessage(getMotivationalMessage(question.field, id));
+    startWriting();
   };
 
   const handleToggleMulti = (id: string) => {
-    setSelectedMulti((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-    // Activar la animación de Kuntur escribiendo el plan
-    setIsWriting(true);
+    setSelectedMulti((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };
 
-  const handleAdvance = async () => {
-    // Guardar respuesta de la pregunta actual
-    const newAnswers = { ...answers };
-    if (question.type === "single" && selectedSingle) {
-      if (question.field === "dailyGoal") {
-        newAnswers.dailyGoal = Number(selectedSingle);
-      } else {
-        (newAnswers as Record<string, unknown>)[question.field] = selectedSingle;
-      }
-    } else if (question.type === "multi") {
-      newAnswers.interests = selectedMulti;
-    } else if (question.type === "time") {
-      newAnswers.reminderTime = timeValue || null;
-    }
-    setAnswers(newAnswers);
-
-    // ¿Es la última pregunta?
-    if (qIndex + 1 >= total) {
-      await submitSurvey(newAnswers);
-      return;
-    }
-    setQIndex((i) => i + 1);
+  const handleTimeSelect = (val: string) => {
+    setTimeValue(val);
+    setWritingMessage(val ? `Recordatorio a las ${val} 🕐` : "Sin recordatorio, a tu ritmo 🌿");
+    startWriting();
   };
 
-  const handleBack = () => {
-    if (qIndex > 0) setQIndex((i) => i - 1);
-  };
+  const handleBack = () => { if (qIndex > 0) setQIndex((i) => i - 1); };
 
   const submitSurvey = async (finalAnswers: SurveyAnswers) => {
     setSubmitting(true);
-    // Aplicar valores por defecto a campos vacíos
     const safe: SurveyAnswers = {
       language: finalAnswers.language || DEFAULT_SURVEY.language,
       goal: finalAnswers.goal || DEFAULT_SURVEY.goal,
@@ -130,30 +142,43 @@ export function SurveyView() {
       const r = await fetch("/api/survey", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(safe),
+        body: JSON.stringify({ ...safe, userId: user?.id }),
       });
       const data = await r.json();
-      if (!r.ok) {
-        toast.error(data.error || "No se pudo guardar la encuesta");
-        return;
-      }
-      if (data.snapshot) {
-        if (data.snapshot.survey) setSurvey(data.snapshot.survey);
-        if (data.snapshot.stats) setStats(data.snapshot.stats);
-        if (data.snapshot.progress) setProgress(data.snapshot.progress);
-        if (data.snapshot.achievements) setAchievements(data.snapshot.achievements);
-      }
-      toast.success("¡Plan personalizado! 🎉");
-    } catch {
-      toast.error("Error de conexión");
-    } finally {
-      setSubmitting(false);
-    }
+      if (!r.ok) { toast.error(data.error || "No se pudo guardar la encuesta"); return; }
+      pendingSnapshotRef.current = data.snapshot || null;
+      setShowLoading(true);
+    } catch { toast.error("Error de conexión"); }
+    finally { setSubmitting(false); }
   };
+
+  const handleLoadingComplete = () => {
+    const snap = pendingSnapshotRef.current;
+    if (snap) {
+      if ((snap as { survey?: unknown }).survey) setSurvey((snap as { survey: Parameters<typeof setSurvey>[0] }).survey);
+      if ((snap as { stats?: unknown }).stats) setStats((snap as { stats: Parameters<typeof setStats>[0] }).stats);
+      if ((snap as { progress?: unknown }).progress) setProgress((snap as { progress: Parameters<typeof setProgress>[0] }).progress);
+      if ((snap as { achievements?: unknown }).achievements) setAchievements((snap as { achievements: Parameters<typeof setAchievements>[0] }).achievements);
+    } else {
+      setSurvey({ language: "quechua", goal: "viajar", level: "principiante", pace: "medio", dailyGoal: 30, reminderTime: null, interests: [] });
+    }
+    useAppStore.getState().setNeedsSurvey(false);
+    setShowLoading(false);
+    toast.success("¡Plan personalizado! 🎉");
+  };
+
+  const guideText = isWriting
+    ? "Kuntur está tejiendo tu plan..."
+    : question.type === "multi"
+    ? selectedMulti.length === 0 ? "Toca los temas que te interesan" : `${selectedMulti.length} seleccionado${selectedMulti.length > 1 ? "s" : ""} · toca más o presiona Continuar`
+    : question.type === "time"
+    ? "Elige una hora o sin recordatorio"
+    : "Toca una opción para continuar";
+
+  if (showLoading) { return <LoadingPlan onComplete={handleLoadingComplete} />; }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-duo-green/10 to-background">
-      {/* Barra de progreso */}
       <div className="px-4 pt-4">
         <div className="mx-auto max-w-2xl flex items-center gap-3">
           {qIndex > 0 && (
@@ -162,67 +187,36 @@ export function SurveyView() {
             </button>
           )}
           <div className="flex-1 h-4 rounded-full bg-muted overflow-hidden">
-            <motion.div
-              className="h-full bg-duo-green rounded-full"
-              animate={{ width: `${progressPct}%` }}
-              transition={{ type: "spring", stiffness: 200, damping: 30 }}
-            />
+            <motion.div className="h-full bg-duo-green rounded-full" animate={{ width: `${progressPct}%` }} transition={{ type: "spring", stiffness: 200, damping: 30 }} />
           </div>
-          <span className="text-xs font-bold text-muted-foreground shrink-0">
-            {qIndex + 1}/{total}
-          </span>
+          <span className="text-xs font-bold text-muted-foreground shrink-0">{qIndex + 1}/{total}</span>
         </div>
       </div>
 
-      {/* Contenido */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
         <div className="w-full max-w-2xl flex flex-col items-center">
-          {/* Kuntur haciendo la pregunta — key estable para que el video
-              NO se reinicie al cambiar de pregunta. Solo cambia el speech y mood.
-              Cuando el usuario selecciona una opción, Kuntur se pone a "escribir" el plan. */}
-          <KunturMascot
-            key="kuntur-survey"
-            mood={question.kunturMood}
-            size={isWriting ? 130 : 140}
-            speech={question.kunturSays}
-            writing={isWriting}
-            onWritingComplete={() => setIsWriting(false)}
-          />
+          <KunturMascot key="kuntur-survey" mood={question.kunturMood} size={220} speech={question.kunturSays}
+            writing={isWriting} writingKey={writingKey} writingMessage={writingMessage} onWritingComplete={handleWritingComplete} />
 
-          {/* Opciones */}
           <div className="w-full mt-6">
             <AnimatePresence mode="wait">
-              <motion.div
-                key={question.id}
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -30 }}
-                transition={{ duration: 0.25 }}
-              >
+              <motion.div key={question.id} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                 {question.type === "single" && (
                   <div className="grid gap-2.5 sm:grid-cols-2">
                     {question.options.map((opt) => {
                       const isSelected = selectedSingle === opt.id;
                       const isDisabled = question.field === "language" && opt.description?.includes("próximamente");
                       return (
-                        <button
-                          key={opt.id}
-                          onClick={() => handleSelectSingle(opt.id)}
-                          disabled={isDisabled}
-                          className={`exercise-option flex items-center gap-3 ${isSelected ? "selected" : ""} ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
-                        >
+                        <button key={opt.id} onClick={() => handleSelectSingle(opt.id)} disabled={isDisabled || isWriting}
+                          className={`exercise-option flex items-center gap-3 ${isSelected ? "selected" : ""} ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}>
                           <span className="text-3xl shrink-0">{opt.emoji}</span>
                           <div className="text-left flex-1 min-w-0">
                             <div className="font-extrabold text-base">{opt.label}</div>
-                            {opt.description && (
-                              <div className="text-xs text-muted-foreground font-semibold">{opt.description}</div>
-                            )}
+                            {opt.description && <div className="text-xs text-muted-foreground font-semibold">{opt.description}</div>}
                           </div>
-                          {isSelected && (
-                            <span className="w-6 h-6 rounded-full bg-duo-blue text-white flex items-center justify-center shrink-0">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                            </span>
-                          )}
+                          {isSelected && <span className="w-6 h-6 rounded-full bg-duo-blue text-white flex items-center justify-center shrink-0">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          </span>}
                         </button>
                       );
                     })}
@@ -230,60 +224,31 @@ export function SurveyView() {
                 )}
 
                 {question.type === "multi" && (
-                  <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                      {question.options.map((opt) => {
-                        const isSelected = selectedMulti.includes(opt.id);
-                        return (
-                          <button
-                            key={opt.id}
-                            onClick={() => handleToggleMulti(opt.id)}
-                            className={`exercise-option flex flex-col items-center gap-1 text-center ${isSelected ? "selected" : ""}`}
-                          >
-                            <span className="text-3xl">{opt.emoji}</span>
-                            <span className="text-xs font-bold">{opt.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="text-center text-xs text-muted-foreground font-semibold mt-3">
-                      {selectedMulti.length === 0 ? "Puedes saltar esta pregunta" : `${selectedMulti.length} seleccionado${selectedMulti.length > 1 ? "s" : ""}`}
-                    </p>
-                  </>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {question.options.map((opt) => {
+                      const isSelected = selectedMulti.includes(opt.id);
+                      return (
+                        <button key={opt.id} onClick={() => handleToggleMulti(opt.id)} disabled={isWriting}
+                          className={`exercise-option flex flex-col items-center gap-1 text-center ${isSelected ? "selected" : ""}`}>
+                          <span className="text-3xl">{opt.emoji}</span>
+                          <span className="text-xs font-bold">{opt.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
 
                 {question.type === "time" && (
                   <div className="flex flex-col items-center gap-4 mt-2">
-                    <input
-                      type="time"
-                      value={timeValue}
-                      onChange={(e) => setTimeValue(e.target.value)}
-                      className="px-6 py-4 rounded-2xl border-2 border-border bg-card font-bold text-2xl text-center focus:outline-none focus:border-duo-green transition-colors"
-                    />
+                    <input type="time" value={timeValue} onChange={(e) => handleTimeSelect(e.target.value)} disabled={isWriting}
+                      className="px-6 py-4 rounded-2xl border-2 border-border bg-card font-bold text-2xl text-center focus:outline-none focus:border-duo-green transition-colors" />
                     <div className="flex gap-2 flex-wrap justify-center">
                       {["07:00", "12:00", "18:00", "21:00"].map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => { setTimeValue(t); setIsWriting(true); }}
-                          className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all ${
-                            timeValue === t
-                              ? "border-duo-green bg-duo-green/10 text-duo-green"
-                              : "border-border bg-card text-muted-foreground hover:border-duo-green/40"
-                          }`}
-                        >
-                          {t}
-                        </button>
+                        <button key={t} onClick={() => handleTimeSelect(t)} disabled={isWriting}
+                          className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all ${timeValue === t ? "border-duo-green bg-duo-green/10 text-duo-green" : "border-border bg-card text-muted-foreground hover:border-duo-green/40"}`}>{t}</button>
                       ))}
-                      <button
-                        onClick={() => setTimeValue("")}
-                        className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all ${
-                          !timeValue
-                            ? "border-muted-foreground bg-muted text-foreground"
-                            : "border-border bg-card text-muted-foreground hover:border-muted-foreground/40"
-                        }`}
-                      >
-                        Sin recordatorio
-                      </button>
+                      <button onClick={() => handleTimeSelect("")} disabled={isWriting}
+                        className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all ${!timeValue ? "border-muted-foreground bg-muted text-foreground" : "border-border bg-card text-muted-foreground hover:border-muted-foreground/40"}`}>Sin recordatorio</button>
                     </div>
                   </div>
                 )}
@@ -293,34 +258,25 @@ export function SurveyView() {
         </div>
       </div>
 
-      {/* Barra inferior — el botón Continuar SOLO aparece cuando Kuntur termina de escribir
-          y el usuario ya seleccionó una opción (o puede saltar la pregunta) */}
       <div className="border-t-2 border-muted/50 bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto max-w-2xl flex items-center justify-end gap-4 min-h-[52px]">
+        <div className="mx-auto max-w-2xl flex items-center justify-center min-h-[52px]">
           {isWriting ? (
-            // Mientras Kuntur escribe el plan, mostrar indicador (sin botón)
-            <span className="text-sm font-bold text-duo-purple flex items-center gap-2">
+            <span className="text-sm font-bold flex items-center gap-2 text-duo-purple">
               <span className="w-2 h-2 rounded-full bg-duo-purple animate-pulse" />
-              Kuntur está tejiendo tu plan...
+              {guideText}
             </span>
-          ) : canAdvance ? (
-            // Kuntur terminó y hay selección (o se puede saltar) → mostrar botón
-            <button
-              onClick={handleAdvance}
-              disabled={submitting}
-              className="duo-btn duo-btn-primary animate-pop-in"
-            >
-              {submitting
-                ? "Guardando..."
-                : qIndex + 1 >= total
-                ? "¡Crear mi plan!"
-                : "Continuar"}
+          ) : question.type === "multi" ? (
+            <button onClick={() => {
+              const interestsMsg = selectedMulti.length > 0
+                ? `¡${selectedMulti.length} temas que te apasionan! 🎯`
+                : "¡A explorar todos los temas! 🌿";
+              setWritingMessage(interestsMsg);
+              startWriting();
+            }} className="duo-btn duo-btn-primary animate-pop-in">
+              {selectedMulti.length === 0 ? "Saltar pregunta" : `Continuar (${selectedMulti.length})`}
             </button>
           ) : (
-            // Aún no selecciona nada en pregunta de selección única
-            <span className="text-sm font-bold text-muted-foreground">
-              {question.type === "single" ? "Elige una opción para continuar" : ""}
-            </span>
+            <span className="text-sm font-bold text-muted-foreground">{guideText}</span>
           )}
         </div>
       </div>

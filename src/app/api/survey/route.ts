@@ -12,16 +12,27 @@ export async function GET() {
 }
 
 // POST /api/survey - guarda las respuestas de la encuesta
-// body: SurveyAnswers
 export async function POST(req: NextRequest) {
+  // Leer el body una sola vez
+  const body = await req.json();
+
   let userId: string;
   try {
     userId = await requireUserId();
   } catch {
-    return NextResponse.json({ error: "Usuario no encontrado" }, { status: 401 });
+    // Fallback: si la cookie se perdió, intentar con el userId del body
+    if (body.userId) {
+      const profile = await db.userProfile.findUnique({ where: { id: body.userId } });
+      if (profile) {
+        userId = profile.id;
+      } else {
+        return NextResponse.json({ error: "Usuario no encontrado" }, { status: 401 });
+      }
+    } else {
+      return NextResponse.json({ error: "Usuario no encontrado" }, { status: 401 });
+    }
   }
 
-  const body = await req.json();
   const answers: SurveyAnswers = {
     language: body.language || "quechua",
     goal: body.goal || "viajar",

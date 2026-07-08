@@ -28,7 +28,7 @@ export function ProfileView() {
       const r = await fetch("/api/auth", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, avatar: user?.avatar ?? "🧑" }),
+        body: JSON.stringify({ name: editName, avatar: user?.avatar ?? "🧑", country: user?.country, nativeLanguage: user?.nativeLanguage }),
       });
       const data = await r.json();
       if (data.user) setUser(data.user);

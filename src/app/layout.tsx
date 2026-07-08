@@ -11,10 +11,10 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "RunaSimi · Aprende Quechua",
-  description: "Aprende quechua jugando. Lecciones interactivas, rachas, ligas y logros al estilo Duolingo.",
+  title: "Lengua Viva · Aprende Quechua",
+  description: "Lenguas del Perú, vivas para siempre. Lecciones interactivas, rachas, ligas y logros al estilo Duolingo.",
   keywords: ["quechua", "runa simi", "aprender quechua", "idioma andino", "gamificación", "Duolingo"],
-  authors: [{ name: "RunaSimi" }],
+  authors: [{ name: "Lengua Viva" }],
 };
 
 export const viewport: Viewport = {

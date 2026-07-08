@@ -55,7 +55,7 @@ export function LearnPath() {
       <div className="text-center mb-6">
         <KunturMascot
           mood={stats && stats.streak >= 3 ? "enamorado" : "feliz"}
-          size={110}
+          size={220}
           speech={
             stats && stats.streak >= 7
               ? "¡Racha imparable! 🔥"
@@ -69,10 +69,10 @@ export function LearnPath() {
           }
         />
         <h1 className="text-2xl font-extrabold text-foreground mt-3">
-          RunaSimi
+          Lengua Viva
         </h1>
         <p className="text-sm font-semibold text-muted-foreground mt-1 flex items-center justify-center gap-1.5">
-          <span>Aprende quechua jugando ·</span>
+          <span>Lenguas del Perú, vivas para siempre ·</span>
           <QuipuKnot size={16} />
           <span className="font-extrabold text-duo-orange">{stats?.xp ?? 0} quipus tejidos</span>
         </p>

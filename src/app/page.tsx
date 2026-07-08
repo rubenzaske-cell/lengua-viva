@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAppStore } from "@/lib/quechua/store";
 import { TopBar } from "@/components/quechua/TopBar";
 import { BottomNav } from "@/components/quechua/BottomNav";
@@ -12,6 +12,7 @@ import { ShopView } from "@/components/quechua/ShopView";
 import { AchievementsView } from "@/components/quechua/AchievementsView";
 import { Onboarding } from "@/components/quechua/Onboarding";
 import { SurveyView } from "@/components/quechua/SurveyView";
+import { WelcomeScreen } from "@/components/quechua/WelcomeScreen";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -34,6 +35,7 @@ export default function Home() {
   const setSurvey = useAppStore((s) => s.setSurvey);
   const needsSurvey = useAppStore((s) => s.needsSurvey);
   const setNeedsSurvey = useAppStore((s) => s.setNeedsSurvey);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   // Cargar estado inicial
   const loadState = async () => {
@@ -91,14 +93,19 @@ export default function Home() {
           className="text-center"
         >
           <KunturMascot mood="timido" size={120} />
-          <h1 className="text-2xl font-extrabold text-duo-green mb-1 mt-2">RunaSimi</h1>
+          <h1 className="text-2xl font-extrabold text-duo-green mb-1 mt-2">Lengua Viva</h1>
           <p className="text-sm font-bold text-muted-foreground">Cargando tu camino...</p>
         </motion.div>
       </div>
     );
   }
 
-  // Onboarding: crear perfil de usuario real
+  // Pantalla de bienvenida con video + audio promocional (antes del onboarding)
+  if (needsOnboarding && !showWelcome) {
+    return <WelcomeScreen onContinue={() => setShowWelcome(true)} />;
+  }
+
+  // Onboarding: crear perfil de usuario real (después de la bienvenida)
   if (needsOnboarding || !stats) {
     return <Onboarding />;
   }

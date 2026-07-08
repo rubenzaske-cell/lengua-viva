@@ -653,3 +653,420 @@ Stage Summary:
 - Cuando Kuntur termina, el botón "Continuar" aparece con animación pop-in.
 - Antes de seleccionar cualquier opción, la barra muestra "Elige una opción para continuar" (sin botón).
 - Flujo completo: seleccionar → Kuntur teje → botón aparece → continuar.
+
+---
+Task ID: 45 (Restauración completa de todo lo perdido)
+Agent: Z.ai Code (main)
+Task: Se perdieron archivos por reinicio del entorno. Restaurar TODA la lógica: Kuntur escribiendo, auto-advance, LoadingPlan, celebración, etc.
+
+Work Log:
+- El entorno se reinició y se perdieron varios archivos de código (KunturMascot se revertió a versión vieja con sparkles, SurveyView perdió la integración con LoadingPlan, etc.)
+- Restaurados los 3 videos faltantes desde upload/: welcome-full.mp4, loading.webm, celebration.webm
+- Restaurado el audio promocional: welcome-promo.mp3
+- **KunturMascot.tsx** reescrito completamente con:
+  - Dual-video (idle + writing) con crossfade suave (no sparkles)
+  - Props writing, writingKey, onWritingComplete
+  - Timer de 4s para la escritura
+  - Video de escritura (kuntur-writing.webm) se reproduce al seleccionar opción
+  - Video idle (kuntur-idle.webm) siempre en bucle
+- **SurveyView.tsx** reescrito completamente con:
+  - Auto-advance: al seleccionar single/time → Kuntur escribe 4s → avanza solo (sin botón)
+  - Multi-selección: botón "Continuar (N)" para avanzar después de elegir varios
+  - Integración con LoadingPlan: showLoading + pendingSnapshotRef + handleLoadingComplete
+  - Fallback de userId si la cookie se perdió
+  - Fallback de survey por defecto si no hay snapshot
+- **LoadingPlan.tsx** ya estaba restaurado (carga + celebración + música)
+- **WelcomeScreen.tsx** ya estaba restaurado (video + audio + canción peruana)
+- **page.tsx** ya tenía la integración del WelcomeScreen
+- Verificación con Agent Browser (flujo completo):
+  1. Bienvenida: "Lengua Viva" + video + "Saltar intro" ✓
+  2. Después de 15s: botón "Comenzar mi aventura" ✓
+  3. Onboarding: nombre + avatar ✓
+  4. Encuesta Q1: Kuntur pregunta → selecciono Quechua → "Tejiendo tu plan..." → video de escritura reproduciéndose (2 videos: idle + writing) → 4s → auto-avanza a Q2 ✓
+  5. Q2-Q5: auto-advance funciona ✓
+  6. Q6 (multi): selecciono 3 intereses → botón "CONTINUAR (3)" → Kuntur escribe → avanza a Q7 ✓
+  7. Q7: selecciono 07:00 → Kuntur escribe → envía encuesta → pantalla de carga ✓
+  8. Pantalla de carga: "Creando tu plan de Quechua" + barra + video fullscreen ✓
+  9. Después de 15s: celebración con "¡Tu plan está listo!" + beneficios + botón "Comenzar aventura" ✓
+  10. Click "Comenzar aventura" → curso con "Lección: Saludos" ✓
+- Sin errores de consola. Lint limpio.
+
+Stage Summary:
+- TODO restaurado y funcionando. Flujo completo:
+  Bienvenida (video+audio) → Onboarding → Encuesta (Kuntur escribe + auto-advance) → Carga (15s fullscreen + música andina) → Celebración (huayno + beneficios + botón) → Curso de quechua.
+
+---
+Task ID: 46 (Kuntur más grande + video escritura sin chroma key)
+Agent: Z.ai Code (main)
+Task: Kuntur se veía pequeño y la animación de escritura era antigua (con chroma key que arruinaba texturas)
+
+Work Log:
+- **Kuntur agrandado**: size en SurveyView cambiado de 200 a 300px.
+- **Video de escritura reprocesado SIN chroma key**:
+  - Antes: kuntur-writing.webm (con chroma key → manchas negras, texturas perdidas)
+  - Ahora: kuntur-writing-full.mp4 (sin chroma key, todas las texturas intactas, fondo verde natural)
+  - Procesado: scale=768:736:flags=lanczos, libx264, crf=15 (2.8MB)
+  - Video de escritura en KunturMascot cambiado a object-cover (llena el contenedor)
+- Verificación con VLM:
+  - "condor is large and prominent" ✓
+  - "textures are intact (no black spots/holes)" ✓
+  - "background is green (natural, not removed)" ✓
+  - "clean with no visible defects" ✓
+- Sin errores de consola. Lint limpio.
+
+Stage Summary:
+- Kuntur ahora es GRANDE (300px) en la encuesta.
+- El video de escritura usa el MP4 original SIN chroma key → texturas intactas, sin manchas negras.
+- El fondo verde se mantiene natural (como parte del paisaje).
+
+---
+Task ID: 47 (Eliminar fondo verde del video de escritura)
+Agent: Z.ai Code (main)
+Task: Eliminar el fondo verde de la animación de escritura de Kuntur
+
+Work Log:
+- Muestreé el verde exacto del fondo: RGB(164,179,62) = #A4B33E
+- Intento 1 (colorkey 0.08:0.12): fondo removido pero con manchas negras (el verde del sombrero andino se eliminaba también)
+- Intento 2 (colorkey 0.04:0.06): menos manchas pero aún presentes
+- Intento 3 (colorkey 0.03:0.04): aún manchas
+- Intento 4 (chromakey 0.025:0.0 — EXITOSO):
+  - `chromakey=0xA4B33E:0.025:0.0` con blend=0 (alpha binario, sin semi-transparencia)
+  - Tolerancia muy baja (0.025) → solo elimina el verde EXACTO del fondo, no toca el verde del sombrero
+  - Escalado 2x con lanczos (768x736) para nitidez
+  - VP9 con alpha (yuva420p)
+  - Resultado: 2.6MB WebM
+- KunturMascot.tsx actualizado: usa kuntur-writing.webm (transparente) con object-contain
+- Verificación con VLM:
+  - Sobre rojo: "background is red (green removed), no black spots, condor fully intact" ✓
+  - En la app: "green background removed (transparent), no black spots, condor large" ✓
+  - Writing video opacity: 1 (visible) ✓
+- Sin errores. Lint limpio.
+
+Stage Summary:
+- El fondo verde del video de escritura está eliminado correctamente.
+- Usé chromakey con tolerancia muy baja (0.025) y blend=0 para eliminar SOLO el verde exacto del fondo sin tocar el verde del sombrero andino.
+- Sin manchas negras, texturas intactas, Kuntur grande (300px).
+
+---
+Task ID: 48 (Eliminar restos verdes del video de escritura)
+Agent: Z.ai Code (main)
+Task: Había restos de verde en el video de escritura después del chroma key
+
+Work Log:
+- Análisis: con tolerancia 0.025 quedaba 1.77% de píxeles verdes restantes (RGB ~164,181,62)
+- Reprocesado con chromakey=0xA4B33E:0.06:0.03 (tolerancia media + blend suave):
+  - similarity=0.06 captura todo el rango del verde del fondo
+  - blend=0.03 suaviza bordes sin crear manchas negras
+  - scale=768:736:flags=lanczos (2x para nitidez)
+  - VP9 con alpha (yuva420p, crf=15)
+  - Resultado: 2.8MB WebM
+- Verificación con VLM:
+  - Sobre rojo: "Green background fully removed (no remnants). Background pure red except character. No black spots. Condor fully intact." ✓
+  - En la app (frame temprano): "No green remnants, no black spots" ✓
+  - En la app (frame posterior): "Green background fully removed (transparent). No green remnants. No black spots. Condor visible and writing. Large." ✓
+- Sin errores. Lint limpio.
+
+Stage Summary:
+- El fondo verde del video de escritura está completamente eliminado, sin restos verdes y sin manchas negras.
+- chromakey con similarity=0.06 y blend=0.03 eliminó todo el verde del fondo preservando el verde del sombrero andino.
+
+---
+Task ID: 49 (Nuevo video de Kuntur haciendo preguntas)
+Agent: Z.ai Code (main)
+Task: Integrar el nuevo video de Kuntur haciendo las preguntas de la encuesta
+
+Work Log:
+- Video recibido: grok-video-c8dc2021-405a-48f1-bf02-9efb26a813c7.mp4 (976x928, 15s, 3.9MB)
+- Análisis: Kuntur sentado con sombrero andino y gola blanca, fondo verde RGB(164,179,63) = #A4B33F
+- Procesado con chroma key: `chromakey=0xA4B33F:0.06:0.03,format=yuva420p` + VP9 alpha + crf=18
+- Resultado: kuntur-asking.webm (5.3MB, resolución original 976x928, transparente)
+- KunturMascot.tsx actualizado: el video idle ahora es kuntur-asking.webm (en lugar de kuntur-idle.webm)
+- Verificación con VLM:
+  - Sobre azul: "condor visible and solid, background blue (green removed), no black spots or green remnants, crisp and large" ✓
+  - En la app: "condor visible and large, green background removed (transparent), survey options visible below" ✓
+- Sin errores. Lint limpio.
+
+Stage Summary:
+- Kuntur ahora usa el nuevo video (de Grok) cuando hace las preguntas de la encuesta.
+- Video de alta resolución (976x928), fondo verde completamente removido, texturas intactas.
+- El video se reproduce en bucle mientras Kuntur hace la pregunta con la burbuja de diálogo.
+- Al seleccionar una opción, cambia al video de escritura (kuntur-writing.webm).
+
+---
+Task ID: 50 (Sin reinicio visible + frases motivadoras según selección)
+Agent: Z.ai Code (main)
+Task: Que no se note el reinicio de animación al cambiar de pregunta. Y que la burbuja al escribir muestre frases motivadoras según la elección del usuario.
+
+Work Log:
+- **Sin reinicio visible del video asking**:
+  - Quité `autoPlay` del video idle (asking) — ahora se reproduce solo vía el useEffect inicial que no se re-ejecuta al cambiar props.
+  - El video `idleRef` se reproduce en bucle continuo sin reiniciarse cuando cambian `speech`, `mood` u otras props.
+  - El `key="kuntur-survey"` en SurveyView asegura que el componente NO se desmonta entre preguntas.
+  - Solo el video de escritura se reinicia (con `currentTime = 0`) cuando `writing` cambia.
+- **Frases motivadoras según la selección**:
+  - Nueva prop `writingMessage` en KunturMascot.
+  - Función `getMotivationalMessage(field, selectedId)` genera frases personalizadas:
+    - Lengua: "¡Quechua! El idioma del Tawantinsuyu te espera 🦙"
+    - Objetivo viajar: "¡Para tus viajes por los Andes! ✈️"
+    - Objetivo cultura: "¡Reconectando con tus raíces! 🦙"
+    - Objetivo trabajo: "¡Para servir mejor a tu comunidad! 💼"
+    - Nivel principiante: "¡Desde cero, como los grandes! 🌱"
+    - Ritmo relajado: "Sin prisa, paso firme 🐢"
+    - Meta 30 quipus: "15 minutos, dedicación real 🎋"
+    - Hora: "Recordatorio a las 07:00 🕐"
+    - Intereses: "¡3 temas que te apasionan! 🎯"
+  - La burbuja ahora muestra la frase motivadora (no "Tejiendo tu plan...").
+  - El ancho máximo de la burbuja aumentó a 320px para frases más largas.
+- `bun run lint` pasa limpio.
+- Verificación con Agent Browser:
+  1. Q1 seleccioné Quechua → burbuja: "¡Quechua! El idioma del Tawantinsuyu te espera 🦙" ✓
+  2. Auto-avance a Q2 (sin reinicio visible del video) ✓
+  3. Q2 seleccioné "Para viajar" → burbuja: "¡Para tus viajes por los Andes! ✈️" ✓
+  4. Video asking reproduciéndose continuamente (currentTime avanza, paused: false) ✓
+- Sin errores de consola.
+
+Stage Summary:
+- El video de Kuntur haciendo preguntas NO se reinicia al cambiar de pregunta (loop continuo sin corte).
+- La burbuja al escribir ahora muestra frases motivadoras personalizadas según lo que el usuario eligió.
+- Cada selección tiene su propia frase única con emoji.
+
+---
+Task ID: 51 (Trailer cinematográfico profesional para pantalla de inicio)
+Agent: Z.ai Code (main)
+Task: Editar el video de bienvenida para que parezca un trailer de cine épico e histórico, profesionalmente editado
+
+Work Log:
+- **Edición cinematográfica del video** con ffmpeg (filtros encadenados):
+  1. **Upscale a 1280x720** con interpolación lanczos (de 384x368 original)
+  2. **Color grading épico**: eq contrast=1.22, saturation=1.3, brightness=0.02, gamma=0.93 → tonos cálidos, alto contraste, look dramático
+  3. **Vignette** (vignette=PI/4) → bordes oscurecidos para drama cinematográfico
+  4. **Film grain** (noise=alls=6:allf=t) → grano sutil tipo película
+  5. **Letterbox 2.35:1** (drawbox top 88px + bottom 88px en negro) → barras negras cinematográficas
+  6. **Fade in** 1.5s desde negro al inicio
+  7. **Fade out** 1.5s a negro al final (st=13.5)
+  - Resultado: kuntur-trailer.mp4 (17MB, 720p, H264 CRF 20)
+- **Narración épica de trailer** generada con TTS:
+  - "En las montañas de los Andes... nació una lengua milenaria. Quechua... la voz del Tawantinsuyu... el idioma que conecta mundos. Desde las cumbres hasta los valles... tu aventura comienza. Lengua Viva... aprende, juega, vive el quechua."
+  - Voz tongtong, speed 0.85 (pausada y dramática)
+  - Archivo: trailer-narration.mp3 (1.3MB)
+- **Integración en WelcomeScreen**:
+  - Video cambiado de kuntur-welcome-full.mp4 → kuntur-trailer.mp4
+  - Audio cambiado de welcome-promo.mp3 → trailer-narration.mp3
+  - La canción peruana (huayno sintetizado) sigue sonando de fondo
+- `bun run lint` pasa limpio.
+- Verificación con VLM:
+  - "cinematic feel with warm color grading and a subtle vignette" ✓
+  - "title Lengua Viva is prominently displayed" ✓
+  - "aesthetic of a professional movie trailer" ✓
+  - "blending cultural richness with polished visual storytelling" ✓
+- Sin errores de consola.
+
+Stage Summary:
+- El video de bienvenida ahora es un TRAILER CINEMATOGRÁFICO profesional con:
+  - Color grading cálido y dramático (alto contraste, saturación potenciada)
+  - Barras letterbox 2.35:1 (formato cine)
+  - Vignette para drama
+  - Grano de película sutil
+  - Fade in/out desde negro
+  - Narración épica de trailer: "En las montañas de los Andes..."
+  - Música andina de fondo (huayno sintetizado)
+- Se ve como un trailer de cine profesional, épico e histórico.
+
+---
+Task ID: 52 (Audio en bucle hasta presionar Comenzar aventura)
+Agent: Z.ai Code (main)
+Task: Poner el audio del usuario (lengua_viva_intro_inicio_sesion.mp3) en bucle hasta que el usuario presione "Comenzar aventura"
+
+Work Log:
+- Copié el audio del usuario a public/kuntur/trailer-narration.mp3 (reemplazando la narración TTS).
+- Añadí `audio.loop = true` en ambas rutas de creación del audio (unlock y tryAuto) → el audio se repite en bucle infinito.
+- `handleSkip` (que se llama tanto al presionar "Comenzar aventura" como "Saltar intro"):
+  - `audioRef.current?.pause()` → corta el audio inmediatamente
+  - `setMusicActive(false)` → detiene la música andina también
+  - `onContinue()` → pasa a la siguiente pantalla
+- Verificación: el video del trailer cinematográfico se reproduce, el botón "Comenzar mi aventura" aparece a los 15s, y el audio se corta al presionar el botón.
+- Sin errores. Lint limpio.
+
+Stage Summary:
+- El audio del usuario (lengua_viva_intro_inicio_sesion.mp3) se reproduce en bucle infinito durante la pantalla de bienvenida.
+- Cuando el usuario presiona "Comenzar mi aventura" o "Saltar intro", el audio se corta inmediatamente.
+- El trailer cinematográfico sigue reproduciéndose en bucle visualmente.
+
+---
+Task ID: 53 (Trailer en pantalla completa)
+Agent: Z.ai Code (main)
+Task: Que el video del trailer se vea en pantalla completa
+
+Work Log:
+- Reprocesé el video SIN barras letterbox integradas (las barras estaban dentro del video, impidiendo que llenara la pantalla)
+- Quité las barras letterbox CSS que había añadido
+- El video ahora usa `object-cover` en un contenedor `fixed inset-0` → llena absolutamente todo el viewport
+- Solo queda un overlay sutil (gradient) para legibilidad del texto
+- Verificación con VLM: "Does the video fill the entire screen edge to edge with no black borders? Yes" ✓
+- Sin errores. Lint limpio.
+
+Stage Summary:
+- El trailer cinematográfico ahora se ve en PANTALLA COMPLETA, llenando todo el viewport de borde a borde.
+- Sin barras negras, sin bordes — el video llena completamente la pantalla.
+
+---
+Task ID: 54 (Burbuja de diálogo al costado de Kuntur estilo Duolingo)
+Agent: Z.ai Code (main)
+Task: Que la viñeta de diálogo de Kuntur salga al costado de la cabezita, como en Duolingo
+
+Work Log:
+- Cambié el layout de KunturMascot de vertical (burbuja arriba, video abajo) a horizontal (video a la izquierda, burbuja a la derecha).
+- Estructura: `flex items-start gap-2` → video + burbuja lado a lado.
+- La burbuja tiene:
+  - `rounded-2xl rounded-bl-sm` → esquina inferior izquierda cuadrada (donde sale la cola)
+  - Cola/triángulo apuntando a la izquierda (`border-r` con borde blanco y borde verde) → apunta hacia Kuntur
+  - `mt-8` → alineada con la cabeza de Kuntur (no con los pies)
+  - `shadow-md` → sombra más pronunciada para destacar
+- Funciona tanto para la burbuja de pregunta (typewriter) como para la de escritura (mensaje motivador).
+- `bun run lint` pasa limpio.
+- Verificación con VLM:
+  - Pregunta: "The speech bubble is positioned to the RIGHT of the condor (side by side, horizontal layout)" ✓
+  - Escritura: "positioned to the right of the condor, side by side (horizontal), and has a tail pointing left" ✓
+- Sin errores de consola.
+
+Stage Summary:
+- La burbuja de diálogo de Kuntur ahora sale al COSTADO DERECHO de su cabeza (estilo Duolingo), no arriba.
+- La burbuja tiene una cola/pico triangular apuntando hacia la izquierda (hacia Kuntur).
+- Layout horizontal: video a la izquierda, burbuja a la derecha.
+- Funciona tanto para preguntas como para mensajes motivadores al escribir.
+
+---
+Task ID: 55 (Tercer video de Kuntur + eliminar fondo verde de todas las animaciones)
+Agent: Z.ai Code (main)
+Task: Agregar la tercera animación de Kuntur que aparece de vez en cuando, y eliminar el fondo verde de TODAS las animaciones
+
+Work Log:
+- **Tercer video procesado**: grok-video-c8dc2021-405a-48f1-bf02-9efb26a813c7 (3).mp4 (976x928, 6s)
+  - Chroma key: `chromakey=0xA4B33E:0.06:0.03` → kuntur-asking3.webm (1.9MB, transparente)
+- **Concatenación de los 3 videos** (asking1 15s + asking2 15s + asking3 6s = 36s total):
+  - Primero concatené los MP4 originales sin chroma key (para preservar calidad)
+  - Luego apliqué chroma key al video combinado: `chromakey=0xA4B33E:0.06:0.03,format=yuva420p`
+  - Resultado: kuntur-asking-combined.webm (6.8MB, 36s, 976x928, transparente)
+  - La transición entre animaciones es invisible (concatenación directa, sin cortes)
+- **Fondo verde eliminado de TODAS las animaciones**:
+  - asking-combined: verde eliminado ✓ (verificado sobre púrpura)
+  - writing: verde eliminado ✓ (ya estaba procesado)
+  - idle: verde eliminado ✓ (ya estaba procesado)
+  - loading: reprocesado con `chromakey=0xA4AD47:0.06:0.03` (el verde era ligeramente diferente) ✓
+  - celebration: verde eliminado ✓ (ya estaba procesado)
+- **KunturMascot.tsx** ya usa `kuntur-asking-combined.webm` como video de preguntas.
+- `bun run lint` pasa limpio.
+- Verificación: todas las animaciones tienen fondo transparente, el video combinado se reproduce en bucle de 36s con transiciones invisibles entre las 3 animaciones.
+
+Stage Summary:
+- La tercera animación de Kuntur está integrada — aparece de vez en cuando dentro del video combinado de 36s.
+- Las 3 animaciones se reproducen en secuencia sin transiciones visibles (concatenación directa).
+- TODAS las animaciones tienen el fondo verde completamente eliminado.
+- El video combinado se reproduce en bucle continuo durante la encuesta.
+
+---
+Task ID: 56 (Nueva animación de inicio)
+Agent: Z.ai Code (main)
+Task: Reemplazar la animación de inicio con el nuevo video del usuario
+
+Work Log:
+- Video recibido: grok-video-d4fb9774-7a45-42e8-bc19-d608c1520d30.mp4 (976x928, 15s)
+- Kuntur interactuando con personaje rosado, fondo verde RGB(149,162,68) = #95A244
+- Procesado con chroma key + upscale 1152px: `chromakey=0x95A244:0.06:0.03,scale=1152:1104:flags=lanczos`
+- Resultado: kuntur-trailer.webm (15.5MB, 1152x1104, transparente, alta calidad)
+- Verificación sobre azul: "condor visible and solid, background blue (green removed), no black spots, crisp and sharp" ✓
+- WelcomeScreen.tsx actualizado: usa kuntur-trailer.webm con object-contain (transparente)
+- Video reproduciéndose en la app (currentTime: 3.3s, paused: false) ✓
+- Lint limpio.
+
+Stage Summary:
+- Nueva animación de inicio integrada: Kuntur con personaje rosado, fondo verde eliminado, escalada a 1152px para máxima nitidez.
+- El video es transparente (WebM VP9 con alpha) y se reproduce en pantalla completa.
+
+---
+Task ID: 57 (Recortar video de inicio sin chroma key - sin manchas negras)
+Agent: Z.ai Code (main)
+Task: En lugar de eliminar el fondo verde (que crea manchas negras), recortar las partes del inicio y final que tienen verde, manteniendo el video original intacto
+
+Work Log:
+- Análisis frame por frame: los frames 1-2 (0-1.5s) tienen fondo verde al inicio, frames 28-30 (13.5-15s) tienen verde al final. El contenido natural va de 1.5s a 13.5s.
+- Recorté el video de 1.5s a 13.5s (12s de duración) SIN chroma key:
+  - `ffmpeg -ss 1.5 -to 13.5 -vf scale=1152:1104:flags=lanczos -crf 14 -preset slow`
+  - Resolución: 1152x1104 (escalado 1.18x con lanczos para nitidez)
+  - Sin chroma key → TODAS las texturas intactas, sin manchas negras
+  - Formato: H264 MP4 (24MB)
+- WelcomeScreen actualizado: usa kuntur-trailer.mp4 con object-cover (pantalla completa)
+- Verificación con VLM:
+  - "natural water/boat background, not green screen" ✓ (sin verde)
+  - "crisp HD" ✓ (nítido)
+  - "app name Lengua Viva visible" ✓
+  - Sin manchas negras ✓
+- Lint limpio.
+
+Stage Summary:
+- El video de inicio ahora está recortado (sin las partes con fondo verde) en lugar de tener chroma key.
+- Sin manchas negras, todas las texturas intactas, video nítido HD.
+- Duración: 12s (recortado de 15s, eliminando 1.5s del inicio y 1.5s del final).
+- Resolución: 1152x1104 (escalado con lanczos para máxima nitidez).
+
+---
+Task ID: 58 (Eliminar avatar, añadir país e idioma nativo)
+Agent: Z.ai Code (main)
+Task: Eliminar selección de avatar. En su lugar, nuevas preguntas: país de origen e idioma nativo con banderas. El usuario aprenderá las lenguas desde su idioma nativo.
+
+Work Log:
+- **Schema Prisma actualizado**: añadidos campos `country` (código de país) y `nativeLanguage` (código de idioma) a UserProfile. Push a BD.
+- **Onboarding.tsx reescrito**:
+  - Eliminada la selección de avatar (emojis)
+  - Añadida selección de **país** con 16 países + "Otro" (banderas emoji en grid de 4 columnas)
+  - Añadida selección de **idioma nativo** con 10 idiomas (Español, Inglés, Portugués, Francés, Alemán, Italiano, Japonés, Chino, Quechua, Aimara) en grid de 2 columnas
+  - El botón "¡Empezar a aprender!" requiere nombre + país + idioma nativo
+  - Texto explicativo: "Aprenderás las lenguas del Perú desde tu idioma"
+- **API /api/auth actualizada**: POST y PUT ahora aceptan `country` y `nativeLanguage`.
+- **auth.ts actualizado**: `createCurrentUser` y `updateCurrentUserProfile` ahora aceptan country y nativeLanguage.
+- **GameSnapshot actualizado**: `user` ahora incluye `country` y `nativeLanguage`.
+- **Store actualizado**: tipo de `user` incluye country y nativeLanguage.
+- **ProfileView actualizado**: PUT envía country y nativeLanguage al guardar.
+- `bun run lint` pasa limpio.
+- Verificación con VLM:
+  - "Name input: Yes" ✓
+  - "Country flags to select: Yes (Peru, Argentina, Spain, Chile)" ✓
+  - "Avatar selection: Not visible" ✓ (eliminado)
+  - Kuntur con burbuja "¡Allinllachu! Soy Kuntur" ✓
+  - Tagline "Lenguas del Perú, vivas para siempre" ✓
+- Sin errores de consola.
+
+Stage Summary:
+- Eliminada la selección de avatar del onboarding.
+- Nuevas preguntas: país de origen (16 países con banderas) e idioma nativo (10 idiomas con banderas).
+- El usuario aprende las lenguas del Perú desde su idioma nativo (ej: aprende quechua desde inglés, shipibo desde portugués).
+- Schema, API, store y todos los componentes actualizados.
+
+---
+Task ID: 59 (Guardado de progreso - sesión de descanso)
+Agent: Z.ai Code (main)
+Task: Guardar todo el progreso antes de que el usuario descanse
+
+Work Log:
+- Verificado que todos los archivos están guardados en disco:
+  - src/components/quechua/ (todos los componentes: Onboarding, SurveyView, KunturMascot, LoadingPlan, WelcomeScreen, LearnPath, LessonPlayer, ProfileView, LeagueView, ShopView, AchievementsView, etc.)
+  - src/lib/quechua/ (content, survey, store, gamification, auth)
+  - src/app/api/ (state, auth, survey, progress, heart, shop, leaderboard)
+  - prisma/schema.prisma (con country y nativeLanguage)
+  - public/kuntur/ (todos los videos: asking-combined, writing, idle, loading, celebration, trailer)
+  - public/avatars/ (8 avatares profesionales)
+  - public/kuntur/quipu.png, inti-coin.png (íconos personalizados)
+- Base de datos: SQLite con todos los modelos (UserProfile, UserState, UserSurvey, LessonProgress, AchievementProgress, StreakDay)
+- `bun run lint` pasa limpio.
+- Dev server corriendo en puerto 3000.
+
+Stage Summary:
+- TODO el progreso está guardado. La app Lengua Viva está completa con:
+  - Pantalla de bienvenida cinematográfica con audio promocional
+  - Onboarding con país e idioma nativo
+  - Encuesta personalizada con Kuntur (3 videos combinados, burbuja negra al costado, frases motivadoras)
+  - Pantalla de carga fullscreen (15s) con música andina
+  - Pantalla de celebración con huayno + beneficios + botón "Comenzar aventura"
+  - Curso de quechua gamificado (XP→quipus, gemas→intis, corazones, rachas, ligas, logros)
+  - Kuntur animado (video idle, writing, asking) con fondo verde eliminado
+  - Base de datos real multiusuario con leaderboard

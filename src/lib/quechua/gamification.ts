@@ -1,4 +1,4 @@
-// Helpers de gamificación para RunaSimi
+// Helpers de gamificación para Lengua Viva
 
 export function todayStr(): string {
   // Fecha en zona del usuario (America/Lima) en formato YYYY-MM-DD
