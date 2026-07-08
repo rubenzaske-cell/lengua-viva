@@ -23,53 +23,47 @@ export function TopBar() {
   const heartMs = nextHeartInMs(new Date(stats.heartsLastRegen), stats.hearts, stats.maxHearts);
 
   return (
-    <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border/60">
-      <div className="mx-auto max-w-2xl px-3 py-2 flex items-center gap-2 sm:gap-4">
+    <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-border/60">
+      <div className="mx-auto max-w-2xl px-3 py-2.5 flex items-center gap-2 sm:gap-3">
         {/* Racha */}
         <button
           onClick={() => setView("profile")}
-          className="flex items-center gap-1 shrink-0 group"
+          className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-full hover:bg-muted transition-colors"
           aria-label="Racha"
         >
-          <Flame className="w-6 h-6 text-duo-orange" fill="currentColor" />
-          <span className="font-extrabold text-lg text-duo-orange group-hover:scale-110 transition-transform">
-            {stats.streak}
-          </span>
+          <Flame className="w-5 h-5 text-duo-orange" fill="currentColor" />
+          <span className="font-extrabold text-base text-duo-orange">{stats.streak}</span>
         </button>
 
-        {/* Intis (monedas del sol) */}
+        {/* Intis */}
         <button
           onClick={() => setView("shop")}
-          className="flex items-center gap-1 shrink-0 group"
+          className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-full hover:bg-muted transition-colors"
           aria-label="Intis"
         >
-          <IntiCoin size={22} className="group-hover:scale-110 transition-transform" />
-          <span className="font-extrabold text-base text-duo-yellow group-hover:scale-110 transition-transform">
-            {stats.gems}
-          </span>
+          <IntiCoin size={20} />
+          <span className="font-extrabold text-base text-duo-yellow">{stats.gems}</span>
         </button>
 
         {/* Corazones */}
         <button
           onClick={() => setView("shop")}
-          className="flex items-center gap-1 shrink-0 group relative"
+          className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-full hover:bg-muted transition-colors"
           aria-label="Corazones"
           title={heartMs ? `Próximo corazón en ${formatMs(heartMs)}` : "Corazones llenos"}
         >
           <Heart className="w-5 h-5 text-duo-red" fill="currentColor" />
-          <span className="font-extrabold text-base text-duo-red group-hover:scale-110 transition-transform">
-            {stats.hearts}/{stats.maxHearts}
-          </span>
+          <span className="font-extrabold text-base text-duo-red">{stats.hearts}/{stats.maxHearts}</span>
         </button>
 
-        {/* Meta diaria de quipus */}
+        {/* Meta diaria */}
         <div className="flex-1 flex items-center gap-2 justify-end">
-          <QuipuKnot size={22} className="shrink-0" />
+          <QuipuKnot size={20} className="shrink-0" />
           <div className="flex-1 max-w-[140px]">
-            <div className="flex justify-between text-xs font-bold text-muted-foreground mb-0.5">
+            <div className="flex justify-between text-[11px] font-bold text-muted-foreground mb-0.5">
               <span>{stats.dailyXp}/{stats.dailyGoal}</span>
             </div>
-            <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-duo-orange to-amber-600 rounded-full transition-all duration-500"
                 style={{ width: `${dailyProgress}%` }}

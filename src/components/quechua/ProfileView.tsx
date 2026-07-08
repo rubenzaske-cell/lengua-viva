@@ -122,14 +122,14 @@ export function ProfileView() {
             </button>
           </h1>
         )}
-        <div className="inline-flex items-center gap-2 mt-2 bg-duo-green/10 border-2 border-duo-green/30 rounded-full px-4 py-1">
+        <div className="inline-flex items-center gap-2 mt-2 bg-duo-green/10 border border-duo-green/30 rounded-full px-4 py-1">
           <span className="text-duo-green font-extrabold text-sm">Nivel {level.level}</span>
           <span className="text-muted-foreground text-sm font-bold">· {level.title}</span>
         </div>
       </motion.div>
 
       {/* Barra de nivel (quipus tejidos) */}
-      <div className="bg-card rounded-2xl border-2 border-border p-4 mb-6">
+      <div className="bg-card rounded-2xl border border-border p-4 mb-6">
         <div className="flex justify-between items-center text-sm font-bold mb-1.5">
           <span className="text-muted-foreground flex items-center gap-1.5">Nivel {level.level} · {level.title}</span>
           <span className="text-duo-orange flex items-center gap-1"><QuipuKnot size={16} /> {level.current}/{level.needed}</span>
@@ -153,7 +153,7 @@ export function ProfileView() {
               key={card.label}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className={`${card.bg} rounded-2xl p-4 border-2 border-border`}
+              className={`${card.bg} rounded-2xl p-4 border border-border`}
             >
               {card.isCoin ? (
                 <div className="mb-2"><IntiCoin size={28} /></div>
@@ -170,7 +170,7 @@ export function ProfileView() {
       </div>
 
       {/* Racha semanal */}
-      <div className="bg-card rounded-2xl border-2 border-border p-4 mb-6">
+      <div className="bg-card rounded-2xl border border-border p-4 mb-6">
         <h3 className="font-extrabold mb-3 flex items-center gap-2">
           <Calendar className="w-5 h-5 text-duo-orange" /> Tu semana
         </h3>
@@ -193,12 +193,12 @@ export function ProfileView() {
           ))}
         </div>
         <p className="text-xs text-muted-foreground font-semibold mt-3 text-center">
-          🔥 ¡Mantén viva tu racha practicando todos los días!
+          ¡Mantén viva tu racha practicando todos los días!
         </p>
       </div>
 
       {/* Meta diaria de quipus */}
-      <div className="bg-card rounded-2xl border-2 border-border p-4 mb-6">
+      <div className="bg-card rounded-2xl border border-border p-4 mb-6">
         <h3 className="font-extrabold mb-2 flex items-center gap-2">
           <QuipuKnot size={20} /> Meta diaria
         </h3>
@@ -221,7 +221,7 @@ export function ProfileView() {
       </div>
 
       {/* Resumen de logros */}
-      <div className="bg-card rounded-2xl border-2 border-border p-4 mb-6">
+      <div className="bg-card rounded-2xl border border-border p-4 mb-6">
         <h3 className="font-extrabold mb-2 flex items-center gap-2">
           <Trophy className="w-5 h-5 text-duo-purple" /> Logros
         </h3>
@@ -240,7 +240,7 @@ export function ProfileView() {
 
       {/* Plan personalizado */}
       {survey && (
-        <div className="bg-gradient-to-br from-duo-green/10 to-duo-blue/10 border-2 border-duo-green/30 rounded-2xl p-4 mb-6">
+        <div className="bg-gradient-to-br from-duo-green/10 to-duo-blue/10 border border-duo-green/30 rounded-2xl p-4 mb-6">
           <h3 className="font-extrabold mb-3 flex items-center gap-2">
             <span className="text-xl">🎯</span> Mi Plan Personalizado
           </h3>

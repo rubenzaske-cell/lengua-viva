@@ -181,7 +181,7 @@ export function LearnPath() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="mt-2 bg-white dark:bg-card border-2 border-duo-green/30 rounded-xl px-3 py-1 text-xs font-bold text-duo-green shadow-sm relative"
+                  className="mt-2 bg-white dark:bg-card border border-duo-green/30 rounded-lg px-3 py-1 text-xs font-bold text-duo-green shadow-sm relative"
                   style={{ transform: `translateX(${offset}px)` }}
                 >
                   <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-card border-t-2 border-l-2 border-duo-green/30 rotate-45" />
@@ -194,7 +194,6 @@ export function LearnPath() {
 
         {/* Final */}
         <div className="mt-6 text-center">
-          <div className="text-5xl mb-2">🏁</div>
           <p className="font-bold text-muted-foreground text-sm">¡Sigue practicando para dominar el quechua!</p>
         </div>
       </div>

@@ -131,19 +131,19 @@ export function AuthScreen() {
         <p className="text-sm text-muted-foreground font-bold text-center mb-6">{t.appTagline}</p>
 
         {/* Tabs: Login / Register */}
-        <div className="flex gap-2 mb-6 bg-muted rounded-2xl p-1">
+        <div className="flex gap-1 mb-6 bg-muted rounded-xl p-1">
           <button
             onClick={() => setMode("register")}
-            className={`flex-1 py-2.5 rounded-xl font-extrabold text-sm transition-all ${
-              mode === "register" ? "bg-duo-green text-white shadow-md" : "text-muted-foreground"
+            className={`flex-1 py-2.5 rounded-lg font-bold text-sm transition-all duration-200 ${
+              mode === "register" ? "bg-background text-duo-green shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {nativeLanguage === "en" ? "Register" : nativeLanguage === "pt" ? "Cadastrar" : "Registrarse"}
           </button>
           <button
             onClick={() => setMode("login")}
-            className={`flex-1 py-2.5 rounded-xl font-extrabold text-sm transition-all ${
-              mode === "login" ? "bg-duo-green text-white shadow-md" : "text-muted-foreground"
+            className={`flex-1 py-2.5 rounded-lg font-bold text-sm transition-all duration-200 ${
+              mode === "login" ? "bg-background text-duo-green shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {nativeLanguage === "en" ? "Log in" : nativeLanguage === "pt" ? "Entrar" : "Iniciar sesión"}
@@ -259,7 +259,7 @@ export function AuthScreen() {
         </button>
 
         <p className="text-xs text-muted-foreground font-semibold text-center mt-4">
-          🔒 {nativeLanguage === "en" ? "Your progress is saved and protected with your email" : nativeLanguage === "pt" ? "Seu progresso é salvo e protegido com seu e-mail" : "Tu progreso está guardado y protegido con tu correo"}
+          {nativeLanguage === "en" ? "Your progress is saved and protected with your email" : nativeLanguage === "pt" ? "Seu progresso é salvo e protegido com seu e-mail" : "Tu progreso está guardado y protegido con tu correo"}
         </p>
       </motion.div>
     </div>

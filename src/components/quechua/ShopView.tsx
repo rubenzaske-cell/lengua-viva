@@ -63,16 +63,15 @@ export function ShopView() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 pb-10">
       <div className="text-center mb-6">
-        <div className="text-6xl mb-2">🛒</div>
         <h1 className="text-2xl font-extrabold">Tienda</h1>
-        <div className="inline-flex items-center gap-2 mt-2 bg-duo-yellow/15 border-2 border-duo-yellow/40 rounded-full px-4 py-1">
+        <div className="inline-flex items-center gap-2 mt-2 bg-duo-yellow/10 border border-duo-yellow/30 rounded-full px-4 py-1">
           <IntiCoin size={22} />
           <span className="font-extrabold text-duo-yellow">{stats.gems} intis</span>
         </div>
       </div>
 
       {/* Estado de corazones */}
-      <div className="bg-card rounded-2xl border-2 border-border p-4 mb-6">
+      <div className="bg-card rounded-2xl border border-border p-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Heart className="w-6 h-6 text-duo-red" fill="currentColor" />
@@ -103,9 +102,9 @@ export function ShopView() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="bg-card rounded-2xl border-2 border-border p-4 flex items-center gap-4"
+              className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4"
             >
-              <div className="text-4xl shrink-0 w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
+              <div className="text-4xl shrink-0 w-14 h-14 rounded-xl bg-muted flex items-center justify-center">
                 {item.emoji}
               </div>
               <div className="flex-1 min-w-0">
@@ -137,7 +136,7 @@ export function ShopView() {
 
       <div className="mt-6 text-center">
         <p className="text-xs text-muted-foreground font-semibold">
-          ☀️ Gana intis completando lecciones y logros
+          Gana intis completando lecciones y logros
         </p>
       </div>
     </div>

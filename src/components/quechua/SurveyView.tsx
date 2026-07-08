@@ -247,14 +247,14 @@ export function SurveyView() {
                 {question.type === "time" && (
                   <div className="flex flex-col items-center gap-4 mt-2">
                     <input type="time" value={timeValue} onChange={(e) => handleTimeSelect(e.target.value)} disabled={isWriting}
-                      className="px-6 py-4 rounded-2xl border-2 border-border bg-card font-bold text-2xl text-center focus:outline-none focus:border-duo-green transition-colors" />
+                      className="px-6 py-4 rounded-xl border border-border bg-card font-bold text-2xl text-center focus:outline-none focus:border-duo-green transition-colors" />
                     <div className="flex gap-2 flex-wrap justify-center">
                       {["07:00", "12:00", "18:00", "21:00"].map((t) => (
                         <button key={t} onClick={() => handleTimeSelect(t)} disabled={isWriting}
-                          className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all ${timeValue === t ? "border-duo-green bg-duo-green/10 text-duo-green" : "border-border bg-card text-muted-foreground hover:border-duo-green/40"}`}>{t}</button>
+                          className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all duration-150 ${timeValue === t ? "border-duo-green bg-duo-green/10 text-duo-green" : "border-border bg-card text-muted-foreground hover:border-duo-green/40 hover:bg-muted"}`}>{t}</button>
                       ))}
                       <button onClick={() => handleTimeSelect("")} disabled={isWriting}
-                        className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all ${!timeValue ? "border-muted-foreground bg-muted text-foreground" : "border-border bg-card text-muted-foreground hover:border-muted-foreground/40"}`}>{t.noReminder}</button>
+                        className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all duration-150 ${!timeValue ? "border-muted-foreground bg-muted text-foreground" : "border-border bg-card text-muted-foreground hover:border-muted-foreground/40 hover:bg-muted"}`}>{t.noReminder}</button>
                     </div>
                   </div>
                 )}
@@ -264,7 +264,7 @@ export function SurveyView() {
         </div>
       </div>
 
-      <div className="border-t-2 border-muted/50 bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="border-t border-border/60 bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-2xl flex items-center justify-center min-h-[52px]">
           {isWriting ? (
             <span className="text-sm font-bold flex items-center gap-2 text-duo-purple">

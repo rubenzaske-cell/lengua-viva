@@ -305,11 +305,10 @@ function ExerciseRenderer(props: {
             {ex.audio && (
               <button
                 onClick={() => props.speak(ex.audio!)}
-                className="shrink-0 w-12 h-12 rounded-2xl bg-duo-blue text-white flex items-center justify-center duo-btn-blue duo-btn"
+                className="shrink-0 w-11 h-11 rounded-xl bg-duo-blue text-white flex items-center justify-center hover:opacity-90 transition-opacity"
                 aria-label="Escuchar"
-                style={{ padding: 0 }}
               >
-                <Volume2 className="w-6 h-6" />
+                <Volume2 className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -353,11 +352,10 @@ function ExerciseRenderer(props: {
         <div className="mb-6 flex flex-col items-center gap-3">
           <button
             onClick={() => props.speak(ex.audio!)}
-            className="w-24 h-24 rounded-full duo-btn-blue duo-btn flex items-center justify-center text-white"
+            className="w-20 h-20 rounded-full bg-duo-blue text-white flex items-center justify-center hover:opacity-90 transition-opacity"
             aria-label="Reproducir audio"
-            style={{ padding: 0 }}
           >
-            <Volume2 className="w-12 h-12" />
+            <Volume2 className="w-10 h-10" />
           </button>
           <button
             onClick={() => props.speak(ex.audio!)}
@@ -663,7 +661,9 @@ function ExitModal({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: (
         className="bg-card rounded-2xl p-6 max-w-sm w-full text-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="text-5xl mb-3">😢</div>
+        <div className="text-5xl mb-3">
+          <KunturMascot mood="triste" size={56} animate={false} />
+        </div>
         <h3 className="text-xl font-extrabold mb-2">¿Salir de la lección?</h3>
         <p className="text-sm text-muted-foreground font-semibold mb-5">
           Perderás tu progreso en esta lección si sales ahora.

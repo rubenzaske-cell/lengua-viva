@@ -1,0 +1,757 @@
+     1→     1→"use client";
+     2→     2→
+     3→     3→import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+     4→     4→import { useAppStore } from "@/lib/quechua/store";
+     5→     5→import type { Exercise } from "@/lib/quechua/content";
+     6→     6→import { motion, AnimatePresence } from "framer-motion";
+     7→     7→import { X, Heart, Volume2, Check, Lightbulb } from "lucide-react";
+     8→     8→import { toast } from "sonner";
+     9→     9→import { KunturMascot, randomPhrase } from "@/components/quechua/KunturMascot";
+    10→    10→import { IntiCoin } from "@/components/quechua/IntiCoin";
+    11→    11→import { QuipuKnot } from "@/components/quechua/QuipuKnot";
+    12→    12→
+    13→    13→type Feedback = "none" | "correct" | "wrong";
+    14→    14→
+    15→    15→export function LessonPlayer() {
+    16→    16→  const lesson = useAppStore((s) => s.activeLesson);
+    17→    17→  const exercises = useAppStore((s) => s.activeExercises);
+    18→    18→  const exitLesson = useAppStore((s) => s.exitLesson);
+    19→    19→  const setStats = useAppStore((s) => s.setStats);
+    20→    20→  const setProgress = useAppStore((s) => s.setProgress);
+    21→    21→  const setAchievements = useAppStore((s) => s.setAchievements);
+    22→    22→  const setView = useAppStore((s) => s.setView);
+    23→    23→  const triggerRefresh = useAppStore((s) => s.triggerRefresh);
+    24→    24→  const xpBoostUntil = useAppStore((s) => s.xpBoostUntil);
+    25→    25→  const hearts = useAppStore((s) => s.stats?.hearts ?? 5);
+    26→    26→
+    27→    27→  const [idx, setIdx] = useState(0);
+    28→    28→  const [feedback, setFeedback] = useState<Feedback>("none");
+    29→    29→  const [correctCount, setCorrectCount] = useState(0);
+    30→    30→  const [wrongCount, setWrongCount] = useState(0);
+    31→    31→  const [lostHearts, setLostHearts] = useState(0);
+    32→    32→  const [confirmExit, setConfirmExit] = useState(false);
+    33→    33→  const [result, setResult] = useState<null | { xp: number; gems: number; perfect: boolean; newAch: string[] }>(null);
+    34→    34→  const [submitting, setSubmitting] = useState(false);
+    35→    35→  const lostHeartRef = useRef(false);
+    36→    36→
+    37→    37→  const total = exercises.length;
+    38→    38→  const current = exercises[idx];
+    39→    39→  const progressPct = (idx / total) * 100;
+    40→    40→
+    41→    41→  const speak = useCallback((text: string) => {
+    42→    42→    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    43→    43→    window.speechSynthesis.cancel();
+    44→    44→    const u = new SpeechSynthesisUtterance(text);
+    45→    45→    u.lang = "es-ES";
+    46→    46→    u.rate = 0.85;
+    47→    47→    // Intentar usar una voz en español
+    48→    48→    const voices = window.speechSynthesis.getVoices();
+    49→    49→    const es = voices.find((v) => v.lang.startsWith("es"));
+    50→    50→    if (es) u.voice = es;
+    51→    51→    window.speechSynthesis.speak(u);
+    52→    52→  }, []);
+    53→    53→
+    54→    54→  // Reproducir audio automáticamente en ejercicios "listen"
+    55→    55→  useEffect(() => {
+    56→    56→    if (current && current.type === "listen" && current.audio) {
+    57→    57→      const t = setTimeout(() => speak(current.audio!), 300);
+    58→    58→      return () => clearTimeout(t);
+    59→    59→    }
+    60→    60→  }, [current, speak]);
+    61→    61→
+    62→    62→  // Precargar voces
+    63→    63→  useEffect(() => {
+    64→    64→    if (typeof window !== "undefined" && window.speechSynthesis) {
+    65→    65→      window.speechSynthesis.getVoices();
+    66→    66→    }
+    67→    67→  }, []);
+    68→    68→
+    69→    69→  // Estado de respuesta por tipo de ejercicio
+    70→    70→  const [selected, setSelected] = useState<string | null>(null);
+    71→    71→  const [matched, setMatched] = useState<Record<string, string>>({});
+    72→    72→  const [matchSelected, setMatchSelected] = useState<{ side: "q" | "a"; value: string } | null>(null);
+    73→    73→  const [bankPlaced, setBankPlaced] = useState<string[]>([]);
+    74→    74→  const [bankError, setBankError] = useState<string | null>(null);
+    75→    75→
+    76→    76→  // Reset al cambiar de ejercicio
+    77→    77→  useEffect(() => {
+    78→    78→    setSelected(null);
+    79→    79→    setMatched({});
+    80→    80→    setMatchSelected(null);
+    81→    81→    setBankPlaced([]);
+    82→    82→    setBankError(null);
+    83→    83→    lostHeartRef.current = false;
+    84→    84→  }, [idx]);
+    85→    85→
+    86→    86→  if (!lesson) return null;
+    87→    87→  if (result) {
+    88→    88→    return (
+    89→    89→      <CompletionScreen
+    90→    90→        xp={result.xp}
+    91→    91→        gems={result.gems}
+    92→    92→        perfect={result.perfect}
+    93→    93→        newAch={result.newAch}
+    94→    94→        onContinue={() => {
+    95→    95→          exitLesson();
+    96→    96→          triggerRefresh();
+    97→    97→          setView("learn");
+    98→    98→        }}
+    99→    99→      />
+   100→   100→    );
+   101→   101→  }
+   102→   102→
+   103→   103→  const isAnswered = (() => {
+   104→   104→    if (!current) return false;
+   105→   105→    if (current.type === "match") return Object.keys(matched).length === current.pairs.length;
+   106→   106→    if (current.type === "bank") return bankPlaced.length === current.answer.length;
+   107→   107→    return selected !== null;
+   108→   108→  })();
+   109→   109→
+   110→   110→  const validate = (): boolean => {
+   111→   111→    if (!current) return false;
+   112→   112→    if (current.type === "select" || current.type === "reverse" || current.type === "listen") {
+   113→   113→      return selected === current.answer;
+   114→   114→    }
+   115→   115→    if (current.type === "match") {
+   116→   116→      return current.pairs.every((p) => matched[p.q] === p.a);
+   117→   117→    }
+   118→   118→    if (current.type === "bank") {
+   119→   119→      return current.answer.every((w, i) => bankPlaced[i] === w);
+   120→   120→    }
+   121→   121→    return false;
+   122→   122→  };
+   123→   123→
+   124→   124→  const handleCheck = () => {
+   125→   125→    if (!isAnswered || feedback !== "none") return;
+   126→   126→    const ok = validate();
+   127→   127→    if (ok) {
+   128→   128→      setFeedback("correct");
+   129→   129→      setCorrectCount((c) => c + 1);
+   130→   130→    } else {
+   131→   131→      setFeedback("wrong");
+   132→   132→      setWrongCount((c) => c + 1);
+   133→   133→      if (!lostHeartRef.current) {
+   134→   134→        lostHeartRef.current = true;
+   135→   135→        setLostHearts((h) => h + 1);
+   136→   136→        // Notificar al backend para perder corazón
+   137→   137→        fetch("/api/progress", {
+   138→   138→          method: "PUT",
+   139→   139→          headers: { "Content-Type": "application/json" },
+   140→   140→          body: JSON.stringify({ action: "lose_heart" }),
+   141→   141→        }).then(async (r) => {
+   142→   142→          const data = await r.json();
+   143→   143→          if (data?.snapshot) {
+   144→   144→            setStats(data.snapshot.stats);
+   145→   145→            setProgress(data.snapshot.progress);
+   146→   146→          }
+   147→   147→          if (data?.hearts === 0) {
+   148→   148→            toast.error("¡Te quedaste sin corazones!", {
+   149→   149→              description: "Practica una lección ya completada o espera a que se regeneren.",
+   150→   150→            });
+   151→   151→          }
+   152→   152→        }).catch(() => {});
+   153→   153→      }
+   154→   154→    }
+   155→   155→  };
+   156→   156→
+   157→   157→  const handleContinue = async () => {
+   158→   158→    if (feedback === "none") return;
+   159→   159→    // Si fue incorrecto, no avanza a menos que se presione continuar igual
+   160→   160→    if (idx + 1 >= total) {
+   161→   161→      // Completar lección
+   162→   162→      setSubmitting(true);
+   163→   163→      const perfect = wrongCount === 0;
+   164→   164→      try {
+   165→   165→        const r = await fetch("/api/progress", {
+   166→   166→          method: "POST",
+   167→   167→          headers: { "Content-Type": "application/json" },
+   168→   168→          body: JSON.stringify({
+   169→   169→            lessonId: lesson.id,
+   170→   170→            correct: correctCount,
+   171→   171→            total,
+   172→   172→            perfect,
+   173→   173→            xpBoost: xpBoostUntil ? xpBoostUntil > Date.now() : false,
+   174→   174→          }),
+   175→   175→        });
+   176→   176→        const data = await r.json();
+   177→   177→        if (data?.snapshot) {
+   178→   178→          setStats(data.snapshot.stats);
+   179→   179→          setProgress(data.snapshot.progress);
+   180→   180→          setAchievements(data.snapshot.achievements);
+   181→   181→        }
+   182→   182→        setResult({
+   183→   183→          xp: data.xpEarned,
+   184→   184→          gems: data.gemsEarned,
+   185→   185→          perfect,
+   186→   186→          newAch: data.newAchievements || [],
+   187→   187→        });
+   188→   188→        if (data.newAchievements?.length) {
+   189→   189→          data.newAchievements.forEach((id: string) => {
+   190→   190→            toast.success("¡Logro desbloqueado!", { description: id, duration: 4000 });
+   191→   191→          });
+   192→   192→        }
+   193→   193→      } catch {
+   194→   194→        toast.error("Hubo un error al guardar tu progreso");
+   195→   195→      } finally {
+   196→   196→        setSubmitting(false);
+   197→   197→      }
+   198→   198→      return;
+   199→   199→    }
+   200→   200→    setIdx((i) => i + 1);
+   201→   201→    setFeedback("none");
+   202→   202→  };
+   203→   203→
+   204→   204→  // Sin corazones: bloquear
+   205→   205→  const noHearts = hearts <= 0 && feedback === "none";
+   206→   206→
+   207→   207→  return (
+   208→   208→    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+   209→   209→      {/* Barra superior: progreso + corazón + salir */}
+   210→   210→      <div className="px-4 py-3 flex items-center gap-3 max-w-2xl mx-auto w-full">
+   211→   211→        <button
+   212→   212→          onClick={() => setConfirmExit(true)}
+   213→   213→          className="text-muted-foreground hover:text-foreground shrink-0"
+   214→   214→          aria-label="Salir"
+   215→   215→        >
+   216→   216→          <X className="w-7 h-7" />
+   217→   217→        </button>
+   218→   218→        <div className="flex-1 h-4 rounded-full bg-muted overflow-hidden">
+   219→   219→          <motion.div
+   220→   220→            className="h-full bg-duo-green rounded-full"
+   221→   221→            animate={{ width: `${((idx + (feedback !== "none" ? 1 : 0)) / total) * 100}%` }}
+   222→   222→            transition={{ type: "spring", stiffness: 200, damping: 30 }}
+   223→   223→          />
+   224→   224→        </div>
+   225→   225→        <div className="flex items-center gap-1 shrink-0">
+   226→   226→          <Heart className="w-6 h-6 text-duo-red" fill="currentColor" />
+   227→   227→          <span className="font-extrabold text-duo-red text-lg">{Math.max(0, hearts)}</span>
+   228→   228→        </div>
+   229→   229→      </div>
+   230→   230→
+   231→   231→      {/* Contenido del ejercicio */}
+   232→   232→      <div className="flex-1 overflow-y-auto scroll-quechua">
+   233→   233→        <div className="mx-auto max-w-2xl px-4 py-4 w-full">
+   234→   234→          <ExerciseRenderer
+   235→   235→            exercise={current}
+   236→   236→            selected={selected}
+   237→   237→            setSelected={setSelected}
+   238→   238→            matched={matched}
+   239→   239→            setMatched={setMatched}
+   240→   240→            matchSelected={matchSelected}
+   241→   241→            setMatchSelected={setMatchSelected}
+   242→   242→            bankPlaced={bankPlaced}
+   243→   243→            setBankPlaced={setBankPlaced}
+   244→   244→            bankError={bankError}
+   245→   245→            setBankError={setBankError}
+   246→   246→            feedback={feedback}
+   247→   247→            speak={speak}
+   248→   248→          />
+   249→   249→        </div>
+   250→   250→      </div>
+   251→   251→
+   252→   252→      {/* Barra inferior: feedback + check/continue */}
+   253→   253→      <FeedbackBar
+   254→   254→        feedback={feedback}
+   255→   255→        isAnswered={isAnswered}
+   256→   256→        noHearts={noHearts}
+   257→   257→        submitting={submitting}
+   258→   258→        exercise={current}
+   259→   259→        selected={selected}
+   260→   260→        matched={matched}
+   261→   261→        bankPlaced={bankPlaced}
+   262→   262→        onCheck={handleCheck}
+   263→   263→        onContinue={handleContinue}
+   264→   264→        onSkip={() => setConfirmExit(true)}
+   265→   265→      />
+   266→   266→
+   267→   267→      {/* Modal salir */}
+   268→   268→      <AnimatePresence>
+   269→   269→        {confirmExit && (
+   270→   270→          <ExitModal onCancel={() => setConfirmExit(false)} onConfirm={() => { exitLesson(); }} />
+   271→   271→        )}
+   272→   272→      </AnimatePresence>
+   273→   273→    </div>
+   274→   274→  );
+   275→   275→}
+   276→   276→
+   277→   277→/* ---------- Renderer de ejercicios ---------- */
+   278→   278→function ExerciseRenderer(props: {
+   279→   279→  exercise: Exercise | undefined;
+   280→   280→  selected: string | null;
+   281→   281→  setSelected: (v: string | null) => void;
+   282→   282→  matched: Record<string, string>;
+   283→   283→  setMatched: (v: Record<string, string>) => void;
+   284→   284→  matchSelected: { side: "q" | "a"; value: string } | null;
+   285→   285→  setMatchSelected: (v: { side: "q" | "a"; value: string } | null) => void;
+   286→   286→  bankPlaced: string[];
+   287→   287→  setBankPlaced: (v: string[]) => void;
+   288→   288→  bankError: string | null;
+   289→   289→  setBankError: (v: string | null) => void;
+   290→   290→  feedback: Feedback;
+   291→   291→  speak: (t: string) => void;
+   292→   292→}) {
+   293→   293→  const { exercise: ex } = props;
+   294→   294→  if (!ex) return null;
+   295→   295→
+   296→   296→  if (ex.type === "select" || ex.type === "reverse") {
+   297→   297→    return (
+   298→   298→      <div>
+   299→   299→        <p className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wide">
+   300→   300→          {ex.type === "select" ? "Selecciona el significado" : "Selecciona la palabra en quechua"}
+   301→   301→        </p>
+   302→   302→        <div className="mb-6">
+   303→   303→          <div className="flex items-center gap-3">
+   304→   304→            <h2 className="text-3xl font-extrabold text-foreground">{ex.prompt}</h2>
+   305→   305→            {ex.audio && (
+   306→   306→              <button
+   307→   307→                onClick={() => props.speak(ex.audio!)}
+   308→   308→                className="shrink-0 w-12 h-12 rounded-2xl bg-duo-blue text-white flex items-center justify-center duo-btn-blue duo-btn"
+   309→   309→                aria-label="Escuchar"
+   310→   310→                style={{ padding: 0 }}
+   311→   311→              >
+   312→   312→                <Volume2 className="w-6 h-6" />
+   313→   313→              </button>
+   314→   314→            )}
+   315→   315→          </div>
+   316→   316→          {ex.hint && (
+   317→   317→            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
+   318→   318→              <Lightbulb className="w-4 h-4" /> {ex.hint}
+   319→   319→            </p>
+   320→   320→          )}
+   321→   321→        </div>
+   322→   322→        <div className="grid gap-3">
+   323→   323→          {ex.choices.map((c) => {
+   324→   324→            const isSelected = props.selected === c;
+   325→   325→            let cls = "exercise-option";
+   326→   326→            if (isSelected && props.feedback === "none") cls += " selected";
+   327→   327→            if (props.feedback !== "none") {
+   328→   328→              if (c === ex.answer) cls += " correct";
+   329→   329→              else if (isSelected) cls += " wrong";
+   330→   330→            }
+   331→   331→            return (
+   332→   332→              <button
+   333→   333→                key={c}
+   334→   334→                disabled={props.feedback !== "none"}
+   335→   335→                onClick={() => props.setSelected(c)}
+   336→   336→                className={cls}
+   337→   337→              >
+   338→   338→                {c}
+   339→   339→              </button>
+   340→   340→            );
+   341→   341→          })}
+   342→   342→        </div>
+   343→   343→      </div>
+   344→   344→    );
+   345→   345→  }
+   346→   346→
+   347→   347→  if (ex.type === "listen") {
+   348→   348→    return (
+   349→   349→      <div>
+   350→   350→        <p className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wide">
+   351→   351→          ¿Qué significa lo que escuchaste?
+   352→   352→        </p>
+   353→   353→        <div className="mb-6 flex flex-col items-center gap-3">
+   354→   354→          <button
+   355→   355→            onClick={() => props.speak(ex.audio!)}
+   356→   356→            className="w-24 h-24 rounded-full duo-btn-blue duo-btn flex items-center justify-center text-white"
+   357→   357→            aria-label="Reproducir audio"
+   358→   358→            style={{ padding: 0 }}
+   359→   359→          >
+   360→   360→            <Volume2 className="w-12 h-12" />
+   361→   361→          </button>
+   362→   362→          <button
+   363→   363→            onClick={() => props.speak(ex.audio!)}
+   364→   364→            className="text-sm font-bold text-duo-blue underline"
+   365→   365→          >
+   366→   366→            Repetir
+   367→   367→          </button>
+   368→   368→        </div>
+   369→   369→        <div className="grid gap-3">
+   370→   370→          {ex.choices.map((c) => {
+   371→   371→            const isSelected = props.selected === c;
+   372→   372→            let cls = "exercise-option";
+   373→   373→            if (isSelected && props.feedback === "none") cls += " selected";
+   374→   374→            if (props.feedback !== "none") {
+   375→   375→              if (c === ex.answer) cls += " correct";
+   376→   376→              else if (isSelected) cls += " wrong";
+   377→   377→            }
+   378→   378→            return (
+   379→   379→              <button
+   380→   380→                key={c}
+   381→   381→                disabled={props.feedback !== "none"}
+   382→   382→                onClick={() => props.setSelected(c)}
+   383→   383→                className={cls}
+   384→   384→              >
+   385→   385→                {c}
+   386→   386→              </button>
+   387→   387→            );
+   388→   388→          })}
+   389→   389→        </div>
+   390→   390→      </div>
+   391→   391→    );
+   392→   392→  }
+   393→   393→
+   394→   394→  if (ex.type === "match") {
+   395→   395→    return <MatchExerciseView exercise={ex} {...props} />;
+   396→   396→  }
+   397→   397→
+   398→   398→  if (ex.type === "bank") {
+   399→   399→    return (
+   400→   400→      <div>
+   401→   401→        <p className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wide">
+   402→   402→          Traduce esta frase
+   403→   403→        </p>
+   404→   404→        <div className="mb-6">
+   405→   405→          <h2 className="text-2xl font-extrabold">{ex.prompt}</h2>
+   406→   406→          {ex.hint && (
+   407→   407→            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
+   408→   408→              <Lightbulb className="w-4 h-4" /> {ex.hint}
+   409→   409→            </p>
+   410→   410→          )}
+   411→   411→        </div>
+   412→   412→        {/* Espacio para la respuesta */}
+   413→   413→        <div className="min-h-[64px] mb-6 p-3 border-b-2 border-duo-green/40 flex flex-wrap gap-2 items-start">
+   414→   414→          {props.bankPlaced.map((w, i) => (
+   415→   415→            <span key={i} className="word-chip" style={{ opacity: 1 }}>
+   416→   416→              {w}
+   417→   417→            </span>
+   418→   418→          ))}
+   419→   419→          {props.bankPlaced.length === 0 && (
+   420→   420→            <span className="text-muted-foreground text-sm font-bold">Toca las palabras de abajo</span>
+   421→   421→          )}
+   422→   422→        </div>
+   423→   423→        {/* Banco de palabras */}
+   424→   424→        <div className="flex flex-wrap gap-2 justify-center">
+   425→   425→          {ex.words.map((w, i) => {
+   426→   426→            const placedCount = props.bankPlaced.filter((x) => x === w).length;
+   427→   427→            const wordCount = ex.words.filter((x) => x === w).length;
+   428→   428→            const isAvailable = placedCount < wordCount;
+   429→   429→            return (
+   430→   430→              <button
+   431→   431→                key={`${w}-${i}`}
+   432→   432→                disabled={!isAvailable || props.feedback !== "none"}
+   433→   433→                onClick={() => {
+   434→   434→                  props.setBankPlaced([...props.bankPlaced, w]);
+   435→   435→                  props.setBankError(null);
+   436→   436→                }}
+   437→   437→                className={`word-chip ${!isAvailable ? "placed" : ""}`}
+   438→   438→              >
+   439→   439→                {w}
+   440→   440→              </button>
+   441→   441→            );
+   442→   442→          })}
+   443→   443→        </div>
+   444→   444→        {props.bankPlaced.length > 0 && (
+   445→   445→          <button
+   446→   446→            onClick={() => props.setBankPlaced(props.bankPlaced.slice(0, -1))}
+   447→   447→            className="mt-4 text-sm font-bold text-muted-foreground underline"
+   448→   448→          >
+   449→   449→            ← Borrar última
+   450→   450→          </button>
+   451→   451→        )}
+   452→   452→      </div>
+   453→   453→    );
+   454→   454→  }
+   455→   455→
+   456→   456→  return null;
+   457→   457→}
+   458→   458→
+   459→   459→/* ---------- Vista del ejercicio de emparejar (con estado de orden estable) ---------- */
+   460→   460→function MatchExerciseView(props: {
+   461→   461→  exercise: Extract<Exercise, { type: "match" }>;
+   462→   462→  matched: Record<string, string>;
+   463→   463→  setMatched: (v: Record<string, string>) => void;
+   464→   464→  matchSelected: { side: "q" | "a"; value: string } | null;
+   465→   465→  setMatchSelected: (v: { side: "q" | "a"; value: string } | null) => void;
+   466→   466→  feedback: Feedback;
+   467→   467→}) {
+   468→   468→  const { exercise: ex } = props;
+   469→   469→  // Orden estable de la columna derecha (mezclado una vez por ejercicio)
+   470→   470→  const rightItems = useMemo(
+   471→   471→    () => [...ex.pairs.map((p) => p.a)].sort(() => Math.random() - 0.5),
+   472→   472→    [ex.id]
+   473→   473→  );
+   474→   474→  const leftItems = ex.pairs.map((p) => p.q);
+   475→   475→
+   476→   476→  const handleClick = (side: "q" | "a", value: string) => {
+   477→   477→    if (props.feedback !== "none") return;
+   478→   478→    if (!props.matchSelected) {
+   479→   479→      props.setMatchSelected({ side, value });
+   480→   480→      return;
+   481→   481→    }
+   482→   482→    if (props.matchSelected.side === side) {
+   483→   483→      props.setMatchSelected({ side, value });
+   484→   484→      return;
+   485→   485→    }
+   486→   486→    const q = side === "q" ? value : props.matchSelected.value;
+   487→   487→    const a = side === "a" ? value : props.matchSelected.value;
+   488→   488→    // Verificar si forman un par real
+   489→   489→    const isPair = ex.pairs.some((p) => p.q === q && p.a === a);
+   490→   490→    if (isPair) {
+   491→   491→      props.setMatched({ ...props.matched, [q]: a });
+   492→   492→    }
+   493→   493→    props.setMatchSelected(null);
+   494→   494→  };
+   495→   495→
+   496→   496→  return (
+   497→   497→    <div>
+   498→   498→      <p className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wide">
+   499→   499→        Empareja las palabras
+   500→   500→      </p>
+   501→   501→      <h2 className="text-xl font-extrabold mb-4">{ex.prompt}</h2>
+   502→   502→      <div className="grid grid-cols-2 gap-3">
+   503→   503→        <div className="flex flex-col gap-3">
+   504→   504→          {leftItems.map((q) => {
+   505→   505→            const isMatched = props.matched[q] !== undefined;
+   506→   506→            const isSelected = props.matchSelected?.side === "q" && props.matchSelected.value === q;
+   507→   507→            return (
+   508→   508→              <button
+   509→   509→                key={q}
+   510→   510→                disabled={isMatched || props.feedback !== "none"}
+   511→   511→                onClick={() => handleClick("q", q)}
+   512→   512→                className={`exercise-option text-center ${isMatched ? "opacity-30" : ""} ${
+   513→   513→                  isSelected ? "selected" : ""
+   514→   514→                }`}
+   515→   515→              >
+   516→   516→                {q}
+   517→   517→              </button>
+   518→   518→            );
+   519→   519→          })}
+   520→   520→        </div>
+   521→   521→        <div className="flex flex-col gap-3">
+   522→   522→          {rightItems.map((a) => {
+   523→   523→            const isMatched = Object.values(props.matched).includes(a);
+   524→   524→            const isSelected = props.matchSelected?.side === "a" && props.matchSelected.value === a;
+   525→   525→            return (
+   526→   526→              <button
+   527→   527→                key={a}
+   528→   528→                disabled={isMatched || props.feedback !== "none"}
+   529→   529→                onClick={() => handleClick("a", a)}
+   530→   530→                className={`exercise-option text-center ${isMatched ? "opacity-30" : ""} ${
+   531→   531→                  isSelected ? "selected" : ""
+   532→   532→                }`}
+   533→   533→              >
+   534→   534→                {a}
+   535→   535→              </button>
+   536→   536→            );
+   537→   537→          })}
+   538→   538→        </div>
+   539→   539→      </div>
+   540→   540→    </div>
+   541→   541→  );
+   542→   542→}
+   543→   543→
+   544→   544→/* ---------- Barra de feedback ---------- */
+   545→   545→function FeedbackBar(props: {
+   546→   546→  feedback: Feedback;
+   547→   547→  isAnswered: boolean;
+   548→   548→  noHearts: boolean;
+   549→   549→  submitting: boolean;
+   550→   550→  exercise: Exercise | undefined;
+   551→   551→  selected: string | null;
+   552→   552→  matched: Record<string, string>;
+   553→   553→  bankPlaced: string[];
+   554→   554→  onCheck: () => void;
+   555→   555→  onContinue: () => void;
+   556→   556→  onSkip: () => void;
+   557→   557→}) {
+   558→   558→  const { feedback, isAnswered, onCheck, onContinue } = props;
+   559→   559→
+   560→   560→  if (props.noHearts) {
+   561→   561→    return (
+   562→   562→      <div className="border-t-4 border-duo-red bg-duo-red/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+   563→   563→        <div className="mx-auto max-w-2xl flex items-center gap-3">
+   564→   564→          <KunturMascot mood="enojado" size={56} animate={false} />
+   565→   565→          <div className="flex-1">
+   566→   566→            <p className="font-extrabold text-duo-red text-lg leading-tight">¡Sin corazones!</p>
+   567→   567→            <p className="text-xs font-bold text-muted-foreground">Compra más en la tienda o espera a que se regeneren.</p>
+   568→   568→          </div>
+   569→   569→        </div>
+   570→   570→      </div>
+   571→   571→    );
+   572→   572→  }
+   573→   573→
+   574→   574→  if (feedback === "none") {
+   575→   575→    return (
+   576→   576→      <div className="border-t-2 border-muted/50 bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+   577→   577→        <div className="mx-auto max-w-2xl flex items-center justify-between gap-4">
+   578→   578→          <button onClick={props.onSkip} className="duo-btn duo-btn-ghost">
+   579→   579→            Saltar
+   580→   580→          </button>
+   581→   581→          <button
+   582→   582→            onClick={onCheck}
+   583→   583→            disabled={!isAnswered}
+   584→   584→            className="duo-btn duo-btn-primary flex-1 max-w-xs"
+   585→   585→          >
+   586→   586→            Comprobar
+   587→   587→          </button>
+   588→   588→        </div>
+   589→   589→      </div>
+   590→   590→    );
+   591→   591→  }
+   592→   592→
+   593→   593→  const correct = feedback === "correct";
+   594→   594→  const ex = props.exercise;
+   595→   595→  const correctAnswer = (() => {
+   596→   596→    if (!ex) return "";
+   597→   597→    if (ex.type === "select" || ex.type === "reverse" || ex.type === "listen") return ex.answer;
+   598→   598→    if (ex.type === "bank") return ex.answer.join(" ");
+   599→   599→    if (ex.type === "match") return "";
+   600→   600→    return "";
+   601→   601→  })();
+   602→   602→
+   603→   603→  return (
+   604→   604→    <motion.div
+   605→   605→      initial={{ y: 100 }}
+   606→   606→      animate={{ y: 0 }}
+   607→   607→      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+   608→   608→      className={`border-t-4 ${correct ? "bg-duo-green/10 border-duo-green" : "bg-duo-red/10 border-duo-red"}`}
+   609→   609→    >
+   610→   610→      <div className="mx-auto max-w-2xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+   611→   611→        <div className="flex items-center justify-between gap-4">
+   612→   612→          <div className="flex items-center gap-3 flex-1 min-w-0">
+   613→   613→            <KunturMascot
+   614→   614→              mood={correct ? "risa" : "triste"}
+   615→   615→              size={56}
+   616→   616→              animate={false}
+   617→   617→              className="shrink-0"
+   618→   618→            />
+   619→   619→            <div className="min-w-0">
+   620→   620→              <div className={`flex items-center gap-2 mb-0.5 ${correct ? "text-duo-green-dark" : "text-duo-red"}`}>
+   621→   621→                {correct ? <Check className="w-6 h-6" /> : <X className="w-6 h-6" />}
+   622→   622→                <span className="text-xl font-extrabold">
+   623→   623→                  {correct ? "¡Correcto!" : "¡Casi!"}
+   624→   624→                </span>
+   625→   625→              </div>
+   626→   626→              {!correct && correctAnswer && (
+   627→   627→                <p className="text-xs font-bold text-foreground truncate">
+   628→   628→                  Respuesta: <span className="text-duo-green-dark">{correctAnswer}</span>
+   629→   629→                </p>
+   630→   630→              )}
+   631→   631→              {correct && (
+   632→   632→                <p className="text-xs font-bold text-duo-green-dark truncate">{randomPhrase("correct")}</p>
+   633→   633→              )}
+   634→   634→            </div>
+   635→   635→          </div>
+   636→   636→          <button
+   637→   637→            onClick={onContinue}
+   638→   638→            disabled={props.submitting}
+   639→   639→            className={`duo-btn ${correct ? "duo-btn-primary" : "duo-btn-danger"} shrink-0`}
+   640→   640→          >
+   641→   641→            {props.submitting ? "Guardando..." : "Continuar"}
+   642→   642→          </button>
+   643→   643→        </div>
+   644→   644→      </div>
+   645→   645→    </motion.div>
+   646→   646→  );
+   647→   647→}
+   648→   648→
+   649→   649→/* ---------- Modal salir ---------- */
+   650→   650→function ExitModal({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
+   651→   651→  return (
+   652→   652→    <motion.div
+   653→   653→      initial={{ opacity: 0 }}
+   654→   654→      animate={{ opacity: 1 }}
+   655→   655→      exit={{ opacity: 0 }}
+   656→   656→      className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4"
+   657→   657→      onClick={onCancel}
+   658→   658→    >
+   659→   659→      <motion.div
+   660→   660→        initial={{ scale: 0.9, y: 20 }}
+   661→   661→        animate={{ scale: 1, y: 0 }}
+   662→   662→        exit={{ scale: 0.9, y: 20 }}
+   663→   663→        className="bg-card rounded-2xl p-6 max-w-sm w-full text-center"
+   664→   664→        onClick={(e) => e.stopPropagation()}
+   665→   665→      >
+   666→   666→        <div className="text-5xl mb-3">😢</div>
+   667→   667→        <h3 className="text-xl font-extrabold mb-2">¿Salir de la lección?</h3>
+   668→   668→        <p className="text-sm text-muted-foreground font-semibold mb-5">
+   669→   669→          Perderás tu progreso en esta lección si sales ahora.
+   670→   670→        </p>
+   671→   671→        <div className="flex flex-col gap-3">
+   672→   672→          <button onClick={onCancel} className="duo-btn duo-btn-primary">
+   673→   673→            Seguir aprendiendo
+   674→   674→          </button>
+   675→   675→          <button onClick={onConfirm} className="duo-btn duo-btn-secondary">
+   676→   676→            Salir
+   677→   677→          </button>
+   678→   678→        </div>
+   679→   679→      </motion.div>
+   680→   680→    </motion.div>
+   681→   681→  );
+   682→   682→}
+   683→   683→
+   684→   684→/* ---------- Pantalla de completado ---------- */
+   685→   685→function CompletionScreen({
+   686→   686→  xp,
+   687→   687→  gems,
+   688→   688→  perfect,
+   689→   689→  newAch,
+   690→   690→  onContinue,
+   691→   691→}: {
+   692→   692→  xp: number;
+   693→   693→  gems: number;
+   694→   694→  perfect: boolean;
+   695→   695→  newAch: string[];
+   696→   696→  onContinue: () => void;
+   697→   697→}) {
+   698→   698→  return (
+   699→   699→    <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center p-6 overflow-y-auto">
+   700→   700→      <motion.div
+   701→   701→        initial={{ scale: 0.5, opacity: 0 }}
+   702→   702→        animate={{ scale: 1, opacity: 1 }}
+   703→   703→        transition={{ type: "spring", stiffness: 200, damping: 15 }}
+   704→   704→        className="text-center w-full max-w-md"
+   705→   705→      >
+   706→   706→        <div className="flex justify-center mb-2">
+   707→   707→          <KunturMascot
+   708→   708→            mood={perfect ? "risa" : "feliz"}
+   709→   709→            size={140}
+   710→   710→            speech={perfect ? "¡Sumaq! ¡Perfecto!" : "¡Allin! ¡Buen trabajo!"}
+   711→   711→          />
+   712→   712→        </div>
+   713→   713→        <h1 className="text-3xl font-extrabold text-duo-yellow mb-2">
+   714→   714→          {perfect ? "¡Perfecto!" : "¡Lección completada!"}
+   715→   715→        </h1>
+   716→   716→        <p className="text-muted-foreground font-bold mb-6">
+   717→   717→          {perfect ? "Sin errores. ¡Eres imparable!" : "¡Sigue así, vas mejorando!"}
+   718→   718→        </p>
+   719→   719→
+   720→   720→        <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto mb-6">
+   721→   721→          <div className="bg-duo-orange/15 border-2 border-duo-orange/30 rounded-2xl p-4">
+   722→   722→            <div className="mb-1 flex justify-center"><QuipuKnot size={36} /></div>
+   723→   723→            <div className="text-xs font-bold text-muted-foreground uppercase">Quipus</div>
+   724→   724→            <div className="text-2xl font-extrabold text-duo-orange">+{xp}</div>
+   725→   725→          </div>
+   726→   726→          <div className="bg-duo-yellow/15 border-2 border-duo-yellow/30 rounded-2xl p-4">
+   727→   727→            <div className="mb-1 flex justify-center"><IntiCoin size={36} /></div>
+   728→   728→            <div className="text-xs font-bold text-muted-foreground uppercase">Intis</div>
+   729→   729→            <div className="text-2xl font-extrabold text-duo-yellow">+{gems}</div>
+   730→   730→          </div>
+   731→   731→        </div>
+   732→   732→
+   733→   733→        {newAch.length > 0 && (
+   734→   734→          <motion.div
+   735→   735→            initial={{ opacity: 0, scale: 0.8 }}
+   736→   736→            animate={{ opacity: 1, scale: 1 }}
+   737→   737→            transition={{ delay: 0.4 }}
+   738→   738→            className="mb-6 bg-duo-purple/10 border-2 border-duo-purple/30 rounded-2xl p-4 max-w-xs mx-auto flex items-center gap-3"
+   739→   739→          >
+   740→   740→            <KunturMascot mood="sorprendido" size={44} animate={false} />
+   741→   741→            <div className="text-left">
+   742→   742→              <div className="text-sm font-extrabold text-duo-purple">
+   743→   743→                ¡{newAch.length} nuevo{newAch.length > 1 ? "s" : ""} logro{newAch.length > 1 ? "s" : ""}!
+   744→   744→              </div>
+   745→   745→              <div className="text-xs text-muted-foreground font-bold">Míralos en la pestaña Logros</div>
+   746→   746→            </div>
+   747→   747→          </motion.div>
+   748→   748→        )}
+   749→   749→
+   750→   750→        <button onClick={onContinue} className="duo-btn duo-btn-primary w-full max-w-xs">
+   751→   751→          Continuar
+   752→   752→        </button>
+   753→   753→      </motion.div>
+   754→   754→    </div>
+   755→   755→  );
+   756→   756→}
+   757→   757→

@@ -139,126 +139,126 @@
 }
 
 @layer components {
-  /* Botón Duolingo con borde inferior 3D */
+  /* Botón moderno: flat, sombra suave, sin borde 3D excesivo */
   .duo-btn {
-    @apply relative inline-flex items-center justify-center gap-2 rounded-2xl font-extrabold uppercase tracking-wide transition-all duration-100 select-none;
-    @apply px-6 py-3 text-base;
-    box-shadow: 0 4px 0 0 var(--btn-shadow, oklch(0.52 0.16 140));
-    border-bottom-width: 0;
+    @apply relative inline-flex items-center justify-center gap-2 rounded-xl font-bold tracking-wide transition-all duration-200 select-none;
+    @apply px-5 py-2.5 text-sm;
+    box-shadow: 0 1px 2px 0 oklch(0.3 0.02 40 / 0.08), 0 1px 3px 0 oklch(0.3 0.02 40 / 0.06);
+    letter-spacing: 0.01em;
+  }
+  .duo-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -2px oklch(0.3 0.02 40 / 0.15), 0 2px 6px -1px oklch(0.3 0.02 40 / 0.08);
   }
   .duo-btn:active:not(:disabled) {
-    transform: translateY(2px);
-    box-shadow: 0 2px 0 0 var(--btn-shadow, oklch(0.52 0.16 140));
+    transform: translateY(0);
+    box-shadow: 0 1px 2px 0 oklch(0.3 0.02 40 / 0.08);
   }
   .duo-btn:disabled {
-    @apply opacity-50 cursor-not-allowed;
-    box-shadow: 0 4px 0 0 oklch(0.55 0.005 150);
+    @apply opacity-40 cursor-not-allowed;
+    box-shadow: none;
   }
   .duo-btn-primary {
     background: var(--duo-green);
     color: white;
-    --btn-shadow: var(--duo-green-dark);
   }
   .duo-btn-secondary {
-    background: white;
-    color: var(--duo-green);
-    border: 2px solid oklch(0.9 0.01 120);
-    --btn-shadow: oklch(0.88 0.01 120);
+    background: var(--card);
+    color: var(--foreground);
+    border: 1px solid var(--border);
+    box-shadow: none;
+  }
+  .duo-btn-secondary:hover:not(:disabled) {
+    background: var(--muted);
+    border-color: oklch(0.8 0.02 40);
   }
   .duo-btn-danger {
     background: var(--duo-red);
     color: white;
-    --btn-shadow: oklch(0.5 0.2 27);
   }
   .duo-btn-yellow {
     background: var(--duo-yellow);
-    color: oklch(0.4 0.05 85);
-    --btn-shadow: oklch(0.72 0.16 85);
+    color: oklch(0.35 0.06 85);
   }
   .duo-btn-blue {
     background: var(--duo-blue);
     color: white;
-    --btn-shadow: oklch(0.55 0.15 250);
   }
   .duo-btn-purple {
     background: var(--duo-purple);
     color: white;
-    --btn-shadow: oklch(0.5 0.18 300);
   }
   .duo-btn-ghost {
     background: transparent;
-    color: var(--duo-green);
+    color: var(--muted-foreground);
     box-shadow: none;
-    border: 2px solid transparent;
   }
-  .duo-btn-ghost:hover {
-    background: oklch(0.95 0.02 120);
-  }
-
-  .dark .duo-btn-secondary {
-    background: oklch(0.27 0.01 150);
-    color: var(--duo-green);
-    border-color: oklch(0.35 0.01 150);
-    --btn-shadow: oklch(0.2 0.01 150);
-  }
-
-  /* Nodo del camino */
-  .path-node {
-    @apply relative rounded-full flex items-center justify-center font-extrabold transition-transform cursor-pointer;
-    box-shadow: 0 6px 0 0 var(--node-shadow, oklch(0.52 0.16 140));
-  }
-  .path-node:active:not(.locked) {
-    transform: translateY(3px);
-    box-shadow: 0 3px 0 0 var(--node-shadow, oklch(0.52 0.16 140));
-  }
-
-  /* Opción de ejercicio */
-  .exercise-option {
-    @apply w-full text-left rounded-2xl border-2 px-4 py-3 font-bold transition-all duration-100 cursor-pointer;
-    border-color: oklch(0.88 0.01 120);
-    background: white;
+  .duo-btn-ghost:hover:not(:disabled) {
+    background: var(--muted);
     color: var(--foreground);
   }
-  .dark .exercise-option {
-    background: oklch(0.27 0.01 150);
-    border-color: oklch(0.35 0.01 150);
+
+  /* Nodo del camino - moderno con sombra suave */
+  .path-node {
+    @apply relative rounded-full flex items-center justify-center font-extrabold transition-all duration-200 cursor-pointer;
+    box-shadow: 0 4px 14px -3px oklch(0.3 0.02 40 / 0.25), 0 2px 6px -2px oklch(0.3 0.02 40 / 0.12);
+  }
+  .path-node:hover:not(.locked) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -4px oklch(0.3 0.02 40 / 0.3), 0 4px 10px -2px oklch(0.3 0.02 40 / 0.15);
+  }
+  .path-node:active:not(.locked) {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px -2px oklch(0.3 0.02 40 / 0.2);
+  }
+
+  /* Opción de ejercicio - moderna, borde fino */
+  .exercise-option {
+    @apply w-full text-left rounded-xl border px-4 py-3 font-bold transition-all duration-150 cursor-pointer;
+    border-color: var(--border);
+    background: var(--card);
+    color: var(--foreground);
+    box-shadow: none;
   }
   .exercise-option:hover:not(.selected):not(.correct):not(.wrong) {
-    border-color: oklch(0.82 0.04 150);
-    background: oklch(0.97 0.01 120);
+    border-color: oklch(0.78 0.03 40);
+    background: var(--muted);
   }
   .exercise-option.selected {
     border-color: var(--duo-blue);
-    background: oklch(0.93 0.04 250 / 0.2);
+    border-width: 2px;
+    background: oklch(0.93 0.04 250 / 0.12);
     color: var(--duo-blue);
   }
   .exercise-option.correct {
     border-color: var(--duo-green);
-    background: oklch(0.93 0.08 140 / 0.25);
+    border-width: 2px;
+    background: oklch(0.93 0.08 140 / 0.15);
     color: var(--duo-green-dark);
   }
   .exercise-option.wrong {
     border-color: var(--duo-red);
-    background: oklch(0.93 0.08 27 / 0.25);
+    border-width: 2px;
+    background: oklch(0.93 0.08 27 / 0.15);
     color: var(--duo-red);
   }
 
-  /* Tarjeta de palabra del banco */
+  /* Tarjeta de palabra del banco - moderna */
   .word-chip {
-    @apply inline-flex items-center rounded-xl border-2 px-4 py-2 font-bold cursor-pointer select-none transition-all;
-    border-color: oklch(0.85 0.01 120);
-    background: white;
+    @apply inline-flex items-center rounded-lg border px-3.5 py-2 font-bold cursor-pointer select-none transition-all duration-150;
+    border-color: var(--border);
+    background: var(--card);
     color: var(--foreground);
-    box-shadow: 0 2px 0 0 oklch(0.8 0.01 120);
+    box-shadow: 0 1px 2px 0 oklch(0.3 0.02 40 / 0.05);
   }
-  .dark .word-chip {
-    background: oklch(0.32 0.01 150);
-    border-color: oklch(0.4 0.01 150);
-    box-shadow: 0 2px 0 0 oklch(0.25 0.01 150);
+  .word-chip:hover:not(.placed) {
+    border-color: oklch(0.78 0.03 40);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px -1px oklch(0.3 0.02 40 / 0.12);
   }
-  .word-chip:active {
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 0 oklch(0.8 0.01 120);
+  .word-chip:active:not(.placed) {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px 0 oklch(0.3 0.02 40 / 0.05);
   }
   .word-chip.placed {
     opacity: 0.35;
@@ -311,8 +311,8 @@
 .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
 
 @keyframes pulse-ring {
-  0% { box-shadow: 0 6px 0 0 var(--duo-green-dark), 0 0 0 0 oklch(0.68 0.19 140 / 0.5); }
-  70% { box-shadow: 0 6px 0 0 var(--duo-green-dark), 0 0 0 14px oklch(0.68 0.19 140 / 0); }
-  100% { box-shadow: 0 6px 0 0 var(--duo-green-dark), 0 0 0 0 oklch(0.68 0.19 140 / 0); }
+  0% { box-shadow: 0 4px 14px -3px oklch(0.3 0.02 40 / 0.25), 0 0 0 0 oklch(0.55 0.2 28 / 0.4); }
+  70% { box-shadow: 0 4px 14px -3px oklch(0.3 0.02 40 / 0.25), 0 0 0 16px oklch(0.55 0.2 28 / 0); }
+  100% { box-shadow: 0 4px 14px -3px oklch(0.3 0.02 40 / 0.25), 0 0 0 0 oklch(0.55 0.2 28 / 0); }
 }
-.animate-pulse-ring { animation: pulse-ring 2s infinite; }
+.animate-pulse-ring { animation: pulse-ring 2.5s infinite; }
