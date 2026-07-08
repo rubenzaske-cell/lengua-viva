@@ -110,8 +110,9 @@ export function SurveyView() {
   const handleSelectSingle = (id: string) => {
     if (question.field === "language") {
       const opt = question.options.find((o) => o.id === id);
-      if (opt?.description?.includes("próximamente")) {
-        toast(`${tr(opt.label)} - ${lang === "en" ? "Coming soon!" : lang === "pt" ? "Em breve!" : "¡Próximamente!"}`, { description: lang === "en" ? "Only Quechua available for now." : lang === "pt" ? "Apenas Quechua disponível." : "Por ahora solo Quechua." });
+      const desc = tr(opt?.description);
+      if (desc.includes("próximamente") || desc.includes("coming soon") || desc.includes("em breve")) {
+        toast(`${tr(opt?.label)} - ${lang === "en" ? "Coming soon!" : lang === "pt" ? "Em breve!" : "¡Próximamente!"}`, { description: lang === "en" ? "Only Quechua available for now." : lang === "pt" ? "Apenas Quechua disponível." : "Por ahora solo Quechua." });
         return;
       }
     }

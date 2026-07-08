@@ -82,10 +82,17 @@ export function AuthScreen() {
 
       if (mode === "login") {
         // Usuario existente: cargar todo y entrar a la app
+        // Forzar recarga del estado desde el servidor
+        const sr = await fetch("/api/state");
+        const sd = await sr.json();
+        if (sd.user) setUser(sd.user);
+        if (sd.stats) setStats(sd.stats);
+        if (sd.progress) setProgress(sd.progress);
+        if (sd.achievements) setAchievements(sd.achievements);
         setNeedsOnboarding(false);
         // Si tiene encuesta, cargarla; si no, necesita hacerla
-        if (data.survey) {
-          useAppStore.getState().setSurvey(data.survey);
+        if (sd.survey) {
+          useAppStore.getState().setSurvey(sd.survey);
         } else {
           useAppStore.getState().setNeedsSurvey(true);
         }
@@ -96,6 +103,7 @@ export function AuthScreen() {
         // Cargar estado
         const sr = await fetch("/api/state");
         const sd = await sr.json();
+        if (sd.user) setUser(sd.user);
         if (sd.stats) setStats(sd.stats);
         if (sd.progress) setProgress(sd.progress);
         if (sd.achievements) setAchievements(sd.achievements);
