@@ -76,14 +76,22 @@ export function AuthScreen() {
       }
 
       if (data.user) setUser(data.user);
+      if (data.stats) setStats(data.stats);
+      if (data.progress) setProgress(data.progress);
+      if (data.achievements) setAchievements(data.achievements);
 
       if (mode === "login") {
-        // Usuario existente: cargar estado completo
-        triggerRefresh();
+        // Usuario existente: cargar todo y entrar a la app
         setNeedsOnboarding(false);
+        // Si tiene encuesta, cargarla; si no, necesita hacerla
+        if (data.survey) {
+          useAppStore.getState().setSurvey(data.survey);
+        } else {
+          useAppStore.getState().setNeedsSurvey(true);
+        }
         toast.success(`${t.kunturGreeting}`);
       } else {
-        // Registro nuevo: ir al onboarding (ya tiene los datos, pero necesitamos encuesta)
+        // Registro nuevo: cargar estado y ir a la encuesta
         setNeedsOnboarding(false);
         // Cargar estado
         const sr = await fetch("/api/state");

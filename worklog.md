@@ -1135,3 +1135,29 @@ Stage Summary:
 - Las preguntas de Kuntur (viñetas), las opciones, las descripciones, los textos guía, los botones y las frases motivadoras están todos traducidos.
 - 8 idiomas soportados: español, inglés, portugués, francés, alemán, italiano, japonés, chino.
 - Un usuario de EE.UU. ve toda la interfaz en inglés; un brasileño en portugués; etc.
+
+---
+Task ID: 62 (Fix login + nuevo tema terracota)
+Agent: Z.ai Code (main)
+Task: Arreglar el login que no dejaba entrar + cambiar color del tema
+
+Work Log:
+- **Login arreglado**: 
+  - /api/login ahora devuelve el snapshot completo (user, stats, progress, achievements, survey) usando getSnapshot()
+  - AuthScreen actualizado: al hacer login, carga todos los datos del snapshot
+  - Si el usuario ya completó la encuesta → entra directo al curso
+  - Si no completó la encuesta → va a la encuesta
+  - Verificado: POST /api/login 200 ✓, entró a la encuesta correctamente
+- **Tema cambiado de verde a terracota andino**:
+  - Color principal: verde claro → rojo terracota (#c8501e)
+  - Fondo: verde pálido → crema cálido
+  - Paleta andina: terracota, dorado inca, azul andino, púrpura sagrado
+  - Modo oscuro: marrón oscuro cálido
+  - themeColor del viewport actualizado
+- Prisma client regenerado correctamente (se había cacheado el schema viejo sin email/password)
+- Lint limpio. Sin errores.
+
+Stage Summary:
+- Login funciona: usuario registrado puede iniciar sesión y entrar a la app.
+- El tema de la app ahora es terracota andino (no verde claro).
+- Base de datos en la nube (Neon PostgreSQL) funcionando.

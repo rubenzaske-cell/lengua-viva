@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
+import { getSnapshot } from "@/lib/quechua/auth";
 
 // POST /api/login
 // body: { email, password }
@@ -36,14 +37,11 @@ export async function POST(req: NextRequest) {
     data: { browserId: sessionId },
   });
 
+  // Devolver el snapshot completo para que el frontend cargue todo
+  const snapshot = await getSnapshot();
+
   return NextResponse.json({
     ok: true,
-    user: {
-      id: profile.id,
-      name: profile.name,
-      avatar: profile.avatar,
-      country: profile.country,
-      nativeLanguage: profile.nativeLanguage,
-    },
+    ...snapshot,
   });
 }
