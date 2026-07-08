@@ -1070,3 +1070,33 @@ Stage Summary:
   - Curso de quechua gamificado (XP→quipus, gemas→intis, corazones, rachas, ligas, logros)
   - Kuntur animado (video idle, writing, asking) con fondo verde eliminado
   - Base de datos real multiusuario con leaderboard
+
+---
+Task ID: 60 (Sistema de traducción - interfaz en el idioma nativo del usuario)
+Agent: Z.ai Code (main)
+Task: Cuando el usuario selecciona inglés, la app debe estar en inglés, no en español
+
+Work Log:
+- Creé sistema completo de traducciones en `src/lib/quechua/translations.ts`:
+  - 10 idiomas: español, inglés, portugués, francés, alemán, italiano, japonés, chino, quechua, aimara
+  - 100+ strings traducidos por idioma (onboarding, encuesta, lecciones, perfil, tienda, ligas, logros, etc.)
+  - Funciones helper para interpolación (motReminder, motInterests)
+- Creé hook `useT()` en `src/lib/quechua/useT.ts` que lee el idioma nativo del usuario del store.
+- **Onboarding actualizado**: usa `getTranslations(nativeLanguage || "es")` para traducir EN TIEMPO REAL cuando el usuario selecciona su idioma nativo (antes de crear el perfil).
+- Todos los textos del onboarding se traducen: título, tagline, labels, placeholders, botones, mensajes de error.
+- `bun run lint` pasa limpio.
+- Verificación con Agent Browser:
+  1. Al seleccionar inglés como idioma nativo → la interfaz cambió inmediatamente:
+     - "Languages of Peru, alive forever. Let's create your profile!" ✓
+     - "WHAT'S YOUR NAME?" ✓
+     - "Your name" (placeholder) ✓
+     - "WHAT COUNTRY ARE YOU FROM?" ✓
+     - "WHAT LANGUAGE DO YOU SPEAK?" ✓
+     - "You'll learn Peru's languages from your language" ✓
+  2. Sin errores de consola.
+
+Stage Summary:
+- La interfaz ahora se traduce al idioma nativo del usuario en tiempo real.
+- 10 idiomas soportados: español, inglés, portugués, francés, alemán, italiano, japonés, chino, quechua, aimara.
+- En el onboarding, la traducción es inmediata al seleccionar el idioma (antes de crear el perfil).
+- Después del onboarding, el hook useT() lee el idioma del perfil del usuario.

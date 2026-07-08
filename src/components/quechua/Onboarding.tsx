@@ -5,6 +5,7 @@ import { useAppStore } from "@/lib/quechua/store";
 import { motion } from "framer-motion";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { useT } from "@/lib/quechua/useT";
+import { getTranslations } from "@/lib/quechua/translations";
 import { toast } from "sonner";
 
 const COUNTRIES = [
@@ -49,6 +50,7 @@ export function Onboarding() {
   const [country, setCountry] = useState<string | null>(null);
   const [nativeLanguage, setNativeLanguage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const t = getTranslations(nativeLanguage || "es");
 
   const handleSubmit = async () => {
     if (!name.trim()) {
