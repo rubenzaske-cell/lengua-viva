@@ -74,24 +74,24 @@ export function KunturMascot({
     return () => clearTimeout(timer);
   }, [writing, writingKey, onWritingComplete]);
 
-  // Kuntur más pequeño (70% del size); la burbuja va a la derecha y se ajusta en móvil
+  // Kuntur más pequeño (72% del size); la burbuja flota al lado de su cabecita
   const kunturSize = Math.round(size * 0.72);
   const msg = writingMessage || "Tejiendo tu plan...";
+  // La burbuja se ancla a la altura de la cabeza de Kuntur (parte superior)
+  const bubbleTop = Math.round(kunturSize * 0.08);
 
   return (
     <div
       className={className}
       style={{
         position: "relative",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         width: "100%",
-        maxWidth: `${kunturSize + 240}px`,
+        maxWidth: `${kunturSize + 260}px`,
         margin: "0 auto",
+        minHeight: kunturSize,
       }}
     >
-      {/* Contenedor de Kuntur (a la izquierda) */}
+      {/* Kuntur a la izquierda */}
       <div style={{ position: "relative", width: kunturSize, height: kunturSize, flexShrink: 0 }}>
         <video ref={idleRef} src="/kuntur/kuntur-asking-combined.webm" loop muted playsInline
           className="absolute inset-0 w-full h-full object-contain"
@@ -103,29 +103,36 @@ export function KunturMascot({
           aria-hidden={!writing} />
       </div>
 
-      {/* Burbuja NEGRA — a la derecha de Kuntur */}
+      {/* Burbuja flotando al lado de la cabecita de Kuntur */}
       {(writing || speech) && (
         <div
           className="z-20"
           style={{
-            position: "relative",
-            marginLeft: "-8px",
-            flex: "1 1 auto",
+            position: "absolute",
+            top: `${bubbleTop}px`,
+            left: `${kunturSize - 12}px`,
             maxWidth: "220px",
-            minWidth: "0",
+            minWidth: "120px",
           }}
         >
           <div
             className="relative min-h-[40px] bg-black rounded-2xl rounded-l-md px-4 py-2.5 text-sm font-extrabold text-white text-center shadow-lg flex items-center justify-center gap-1.5"
           >
-            {/* Cola de la burbuja (apuntando a Kuntur, a la izquierda) */}
+            {/* Cola de la burbuja apuntando a Kuntur (a la izquierda) */}
             <span
-              className="absolute bottom-[10px] left-[-12px] w-0 h-0"
+              className="absolute w-0 h-0"
               style={{
-                borderTop: "8px solid transparent",
-                borderBottom: "8px solid transparent",
-                borderRight: "14px solid black",
+                top: "14px",
+                left: "-10px",
+                borderTop: "7px solid transparent",
+                borderBottom: "7px solid transparent",
+                borderRight: "12px solid black",
               }}
+            />
+            {/* Pequeño punto de pensamiento entre Kuntur y la burbuja */}
+            <span
+              className="absolute rounded-full bg-black"
+              style={{ top: "4px", left: "-18px", width: "5px", height: "5px", opacity: 0.6 }}
             />
             {writing ? (
               <>
