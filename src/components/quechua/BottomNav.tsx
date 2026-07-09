@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppStore, type AppView } from "@/lib/quechua/store";
-import { Home, Trophy, User, ShoppingBag, Award } from "lucide-react";
+import { Home, Trophy, User, ShoppingBag, Award, Map } from "lucide-react";
 
 interface NavItem {
   view: AppView;
@@ -13,10 +13,10 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { view: "learn", label: "Aprender", icon: Home, color: "text-duo-green", activeBg: "bg-duo-green/10" },
+  { view: "map", label: "Mapa", icon: Map, color: "text-duo-blue", activeBg: "bg-duo-blue/10" },
   { view: "league", label: "Ligas", icon: Trophy, color: "text-duo-yellow", activeBg: "bg-duo-yellow/10" },
-  { view: "achievements", label: "Logros", icon: Award, color: "text-duo-purple", activeBg: "bg-duo-purple/10" },
-  { view: "shop", label: "Tienda", icon: ShoppingBag, color: "text-duo-blue", activeBg: "bg-duo-blue/10" },
-  { view: "profile", label: "Perfil", icon: User, color: "text-duo-orange", activeBg: "bg-duo-orange/10" },
+  { view: "shop", label: "Tienda", icon: ShoppingBag, color: "text-duo-orange", activeBg: "bg-duo-orange/10" },
+  { view: "profile", label: "Perfil", icon: User, color: "text-duo-purple", activeBg: "bg-duo-purple/10" },
 ];
 
 export function BottomNav() {

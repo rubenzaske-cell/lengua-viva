@@ -13,6 +13,7 @@ import { AchievementsView } from "@/components/quechua/AchievementsView";
 import { AuthScreen } from "@/components/quechua/AuthScreen";
 import { SurveyView } from "@/components/quechua/SurveyView";
 import { WelcomeScreen } from "@/components/quechua/WelcomeScreen";
+import { PeruMapView } from "@/components/quechua/PeruMapView";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -133,6 +134,7 @@ export default function Home() {
             transition={{ duration: 0.2 }}
           >
             {view === "learn" && <LearnPath />}
+            {view === "map" && <PeruMapView />}
             {view === "league" && <LeagueView />}
             {view === "profile" && <ProfileView />}
             {view === "shop" && <ShopView />}

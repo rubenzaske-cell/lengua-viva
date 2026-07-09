@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import type { Exercise, Lesson } from "./content";
 
-export type AppView = "learn" | "league" | "profile" | "shop" | "achievements";
+export type AppView = "learn" | "league" | "profile" | "shop" | "achievements" | "map";
 
 export interface UserStats {
   xp: number;
