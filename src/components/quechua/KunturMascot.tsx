@@ -62,7 +62,6 @@ export function KunturMascot({
   const writingRef = useRef<HTMLVideoElement>(null);
   const { text: typedText, typing } = useTypewriter(speech, !!speech && !writing);
 
-  // El video idle se reproduce solo una vez al montar (NO se reinicia al cambiar props)
   useEffect(() => { idleRef.current?.play().catch(() => {}); }, []);
   useEffect(() => {
     const v = writingRef.current; if (!v) return;
@@ -75,48 +74,77 @@ export function KunturMascot({
     return () => clearTimeout(timer);
   }, [writing, writingKey, onWritingComplete]);
 
-  const boxSize = size;
+  // Kuntur más pequeño (70% del size); la burbuja va a la derecha y se ajusta en móvil
+  const kunturSize = Math.round(size * 0.72);
   const msg = writingMessage || "Tejiendo tu plan...";
 
   return (
-    <div className={className} style={{ position: "relative", width: boxSize, height: boxSize }}>
-      {/* Video de Kuntur */}
-      <video ref={idleRef} src="/kuntur/kuntur-asking-combined.webm" loop muted playsInline
-        className="absolute inset-0 w-full h-full object-contain"
-        style={{ pointerEvents: "none", opacity: writing ? 0 : 1, transition: "opacity 0.15s ease" }}
-        aria-label={MOOD_ALT[mood]} />
-      <video ref={writingRef} src="/kuntur/kuntur-writing.webm" muted playsInline
-        className="absolute inset-0 w-full h-full object-contain"
-        style={{ pointerEvents: "none", opacity: writing ? 1 : 0, transition: "opacity 0.15s ease" }}
-        aria-hidden={!writing} />
+    <div
+      className={className}
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        maxWidth: `${kunturSize + 240}px`,
+        margin: "0 auto",
+      }}
+    >
+      {/* Contenedor de Kuntur (a la izquierda) */}
+      <div style={{ position: "relative", width: kunturSize, height: kunturSize, flexShrink: 0 }}>
+        <video ref={idleRef} src="/kuntur/kuntur-asking-combined.webm" loop muted playsInline
+          className="absolute inset-0 w-full h-full object-contain"
+          style={{ pointerEvents: "none", opacity: writing ? 0 : 1, transition: "opacity 0.15s ease" }}
+          aria-label={MOOD_ALT[mood]} />
+        <video ref={writingRef} src="/kuntur/kuntur-writing.webm" muted playsInline
+          className="absolute inset-0 w-full h-full object-contain"
+          style={{ pointerEvents: "none", opacity: writing ? 1 : 0, transition: "opacity 0.15s ease" }}
+          aria-hidden={!writing} />
+      </div>
 
-      {/* Burbuja NEGRA — al costado derecho de la cabeza de Kuntur (siempre igual) */}
-      {writing ? (
-        <div className="absolute z-20" style={{ top: "3%", left: "70%", width: "220px" }}>
-          <div className="relative min-h-[40px] bg-black rounded-2xl rounded-l-md px-4 py-2.5 text-sm font-extrabold text-white text-center shadow-lg flex items-center justify-center gap-1.5">
-            <span className="absolute bottom-[10px] left-[-12px] w-0 h-0
-              border-t-[8px] border-t-transparent
-              border-b-[8px] border-b-transparent
-              border-r-[14px] border-r-black" />
-            <span>{msg}</span>
-            <span className="flex gap-0.5 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "300ms" }} />
-            </span>
+      {/* Burbuja NEGRA — a la derecha de Kuntur */}
+      {(writing || speech) && (
+        <div
+          className="z-20"
+          style={{
+            position: "relative",
+            marginLeft: "-8px",
+            flex: "1 1 auto",
+            maxWidth: "220px",
+            minWidth: "0",
+          }}
+        >
+          <div
+            className="relative min-h-[40px] bg-black rounded-2xl rounded-l-md px-4 py-2.5 text-sm font-extrabold text-white text-center shadow-lg flex items-center justify-center gap-1.5"
+          >
+            {/* Cola de la burbuja (apuntando a Kuntur, a la izquierda) */}
+            <span
+              className="absolute bottom-[10px] left-[-12px] w-0 h-0"
+              style={{
+                borderTop: "8px solid transparent",
+                borderBottom: "8px solid transparent",
+                borderRight: "14px solid black",
+              }}
+            />
+            {writing ? (
+              <>
+                <span className="truncate">{msg}</span>
+                <span className="flex gap-0.5 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "300ms" }} />
+                </span>
+              </>
+            ) : (
+              <span className="break-words leading-snug">
+                {typedText}
+                {typing && <span className="inline-block w-[2px] h-4 bg-white ml-0.5 align-middle animate-pulse" />}
+              </span>
+            )}
           </div>
         </div>
-      ) : speech ? (
-        <div className="absolute z-20" style={{ top: "3%", left: "70%", width: "220px" }}>
-          <div className="relative min-h-[40px] bg-black rounded-2xl rounded-l-md px-4 py-2.5 text-sm font-extrabold text-white text-center shadow-lg flex items-center justify-center">
-            <span className="absolute bottom-[10px] left-[-12px] w-0 h-0
-              border-t-[8px] border-t-transparent
-              border-b-[8px] border-b-transparent
-              border-r-[14px] border-r-black" />
-            <span>{typedText}{typing && <span className="inline-block w-[2px] h-4 bg-white ml-0.5 align-middle animate-pulse" />}</span>
-          </div>
-        </div>
-      ) : null}
+      )}
     </div>
   );
 }
