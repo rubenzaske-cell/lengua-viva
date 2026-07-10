@@ -61,9 +61,9 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
         ...m,
         {
           role: "kuntur",
-          text: data.respuesta || "Sigue practicando 🦙",
-          palabraQuechua: data.palabraQuechua,
-          traduccion: data.traduccion,
+          text: data.respuesta || "No pude procesar tu pregunta 🦙",
+          palabraQuechua: data.palabraQuechua || "",
+          traduccion: data.traduccion || "",
         },
       ]);
     } catch {

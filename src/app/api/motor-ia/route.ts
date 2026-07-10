@@ -16,78 +16,103 @@ export async function POST(req: NextRequest) {
 
     const zai = await getZAI();
 
-    let prompt = "";
-    let systemPrompt = "";
-    let result;
+    let messages: { role: string; content: string }[] = [];
 
     switch (action) {
       case "tutor_kuntur": {
-        // Kuntur como tutor conversacional con IA real
-        systemPrompt = `Eres Kuntur, un cóndor sabio andino que enseña quechua. Eres amigable, motivador y conoces profundamente la cultura andina, el Tawantinsuyu y las tradiciones peruanas.
+        // Sistema: define claramente el rol
+        messages = [
+          {
+            role: "system",
+            content: `Eres un profesor experto en quechua (Runasimi) y cultura andina del Perú. Respondes en español de forma clara, breve y precisa.
 
-Contexto del estudiante:
+REGLAS ESTRICTAS:
+1. Responde EXCLUSIVAMENTE a lo que el usuario pregunta. No divagues ni cambies de tema.
+2. Sé conciso: máximo 3 frases.
+3. Si el usuario pregunta cómo decir algo en quechua, dale la palabra/frase correcta en quechua y su significado en español.
+4. Si pide un consejo, da un consejo práctico sobre aprendizaje.
+5. Si pide traducción, traduce exactamente lo que pidió.
+6. Si NO estás seguro de una traducción, di "No estoy seguro de esa traducción" — NO inventes palabras.
+7. Usa emojis andinos ocasionalmente 🦙🏔️ pero sin exagerar.
+
+VOCABULARIO QUECHUA BÁSICO (usa estas traducciones correctas):
+- Hola = Allinllachu / Imaynallam
+- Gracias = Sulpayki / Payllasunki
+- Buen día = Allin p'unchaw
+- Buenas noches = Allin tuta
+- Madre = Mama
+- Padre = Tayta
+- Sol = Inti
+- Luna = Killa
+- Agua = Unu
+- Fuego = Nina
+- Tierra = Pacha
+- Casa = Wasi
+- Comida = Mikhuy
+- Amor = Khuyay
+- Saber = Yachay
+- Uno = Huk, Dos = Iskay, Tres = Kimsa, Cuatro = Tawa, Cinco = Pisqa
+- Familia = Ayllu
+- Hermoso = Sumaq
+- Cóndor = Kuntur
+- Agua = Unu
+- Noche = Tuta
+- Día = P'unchaw
+
+Datos del estudiante (solo para contexto, NO los menciones a menos que sea relevante):
 - Nombre: ${contextoUsuario?.nombre || "estudiante"}
 - Nivel: ${contextoUsuario?.nivel || "principiante"}
-- Racha actual: ${contextoUsuario?.racha || 0} días
-- Quipus (XP) ganados: ${contextoUsuario?.xp || 0}
-- Lengua que aprende: ${contextoUsuario?.leccion || "quechua"}
-
-El estudiante te dice: "${mensaje}"
-
-Responde como Kuntur de forma BREVE (máximo 2-3 frases), cálida y con emojis andinos 🦙🏔️✨. Debes:
-- Responder de forma natural y conversacional
-- Incluir una palabra o frase en quechua cuando sea relevante (con su traducción entre paréntesis)
-- Dar un consejo práctico o motivación
-- Mantener el tono de un sabio maestro andino
-
-Responde ÚNICAMENTE en JSON válido (sin markdown):
-{
-  "respuesta": "tu respuesta como Kuntur (2-3 frases)",
-  "palabraQuechua": "palabra en quechua enseñada",
-  "traduccion": "traducción al español",
-  "animo": true
-}`;
+- Racha: ${contextoUsuario?.racha || 0} días
+- XP: ${contextoUsuario?.xp || 0}`
+          },
+          {
+            role: "user",
+            content: mensaje || "Hola"
+          }
+        ];
 
         const completion = await zai.chat.completions.create({
-          messages: [
-            { role: "assistant", content: systemPrompt },
-            { role: "user", content: mensaje || "Hola" },
-          ],
+          messages,
           thinking: { type: "disabled" },
         });
 
-        const text = completion.choices[0]?.message?.content || "";
-        try {
-          const jsonText = text.replace(/```json\n?|\n?```/g, "").trim();
-          return NextResponse.json(JSON.parse(jsonText));
-        } catch {
-          return NextResponse.json({
-            respuesta: text,
-            palabraQuechua: "",
-            traduccion: "",
-            animo: true,
-          });
-        }
+        const text = completion.choices[0]?.message?.content || "No pude procesar tu pregunta.";
+
+        // Devolver texto plano simple — sin formato JSON
+        return NextResponse.json({
+          respuesta: text.trim(),
+          palabraQuechua: "",
+          traduccion: "",
+          animo: true,
+        });
       }
 
       case "explicar_palabra": {
-        systemPrompt = `Eres un diccionario cultural vivo de quechua. Explica la palabra: "${mensaje}"
+        messages = [
+          {
+            role: "system",
+            content: `Eres un diccionario experto en quechua. El usuario te dará una palabra y debes explicarla de forma clara y precisa.
 
-Da información precisa y culturalmente correcta. Responde ÚNICAMENTE en JSON:
+Si la palabra NO existe en quechua o no la conoces, di claramente: "No encuentro esa palabra en quechua".
+
+Responde en JSON válido:
 {
-  "palabra": "${mensaje}",
-  "significado": "significado literal",
-  "contextoCultural": "contexto cultural andino (1-2 frases)",
-  "ejemplo": "frase ejemplo en quechua",
+  "palabra": "la palabra",
+  "significado": "significado en español",
+  "contextoCultural": "1-2 frases de contexto andino",
+  "ejemplo": "ejemplo de uso en quechua",
   "traduccionEjemplo": "traducción al español",
   "pronunciacion": "pronunciación fonética"
-}`;
+}`
+          },
+          {
+            role: "user",
+            content: `Explica la palabra: ${mensaje}`
+          }
+        ];
 
         const completion = await zai.chat.completions.create({
-          messages: [
-            { role: "assistant", content: systemPrompt },
-            { role: "user", content: `Explica: ${mensaje}` },
-          ],
+          messages,
           thinking: { type: "disabled" },
         });
 
@@ -108,34 +133,28 @@ Da información precisa y culturalmente correcta. Responde ÚNICAMENTE en JSON:
       }
 
       case "generar_pregunta": {
-        prompt = `Eres un profesor experto de Quechua (Runasimi). Genera UNA pregunta DIFERENTE para enseñar "${tema}" en la lección "${leccion}".
+        messages = [
+          {
+            role: "system",
+            content: `Eres un profesor de quechua. Genera UNA pregunta de práctica sobre "${tema}" para nivel ${nivel || "principiante"}.
 
-Contexto:
-- Nivel del estudiante: ${nivel}
-- Preguntas anteriores (evita repetir): ${preguntasAnteriores?.join(", ") || "ninguna"}
+Evita repetir: ${preguntasAnteriores?.join(", ") || "ninguna"}
 
-Requisitos:
-1. Si es PRINCIPIANTE: preguntas simples, vocabulario básico
-2. Si es INTERMEDIO: frases cortas, gramática simple
-3. Si es AVANZADO: conversaciones complejas, contexto cultural
-
-Tipos posibles: "seleccionar", "escribir", "escuchar", "pronunciar"
-
-Responde ÚNICAMENTE en JSON válido (sin markdown):
+Responde en JSON:
 {
-  "pregunta": "la pregunta clara y en español",
+  "pregunta": "pregunta en español",
   "tipo": "seleccionar",
-  "opciones": ["opción1", "opción2", "opción3", "opción4"],
-  "respuestaCorrecta": "la respuesta correcta",
-  "explicacion": "explicación breve",
+  "opciones": ["op1", "op2", "op3", "op4"],
+  "respuestaCorrecta": "respuesta",
+  "explicacion": "por qué",
   "pronunciacionQuechua": "pronunciación"
-}`;
+}`
+          },
+          { role: "user", content: "Genera la pregunta" }
+        ];
 
         const completion = await zai.chat.completions.create({
-          messages: [
-            { role: "assistant", content: prompt },
-            { role: "user", content: "Genera la pregunta" },
-          ],
+          messages,
           thinking: { type: "disabled" },
         });
 
@@ -145,29 +164,27 @@ Responde ÚNICAMENTE en JSON válido (sin markdown):
       }
 
       case "corregir_pronunciacion": {
-        prompt = `Eres un corrector experto de pronunciación en quechua.
+        messages = [
+          {
+            role: "system",
+            content: `Eres corrector de pronunciación en quechua. Compara lo que el usuario dijo vs lo correcto.
 
-El usuario intentó decir: "${textoDelUsuario}"
-Lo correcto es: "${textoEsperado}"
+Usuario dijo: "${textoDelUsuario}"
+Correcto: "${textoEsperado}"
 
-Analiza:
-1. ¿Qué tan cerca estuvo? (0-100% de precisión)
-2. ¿Sonó correcto?
-3. ¿Qué necesita mejorar?
-
-Responde ÚNICAMENTE en JSON:
+Responde en JSON:
 {
   "precision": 75,
   "correcto": false,
-  "feedback": "Casi perfecto, ajusta la última sílaba",
-  "sugerencia": "Pronuncia más lento: kee-CHU-a"
-}`;
+  "feedback": "feedback breve",
+  "sugerencia": "cómo mejorar"
+}`
+          },
+          { role: "user", content: "Corrige" }
+        ];
 
         const completion = await zai.chat.completions.create({
-          messages: [
-            { role: "assistant", content: prompt },
-            { role: "user", content: "Corrige la pronunciación" },
-          ],
+          messages,
           thinking: { type: "disabled" },
         });
 
@@ -178,28 +195,31 @@ Responde ÚNICAMENTE en JSON:
 
       case "generar_feedback": {
         const esCorrecto = respuestaUsuario?.toLowerCase().trim() === respuestaCorrecta?.toLowerCase().trim();
-        prompt = `Eres un profesor de Quechua motivador. El estudiante respondió:
+        messages = [
+          {
+            role: "system",
+            content: `Eres profesor de quechua. Da feedback sobre la respuesta del estudiante.
+
 Respuesta: "${respuestaUsuario}"
-Esperado: "${respuestaCorrecta}"
-Correcto: ${esCorrecto}
-Tema: ${leccion}
+Correcta: "${respuestaCorrecta}"
+¿Es correcta? ${esCorrecto}
 
-${esCorrecto ? "¡Celebra! Genera feedback positivo y motivador." : "Corrige de forma amable. Explica por qué es incorrecto y cómo mejorar."}
+${esCorrecto ? "Celebra brevemente." : "Corrige amablemente."}
 
-Responde ÚNICAMENTE en JSON:
+Responde en JSON:
 {
   "esCorrecto": ${esCorrecto},
   "puntos": ${esCorrecto ? 10 : 0},
-  "feedback": "mensaje de feedback",
-  "consejo": "consejo para mejorar",
-  "palabrasClave": ["palabra1", "palabra2"]
-}`;
+  "feedback": "feedback",
+  "consejo": "consejo",
+  "palabrasClave": ["palabra"]
+}`
+          },
+          { role: "user", content: "Da feedback" }
+        ];
 
         const completion = await zai.chat.completions.create({
-          messages: [
-            { role: "assistant", content: prompt },
-            { role: "user", content: "Genera feedback" },
-          ],
+          messages,
           thinking: { type: "disabled" },
         });
 
@@ -209,28 +229,26 @@ Responde ÚNICAMENTE en JSON:
       }
 
       case "reto_diario": {
-        prompt = `Genera un reto diario de quechua para nivel ${nivel || "principiante"}.
+        messages = [
+          {
+            role: "system",
+            content: `Genera un reto de quechua para nivel ${nivel || "principiante"}. Que sea alcanzable en 5 minutos.
 
-Debe ser:
-- Alcanzable en 5 minutos
-- Educativo
-- Diferente cada vez
-
-Responde ÚNICAMENTE en JSON:
+Responde en JSON:
 {
-  "titulo": "título corto del reto",
-  "descripcion": "qué debe hacer el estudiante",
-  "tipo": "traducir|escribir|pronunciar|identificar",
-  "pregunta": "la pregunta del reto",
-  "respuesta": "respuesta correcta",
+  "titulo": "título",
+  "descripcion": "qué hacer",
+  "tipo": "traducir|identificar|escribir",
+  "pregunta": "pregunta",
+  "respuesta": "respuesta",
   "xp": 20
-}`;
+}`
+          },
+          { role: "user", content: "Genera reto" }
+        ];
 
         const completion = await zai.chat.completions.create({
-          messages: [
-            { role: "assistant", content: prompt },
-            { role: "user", content: "Genera reto diario" },
-          ],
+          messages,
           thinking: { type: "disabled" },
         });
 
@@ -243,11 +261,13 @@ Responde ÚNICAMENTE en JSON:
         return NextResponse.json({ error: "Action not supported" }, { status: 400 });
     }
   } catch (error) {
-    console.error("Error en API de Motor IA:", error);
-    return NextResponse.json(
-      getFallback("tutor_kuntur", { mensaje }),
-      { status: 200 }
-    );
+    console.error("Error en Motor IA:", error);
+    return NextResponse.json({
+      respuesta: "En este momento no puedo responder. Intenta de nuevo 🦙",
+      palabraQuechua: "",
+      traduccion: "",
+      animo: true,
+    });
   }
 }
 
@@ -266,20 +286,4 @@ export async function GET() {
       "reto_diario",
     ],
   });
-}
-
-// Fallback simple si la IA falla
-function getFallback(action: string, ctx: any) {
-  const palabras = [
-    { r: "¡Sigue practicando! 🦙 Cada palabra cuenta.", p: "Yachay", t: "Saber" },
-    { r: "El quechua es hermoso 🏔️. ¡No te rindas!", p: "Kallpa", t: "Fuerza" },
-    { r: "Cada día te acercas más a dominar el quechua ✨.", p: "Wiñay", t: "Siempre" },
-  ];
-  const idx = Math.floor(Math.random() * palabras.length);
-  return {
-    respuesta: palabras[idx].r,
-    palabraQuechua: palabras[idx].p,
-    traduccion: palabras[idx].t,
-    animo: true,
-  };
 }
