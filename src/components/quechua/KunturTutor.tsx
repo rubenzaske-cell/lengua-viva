@@ -18,9 +18,9 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "kuntur",
-      text: "¡Allinllachu! Soy Kuntur, tu tutor 🦅. Pregúntame cualquier cosa sobre el quechua o pídime un consejo.",
-      palabraQuechua: "Allinllachu",
-      traduccion: "Hola / Buenos días",
+      text: "¡Hola! Soy Kuntur, tu asistente de IA. Puedes preguntarme sobre cualquier tema — ciencia, historia, tecnología, cultura, consejos, o lo que necesites. ¿En qué puedo ayudarte?",
+      palabraQuechua: "",
+      traduccion: "",
     },
   ]);
   const [input, setInput] = useState("");
@@ -90,7 +90,7 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const sugerencias = ["¿Cómo digo gracias?", "Dame un consejo", "Enséñame una palabra", "¿Qué es yachay?"];
+  const sugerencias = ["¿Qué hora es en Japón?", "Explícame la fotosíntesis", "Dame un consejo de vida", "¿Quién fue Einstein?"];
 
   return (
     <motion.div
@@ -107,9 +107,9 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
         <div className="flex-1">
           <h2 className="font-extrabold flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-duo-purple" />
-            Tutor Kuntur IA
+            Kuntur IA
           </h2>
-          <p className="text-xs text-muted-foreground font-semibold">Tu maestro quechua personal</p>
+          <p className="text-xs text-muted-foreground font-semibold">Tu asistente inteligente</p>
         </div>
       </div>
 
