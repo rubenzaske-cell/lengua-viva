@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, Sparkles } from "lucide-react";
+import { Send, X, Sparkles, Trash2 } from "lucide-react";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { useAppStore } from "@/lib/quechua/store";
 import { useTTS } from "@/lib/quechua/useTTS";
+import { toast } from "sonner";
 
 interface Message {
   role: "user" | "kuntur";
@@ -14,36 +15,87 @@ interface Message {
   traduccion?: string;
 }
 
+const WELCOME_MESSAGE: Message = {
+  role: "kuntur",
+  text: "¡Hola! Soy Kuntur, tu asistente de IA. Puedes preguntarme sobre cualquier tema — ciencia, historia, tecnología, cultura, consejos, o lo que necesites. ¿En qué puedo ayudarte?",
+  palabraQuechua: "",
+  traduccion: "",
+};
+
 export function KunturTutor({ onClose }: { onClose: () => void }) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "kuntur",
-      text: "¡Hola! Soy Kuntur, tu asistente de IA. Puedes preguntarme sobre cualquier tema — ciencia, historia, tecnología, cultura, consejos, o lo que necesites. ¿En qué puedo ayudarte?",
-      palabraQuechua: "",
-      traduccion: "",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const user = useAppStore((s) => s.user);
   const stats = useAppStore((s) => s.stats);
   const survey = useAppStore((s) => s.survey);
   const scrollRef = useRef<HTMLDivElement>(null);
   const tts = useTTS();
 
+  // Cargar historial desde la BD al abrir el chat
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch("/api/chat-history");
+        const data = await r.json();
+        if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
+          setMessages(data.messages);
+        }
+      } catch {
+        // Si falla, mantener el mensaje de bienvenida
+      } finally {
+        setLoaded(true);
+      }
+    })();
+  }, []);
+
+  // Guardar historial en la BD cada vez que cambian los mensajes
+  const saveHistory = useCallback(async (msgs: Message[]) => {
+    try {
+      await fetch("/api/chat-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: msgs }),
+      });
+    } catch {
+      // Silencioso: si falla el guardado, no interrumpimos el chat
+    }
+  }, []);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
+
+  // Guardar cuando cambian los mensajes (con debounce para no sobrecargar)
+  useEffect(() => {
+    if (!loaded) return;
+    const timer = setTimeout(() => {
+      saveHistory(messages);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [messages, loaded, saveHistory]);
+
+  const limpiarChat = async () => {
+    setMessages([WELCOME_MESSAGE]);
+    try {
+      await fetch("/api/chat-history", { method: "DELETE" });
+      toast.success("Conversación reiniciada");
+    } catch {
+      // ignore
+    }
+  };
 
   const enviar = async () => {
     if (!input.trim() || loading) return;
     const mensaje = input.trim();
     setInput("");
-    setMessages((m) => [...m, { role: "user", text: mensaje }]);
+    const newMessages = [...messages, { role: "user" as const, text: mensaje }];
+    setMessages(newMessages);
     setLoading(true);
 
     // Construir historial de la conversación (excluyendo el mensaje inicial de bienvenida)
-    const historial = messages.slice(1).map((m) => ({
+    const historial = newMessages.slice(1).map((m) => ({
       role: m.role === "kuntur" ? "assistant" : "user",
       content: m.text,
     }));
@@ -55,7 +107,7 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({
           action: "tutor_kuntur",
           mensaje,
-          historial, // Enviar historial para que Kuntur tenga memoria
+          historial,
           contextoUsuario: {
             nombre: user?.name,
             nivel: survey?.level || "principiante",
@@ -67,23 +119,22 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
       });
       const data = await r.json();
       const respuestaKuntur = data.respuesta || "No pude procesar tu pregunta 🦙";
-      setMessages((m) => [
-        ...m,
-        {
-          role: "kuntur",
-          text: respuestaKuntur,
-          palabraQuechua: data.palabraQuechua || "",
-          traduccion: data.traduccion || "",
-        },
-      ]);
-      // Kuntur habla automáticamente con voz de niño (chuichui = voz animada/infantil)
+      const finalMessages = [...newMessages, {
+        role: "kuntur" as const,
+        text: respuestaKuntur,
+        palabraQuechua: data.palabraQuechua || "",
+        traduccion: data.traduccion || "",
+      }];
+      setMessages(finalMessages);
+      // Guardar inmediatamente después de la respuesta
+      saveHistory(finalMessages);
+      // Kuntur habla automáticamente con voz de niño
       tts.speak(respuestaKuntur, "chuichui");
     } catch {
       const errorMsg = "No pude conectar, pero sigue practicando 🦙";
-      setMessages((m) => [
-        ...m,
-        { role: "kuntur", text: errorMsg },
-      ]);
+      const errorMessages = [...newMessages, { role: "kuntur" as const, text: errorMsg }];
+      setMessages(errorMessages);
+      saveHistory(errorMessages);
       tts.speak(errorMsg, "chuichui");
     } finally {
       setLoading(false);
@@ -111,6 +162,16 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
           </h2>
           <p className="text-xs text-muted-foreground font-semibold">Tu asistente inteligente</p>
         </div>
+        {messages.length > 1 && (
+          <button
+            onClick={limpiarChat}
+            className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+            aria-label="Limpiar conversación"
+            title="Limpiar conversación"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Mensajes */}
