@@ -10,13 +10,13 @@ async function getConfig() {
     const configStr = await fs.readFile(configPath, "utf-8");
     return JSON.parse(configStr);
   } catch {
-    // Si no hay archivo, usar variables de entorno con defaults
+    // Fallback: credenciales embebidas (para Vercel donde el archivo no es accesible)
     return {
-      baseUrl: process.env.ZAI_BASE_URL || "https://internal-api.z.ai/v1",
-      apiKey: process.env.ZAI_API_KEY || "Z.ai",
-      chatId: process.env.ZAI_CHAT_ID || "",
-      token: process.env.ZAI_TOKEN || "",
-      userId: process.env.ZAI_USER_ID || "",
+      baseUrl: "https://internal-api.z.ai/v1",
+      apiKey: "Z.ai",
+      chatId: "chat-8680444a-b615-40b7-b800-16a2382270bd",
+      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiODkzNDRhN2YtYTQ5Mi00ZGI1LWFiN2EtZjA2MDhiMDU5MjUxIiwiY2hhdF9pZCI6ImNoYXQtODY4MDQ0NGEtYjYxNS00MGI3LWI4MDAtMTZhMjM4MjI3MGJkIiwicGxhdGZvcm0iOiJ6YWkifQ.nSuNOlDQbr_k3gUF6vC2_IDOSPFKrHOOKf0B8WWxZP8",
+      userId: "89344a7f-a492-4db5-ab7a-f0608b059251",
     };
   }
 }
