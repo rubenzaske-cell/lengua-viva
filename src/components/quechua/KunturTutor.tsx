@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, Sparkles, Volume2 } from "lucide-react";
+import { Send, X, Sparkles } from "lucide-react";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { useAppStore } from "@/lib/quechua/store";
 import { useTTS } from "@/lib/quechua/useTTS";
@@ -59,20 +59,25 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
         }),
       });
       const data = await r.json();
+      const respuestaKuntur = data.respuesta || "No pude procesar tu pregunta 🦙";
       setMessages((m) => [
         ...m,
         {
           role: "kuntur",
-          text: data.respuesta || "No pude procesar tu pregunta 🦙",
+          text: respuestaKuntur,
           palabraQuechua: data.palabraQuechua || "",
           traduccion: data.traduccion || "",
         },
       ]);
+      // Kuntur habla automáticamente con voz de niño (chuichui = voz animada/infantil)
+      tts.speak(respuestaKuntur, "chuichui");
     } catch {
+      const errorMsg = "No pude conectar, pero sigue practicando 🦙";
       setMessages((m) => [
         ...m,
-        { role: "kuntur", text: "No pude conectar, pero sigue practicando 🦙" },
+        { role: "kuntur", text: errorMsg },
       ]);
+      tts.speak(errorMsg, "chuichui");
     } finally {
       setLoading(false);
     }
@@ -130,23 +135,6 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
                       {msg.palabraQuechua} = <span className="text-muted-foreground">{msg.traduccion}</span>
                     </p>
                   </div>
-                )}
-                {msg.role === "kuntur" && (
-                  <button
-                    onClick={() => tts.speak(msg.text)}
-                    disabled={tts.loading}
-                    className="mt-2 flex items-center gap-1 text-xs font-bold text-duo-blue hover:opacity-80 transition-opacity disabled:opacity-50"
-                    aria-label="Escuchar"
-                  >
-                    {tts.loading ? (
-                      <span className="animate-pulse">Generando...</span>
-                    ) : (
-                      <>
-                        <Volume2 className="w-3.5 h-3.5" />
-                        Escuchar a Kuntur
-                      </>
-                    )}
-                  </button>
                 )}
               </div>
             </motion.div>
