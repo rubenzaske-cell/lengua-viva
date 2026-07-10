@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, Sparkles, Trash2 } from "lucide-react";
+import { Send, X, Sparkles, Trash2, Copy, Check } from "lucide-react";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { useAppStore } from "@/lib/quechua/store";
 import { useTTS } from "@/lib/quechua/useTTS";
@@ -90,12 +90,6 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
     if (!input.trim() || loading) return;
     const mensaje = input.trim();
     setInput("");
-    await enviarMensaje(mensaje);
-  };
-
-  // Función para enviar un mensaje directo (usada por botones como "Crear más código")
-  const enviarMensajeDirecto = async (mensaje: string) => {
-    if (loading) return;
     await enviarMensaje(mensaje);
   };
 
@@ -206,13 +200,7 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
                 }`}
               >
                 {msg.role === "kuntur" ? (
-                  <MessageContent
-                    text={msg.text}
-                    onPedirMas={() => {
-                      // Enviar mensaje para crear más código
-                      enviarMensajeDirecto("Crea más código similar, con variaciones y mejoras");
-                    }}
-                  />
+                  <MessageContent text={msg.text} />
                 ) : (
                   <p className="text-sm font-semibold">{msg.text}</p>
                 )}
@@ -286,7 +274,7 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
 }
 
 // Componente que renderiza texto separando los bloques de código
-function MessageContent({ text, onPedirMas }: { text: string; onPedirMas?: () => void }) {
+function MessageContent({ text }: { text: string }) {
   // Dividir el texto por bloques de código (```...```)
   const parts: { type: "text" | "code"; content: string; lang?: string }[] = [];
   const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
@@ -313,13 +301,19 @@ function MessageContent({ text, onPedirMas }: { text: string; onPedirMas?: () =>
     parts.push({ type: "text", content: text });
   }
 
-  const hasCode = parts.some((p) => p.type === "code");
-  const [copiado, setCopiado] = useState<number | null>(null);
+  const [copiadoTexto, setCopiadoTexto] = useState(false);
+  const [copiadoCodigo, setCopiadoCodigo] = useState<number | null>(null);
 
-  const copiar = (content: string, i: number) => {
+  const copiarTexto = () => {
+    navigator.clipboard?.writeText(text);
+    setCopiadoTexto(true);
+    setTimeout(() => setCopiadoTexto(false), 2000);
+  };
+
+  const copiarCodigo = (content: string, i: number) => {
     navigator.clipboard?.writeText(content);
-    setCopiado(i);
-    setTimeout(() => setCopiado(null), 2000);
+    setCopiadoCodigo(i);
+    setTimeout(() => setCopiadoCodigo(null), 2000);
   };
 
   return (
@@ -331,10 +325,10 @@ function MessageContent({ text, onPedirMas }: { text: string; onPedirMas?: () =>
               <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-800 border-b border-zinc-700">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">{part.lang}</span>
                 <button
-                  onClick={() => copiar(part.content, i)}
+                  onClick={() => copiarCodigo(part.content, i)}
                   className="text-[10px] font-bold text-zinc-400 hover:text-white transition-colors"
                 >
-                  {copiado === i ? "✓ Copiado" : "Copiar"}
+                  {copiadoCodigo === i ? "✓ Copiado" : "Copiar"}
                 </button>
               </div>
               <pre className="p-3 overflow-x-auto text-xs leading-relaxed">
@@ -347,15 +341,23 @@ function MessageContent({ text, onPedirMas }: { text: string; onPedirMas?: () =>
           <p key={i} className="text-sm font-semibold whitespace-pre-wrap leading-relaxed">{part.content}</p>
         );
       })}
-      {hasCode && onPedirMas && (
-        <button
-          onClick={onPedirMas}
-          className="mt-2 flex items-center gap-1.5 text-xs font-bold text-duo-purple hover:opacity-80 transition-opacity"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          Crear más código
-        </button>
-      )}
+      {/* Botón para copiar todo el texto de la respuesta */}
+      <button
+        onClick={copiarTexto}
+        className="mt-1 flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {copiadoTexto ? (
+          <>
+            <Check className="w-3 h-3" />
+            Copiado
+          </>
+        ) : (
+          <>
+            <Copy className="w-3 h-3" />
+            Copiar texto
+          </>
+        )}
+      </button>
     </div>
   );
 }
