@@ -316,14 +316,21 @@ function MessageContent({ text }: { text: string }) {
     setTimeout(() => setCopiadoCodigo(null), 2000);
   };
 
+  const hasCode = parts.some((p) => p.type === "code");
+
   return (
     <div className="space-y-2">
       {parts.map((part, i) => {
         if (part.type === "code") {
           return (
-            <div key={i} className="my-2 rounded-xl overflow-hidden border border-border bg-zinc-900">
+            <div key={i} className="my-2 rounded-xl overflow-hidden border border-zinc-700 bg-zinc-900 shadow-md">
               <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-800 border-b border-zinc-700">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">{part.lang}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                  <span className="ml-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wide">{part.lang}</span>
+                </div>
                 <button
                   onClick={() => copiarCodigo(part.content, i)}
                   className="text-[10px] font-bold text-zinc-400 hover:text-white transition-colors"
@@ -332,7 +339,9 @@ function MessageContent({ text }: { text: string }) {
                 </button>
               </div>
               <pre className="p-3 overflow-x-auto text-xs leading-relaxed">
-                <code className="text-zinc-100 font-mono whitespace-pre">{part.content}</code>
+                <code className="font-mono whitespace-pre">
+                  <HighlightedCode code={part.content} lang={part.lang || "code"} />
+                </code>
               </pre>
             </div>
           );
@@ -341,23 +350,190 @@ function MessageContent({ text }: { text: string }) {
           <p key={i} className="text-sm font-semibold whitespace-pre-wrap leading-relaxed">{part.content}</p>
         );
       })}
-      {/* Botón para copiar todo el texto de la respuesta */}
-      <button
-        onClick={copiarTexto}
-        className="mt-1 flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {copiadoTexto ? (
-          <>
-            <Check className="w-3 h-3" />
-            Copiado
-          </>
-        ) : (
-          <>
-            <Copy className="w-3 h-3" />
-            Copiar texto
-          </>
-        )}
-      </button>
+      {/* Botón para copiar todo el texto SOLO cuando hay código */}
+      {hasCode && (
+        <button
+          onClick={copiarTexto}
+          className="mt-1 flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {copiadoTexto ? (
+            <>
+              <Check className="w-3 h-3" />
+              Copiado
+            </>
+          ) : (
+            <>
+              <Copy className="w-3 h-3" />
+              Copiar texto
+            </>
+          )}
+        </button>
+      )}
     </div>
+  );
+}
+
+// Resaltador de sintaxis simple (sin dependencias externas)
+function HighlightedCode({ code, lang }: { code: string; lang: string }) {
+  // Colores estilo VS Code / drácula
+  const COLORS = {
+    keyword: "#ff79c6",    // rosa - keywords (function, const, if, etc.)
+    string: "#f1fa8c",     // amarillo - strings
+    number: "#bd93f9",     // morado - números
+    comment: "#6272a4",    // gris azul - comentarios
+    function: "#50fa7b",   // verde - nombres de funciones
+    tag: "#ff79c6",        // rosa - tags HTML/JSX
+    attr: "#50fa7b",       // verde - atributos
+    punctuation: "#f8f8f2", // blanco - puntuación
+    plain: "#f8f8f2",      // blanco - texto normal
+  };
+
+  // Keywords comunes
+  const keywords = [
+    "function", "const", "let", "var", "if", "else", "return", "for", "while",
+    "import", "export", "default", "class", "extends", "new", "this", "async",
+    "await", "try", "catch", "throw", "typeof", "instanceof", "in", "of",
+    "true", "false", "null", "undefined", "void", "delete", "switch", "case",
+    "break", "continue", "do", "yield", "static", "public", "private", "protected",
+    "def", "print", "lambda", "with", "as", "pass", "from", "elif", "is", "not",
+    "and", "or", "None", "True", "False", "self", "struct", "fn", "pub", "use",
+    "module", "interface", "type", "enum", "impl", "where", "match",
+  ];
+
+  // Tokenizar el código
+  const tokenize = (code: string) => {
+    const tokens: { text: string; color: string }[] = [];
+    let i = 0;
+
+    while (i < code.length) {
+      const char = code[i];
+      const rest = code.slice(i);
+
+      // Comentarios // o #
+      if (char === "/" && code[i + 1] === "/") {
+        let comment = "";
+        while (i < code.length && code[i] !== "\n") {
+          comment += code[i];
+          i++;
+        }
+        tokens.push({ text: comment, color: COLORS.comment });
+        continue;
+      }
+      if (char === "#") {
+        let comment = "";
+        while (i < code.length && code[i] !== "\n") {
+          comment += code[i];
+          i++;
+        }
+        tokens.push({ text: comment, color: COLORS.comment });
+        continue;
+      }
+      // Comentarios /* */
+      if (char === "/" && code[i + 1] === "*") {
+        let comment = "/*";
+        i += 2;
+        while (i < code.length && !(code[i] === "*" && code[i + 1] === "/")) {
+          comment += code[i];
+          i++;
+        }
+        comment += "*/";
+        i += 2;
+        tokens.push({ text: comment, color: COLORS.comment });
+        continue;
+      }
+
+      // Strings con comillas dobles, simples o backticks
+      if (char === '"' || char === "'" || char === "`") {
+        const quote = char;
+        let str = char;
+        i++;
+        while (i < code.length && code[i] !== quote) {
+          str += code[i];
+          if (code[i] === "\\") {
+            i++;
+            str += code[i] || "";
+          }
+          i++;
+        }
+        str += quote;
+        i++;
+        tokens.push({ text: str, color: COLORS.string });
+        continue;
+      }
+
+      // Números
+      if (/[0-9]/.test(char)) {
+        let num = "";
+        while (i < code.length && /[0-9.]/.test(code[i])) {
+          num += code[i];
+          i++;
+        }
+        tokens.push({ text: num, color: COLORS.number });
+        continue;
+      }
+
+      // Identificadores y keywords
+      if (/[a-zA-Z_$]/.test(char)) {
+        let word = "";
+        while (i < code.length && /[a-zA-Z0-9_$]/.test(code[i])) {
+          word += code[i];
+          i++;
+        }
+        // Verificar si es keyword
+        if (keywords.includes(word)) {
+          tokens.push({ text: word, color: COLORS.keyword });
+        }
+        // Verificar si es llamada a función (sigue un paréntesis)
+        else if (code[i] === "(" || code[i] === " ") {
+          let j = i;
+          while (j < code.length && code[j] === " ") j++;
+          if (code[j] === "(") {
+            tokens.push({ text: word, color: COLORS.function });
+          } else {
+            tokens.push({ text: word, color: COLORS.plain });
+          }
+        }
+        // JSX tags (después de <)
+        else if (tokens.length > 0 && tokens[tokens.length - 1].text === "<") {
+          tokens.push({ text: word, color: COLORS.tag });
+        }
+        else {
+          tokens.push({ text: word, color: COLORS.plain });
+        }
+        continue;
+      }
+
+      // Tags JSX/HTML < y >
+      if (char === "<" || char === ">") {
+        tokens.push({ text: char, color: COLORS.tag });
+        i++;
+        continue;
+      }
+
+      // Puntuación y operadores
+      if (/[{}()\[\];,.:=+\-*/%<>!&|?]/.test(char)) {
+        tokens.push({ text: char, color: COLORS.punctuation });
+        i++;
+        continue;
+      }
+
+      // Espacios y otros
+      tokens.push({ text: char, color: COLORS.plain });
+      i++;
+    }
+
+    return tokens;
+  };
+
+  const tokens = tokenize(code);
+
+  return (
+    <>
+      {tokens.map((token, idx) => (
+        <span key={idx} style={{ color: token.color }}>
+          {token.text}
+        </span>
+      ))}
+    </>
   );
 }
