@@ -3,11 +3,14 @@
 import { CURRICULUM } from "@/lib/quechua/content";
 import { useAppStore } from "@/lib/quechua/store";
 import { Check, Lock, Crown, BookOpen } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { KunturMascot, KUNTUR_PHRASES } from "@/components/quechua/KunturMascot";
 import { getKunturGreetingForPlan } from "@/lib/quechua/survey";
 import { QuipuKnot } from "@/components/quechua/QuipuKnot";
+import { KunturTutor } from "@/components/quechua/KunturTutor";
+import { Sparkles } from "lucide-react";
+import { useState } from "react";
 
 // Offsets en píxeles para crear el camino serpenteante
 const OFFSETS = [0, 60, 100, 60, 0, -60, -100, -60];
@@ -17,6 +20,7 @@ export function LearnPath() {
   const startLesson = useAppStore((s) => s.startLesson);
   const stats = useAppStore((s) => s.stats);
   const survey = useAppStore((s) => s.survey);
+  const [showTutor, setShowTutor] = useState(false);
 
   // Construir lista plana de lecciones con su unidad
   const allLessons = useMemo(() => {
@@ -197,6 +201,22 @@ export function LearnPath() {
           <p className="font-bold text-muted-foreground text-sm">¡Sigue practicando para dominar el quechua!</p>
         </div>
       </div>
+
+      {/* Botón flotante del Tutor Kuntur IA */}
+      <button
+        onClick={() => setShowTutor(true)}
+        className="fixed bottom-24 right-4 z-40 duo-btn duo-btn-purple shadow-lg"
+        style={{ padding: "0.75rem 1.25rem" }}
+        aria-label="Preguntar a Kuntur"
+      >
+        <Sparkles className="w-5 h-5" />
+        <span className="hidden sm:inline">Preguntar a Kuntur</span>
+      </button>
+
+      {/* Modal del tutor */}
+      <AnimatePresence>
+        {showTutor && <KunturTutor onClose={() => setShowTutor(false)} />}
+      </AnimatePresence>
     </div>
   );
 }
