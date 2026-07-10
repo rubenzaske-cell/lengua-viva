@@ -42,6 +42,12 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
     setMessages((m) => [...m, { role: "user", text: mensaje }]);
     setLoading(true);
 
+    // Construir historial de la conversación (excluyendo el mensaje inicial de bienvenida)
+    const historial = messages.slice(1).map((m) => ({
+      role: m.role === "kuntur" ? "assistant" : "user",
+      content: m.text,
+    }));
+
     try {
       const r = await fetch("/api/motor-ia", {
         method: "POST",
@@ -49,6 +55,7 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({
           action: "tutor_kuntur",
           mensaje,
+          historial, // Enviar historial para que Kuntur tenga memoria
           contextoUsuario: {
             nombre: user?.name,
             nivel: survey?.level || "principiante",

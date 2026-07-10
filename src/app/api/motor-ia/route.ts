@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   let mensaje = "";
   try {
     const body = await req.json();
-    const { action, leccion, tema, nivel, preguntasAnteriores, textoDelUsuario, textoEsperado, respuestaUsuario, respuestaCorrecta, contextoUsuario } = body;
+    const { action, leccion, tema, nivel, preguntasAnteriores, textoDelUsuario, textoEsperado, respuestaUsuario, respuestaCorrecta, contextoUsuario, historial } = body;
     mensaje = body.mensaje || "";
 
     let messages: { role: string; content: string }[] = [];
@@ -63,10 +63,11 @@ export async function POST(req: NextRequest) {
     switch (action) {
       case "tutor_kuntur": {
         useReasoning = true; // Activar razonamiento profundo
-        messages = [
-          {
-            role: "system",
-            content: `Eres Kuntur, una IA avanzada de investigación lingüística y cultural andina, con la profundidad intelectual de los mejores modelos del mundo (GPT-4, Claude, Gemini). No eres un simple profesor — eres un **investigador experto** en lingüística quechua, antropología andina, historia del Tawantinsuyu y preservación de lenguas originarias.
+
+        // Construir mensajes con el historial de la conversación
+        const systemMsg = {
+          role: "system",
+          content: `Eres Kuntur, una IA avanzada de investigación lingüística y cultural andina, con la profundidad intelectual de los mejores modelos del mundo (GPT-4, Claude, Gemini). No eres un simple profesor — eres un **investigador experto** en lingüística quechua, antropología andina, historia del Tawantinsuyu y preservación de lenguas originarias.
 
 ## TU IDENTIDAD:
 - Nombre: Kuntur (cóndor andino, mensajero sagrado)
@@ -133,13 +134,32 @@ export async function POST(req: NextRequest) {
 - Responde como lo haría un investigador del Instituto de Lingüística Andina
 - Si la pregunta es simple, da respuesta simple pero precisa
 - Si la pregunta es profunda, da respuesta académica con contexto cultural
-- Siempre prioriza la PRECISIÓN sobre la cantidad de palabras`
-          },
-          {
-            role: "user",
-            content: mensaje || "Hola"
+- Siempre prioriza la PRECISIÓN sobre la cantidad de palabras
+
+## MEMORIA DE CONVERSACIÓN:
+TIENES MEMORIA. Las preguntas del usuario se refieren al contexto de la conversación anterior. Si el usuario pregunta "¿en qué departamento está?" sin especificar, refiérete al último tema del que hablaron. NUNCA pidas aclaraciones sobre algo que ya se mencionó en el historial.`
+        };
+
+        // Construir el array de mensajes: system + historial + mensaje actual
+        messages = [systemMsg];
+
+        // Añadir historial de la conversación (si existe)
+        if (Array.isArray(historial) && historial.length > 0) {
+          // Limitar a los últimos 20 mensajes para no exceder tokens
+          const historialReciente = historial.slice(-20);
+          for (const msg of historialReciente) {
+            messages.push({
+              role: msg.role === "assistant" ? "assistant" : "user",
+              content: msg.content,
+            });
           }
-        ];
+        }
+
+        // Añadir el mensaje actual del usuario
+        messages.push({
+          role: "user",
+          content: mensaje || "Hola",
+        });
 
         responseText = await callGroqChat(messages, useReasoning);
         return NextResponse.json({
