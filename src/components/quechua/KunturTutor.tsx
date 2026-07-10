@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, Sparkles } from "lucide-react";
+import { Send, X, Sparkles, Volume2 } from "lucide-react";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { useAppStore } from "@/lib/quechua/store";
+import { useTTS } from "@/lib/quechua/useTTS";
 
 interface Message {
   role: "user" | "kuntur";
@@ -28,6 +29,7 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
   const stats = useAppStore((s) => s.stats);
   const survey = useAppStore((s) => s.survey);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const tts = useTTS();
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -128,6 +130,23 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
                       {msg.palabraQuechua} = <span className="text-muted-foreground">{msg.traduccion}</span>
                     </p>
                   </div>
+                )}
+                {msg.role === "kuntur" && (
+                  <button
+                    onClick={() => tts.speak(msg.text)}
+                    disabled={tts.loading}
+                    className="mt-2 flex items-center gap-1 text-xs font-bold text-duo-blue hover:opacity-80 transition-opacity disabled:opacity-50"
+                    aria-label="Escuchar"
+                  >
+                    {tts.loading ? (
+                      <span className="animate-pulse">Generando...</span>
+                    ) : (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5" />
+                        Escuchar a Kuntur
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
             </motion.div>
