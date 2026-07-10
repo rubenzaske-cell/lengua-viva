@@ -129,11 +129,6 @@ export function KunturMascot({
                 borderRight: "12px solid black",
               }}
             />
-            {/* Pequeño punto de pensamiento entre Kuntur y la burbuja */}
-            <span
-              className="absolute rounded-full bg-black"
-              style={{ top: "4px", left: "-18px", width: "5px", height: "5px", opacity: 0.6 }}
-            />
             {writing ? (
               <>
                 <span className="truncate">{msg}</span>
