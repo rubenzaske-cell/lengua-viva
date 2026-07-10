@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Groq API (Llama 3.3 - gratis y rápido)
-const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
+// OpenRouter API (modelos gratis, sin límites estrictos)
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY || "";
 
-// Llamar al API de Groq con reintentos y manejo de errores robusto
+// Llamar al API de OpenRouter con reintentos y manejo de errores robusto
 async function callGroqChat(messages: { role: string; content: string }[], useReasoning: boolean = false): Promise<string> {
-  if (!GROQ_API_KEY) {
-    throw new Error("No GROQ_API_KEY configured");
+  if (!OPENROUTER_API_KEY) {
+    throw new Error("No OPENROUTER_API_KEY configured");
   }
 
-  // Mapear roles correctamente para Groq
-  const groqMessages = messages.map((m) => {
+  // Mapear roles correctamente para OpenRouter
+  const apiMessages = messages.map((m) => {
     if (m.role === "system") return { role: "system", content: m.content };
     if (m.role === "assistant") return { role: "assistant", content: m.content };
     return { role: "user", content: m.content };
   });
 
   const body: any = {
-    model: "llama-3.3-70b-versatile",
-    messages: groqMessages,
+    model: "meta-llama/llama-3.3-70b-instruct:free",
+    messages: apiMessages,
     temperature: useReasoning ? 0.5 : 0.6,
     max_tokens: useReasoning ? 1000 : 800,
     top_p: useReasoning ? 0.92 : 0.95,
@@ -31,13 +31,15 @@ async function callGroqChat(messages: { role: string; content: string }[], useRe
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      const timeout = setTimeout(() => controller.abort(), 45000); // 45s timeout (OpenRouter puede ser más lento)
 
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${GROQ_API_KEY}`,
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
           "Content-Type": "application/json",
+          "HTTP-Referer": "https://lengua-viva.vercel.app",
+          "X-Title": "Lengua Viva",
         },
         body: JSON.stringify(body),
         signal: controller.signal,
@@ -47,41 +49,38 @@ async function callGroqChat(messages: { role: string; content: string }[], useRe
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Groq API error (intento ${attempt}):`, response.status, errorText);
-        // Si es 429 (rate limit) o 5xx, reintentar
+        console.error(`OpenRouter API error (intento ${attempt}):`, response.status, errorText);
         if (response.status === 429 || response.status >= 500) {
-          lastError = new Error(`Groq API error: ${response.status}`);
-          await new Promise(r => setTimeout(r, 1000 * attempt)); // backoff
+          lastError = new Error(`OpenRouter API error: ${response.status}`);
+          await new Promise(r => setTimeout(r, 2000 * attempt));
           continue;
         }
-        // Si es 401/403, no reintentar (API key inválida)
-        throw new Error(`Groq API error: ${response.status} - ${errorText.slice(0, 200)}`);
+        throw new Error(`OpenRouter API error: ${response.status} - ${errorText.slice(0, 200)}`);
       }
 
       const data = await response.json();
       const text = data.choices?.[0]?.message?.content || "";
 
       if (!text) {
-        throw new Error("Respuesta vacía de Groq");
+        throw new Error("Respuesta vacía de OpenRouter");
       }
 
       return cleanMarkdown(text);
     } catch (err: any) {
       if (err.name === "AbortError") {
         console.error(`Timeout en intento ${attempt}`);
-        lastError = new Error("Timeout - Groq no respondió en 30s");
+        lastError = new Error("Timeout - OpenRouter no respondió en 45s");
       } else {
         lastError = err;
       }
-      // Si no es rate limit, no reintentar
       if (!err.message?.includes("429") && !err.message?.includes("5")) {
         break;
       }
-      await new Promise(r => setTimeout(r, 1000 * attempt));
+      await new Promise(r => setTimeout(r, 2000 * attempt));
     }
   }
 
-  throw lastError || new Error("Error desconocido en Groq");
+  throw lastError || new Error("Error desconocido en OpenRouter");
 }
 
 // Función para limpiar markdown manteniendo bloques de código
@@ -486,9 +485,9 @@ Responde en JSON:
 export async function GET() {
   return NextResponse.json({
     status: "ok",
-    iaActiva: !!GROQ_API_KEY,
-    proveedor: "Groq (Llama 3.3 70B)",
-    nivel: "Investigador profesional - razonamiento profundo",
+    iaActiva: !!OPENROUTER_API_KEY,
+    proveedor: "OpenRouter (Llama 3.3 70B)",
+    nivel: "IA profesional - sin límites",
     acciones: [
       "generar_pregunta",
       "corregir_pronunciacion",
