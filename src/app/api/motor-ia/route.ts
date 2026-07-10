@@ -1,10 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Usar el SDK de Z.ai (IA potente, sin necesidad de API key)
+// Configuración de Z.ai desde variables de entorno o archivo local
+const ZAI_CONFIG = {
+  baseUrl: process.env.ZAI_BASE_URL || "https://internal-api.z.ai/v1",
+  apiKey: process.env.ZAI_API_KEY || "Z.ai",
+  chatId: process.env.ZAI_CHAT_ID || "",
+  token: process.env.ZAI_TOKEN || "",
+  userId: process.env.ZAI_USER_ID || "",
+};
+
+// Usar el SDK de Z.ai
 let zaiInstance: any = null;
 async function getZAI() {
   if (!zaiInstance) {
+    // Intentar crear el archivo de configuración si no existe
     const ZAI = (await import("z-ai-web-dev-sdk")).default;
+
+    // Si hay token en variables de entorno, usarlo
+    if (process.env.ZAI_TOKEN || process.env.ZAI_API_KEY) {
+      // Crear instancia con configuración de entorno
+      const fs = await import("fs");
+      const path = await import("path");
+      const configPath = path.join(process.cwd(), ".z-ai-config");
+      if (!fs.existsSync(configPath)) {
+        fs.writeFileSync(configPath, JSON.stringify({
+          baseUrl: ZAI_CONFIG.baseUrl,
+          apiKey: ZAI_CONFIG.apiKey,
+          chatId: ZAI_CONFIG.chatId,
+          token: ZAI_CONFIG.token,
+          userId: ZAI_CONFIG.userId,
+        }, null, 2));
+      }
+    }
+
     zaiInstance = await ZAI.create();
   }
   return zaiInstance;
@@ -14,13 +42,18 @@ export async function POST(req: NextRequest) {
   try {
     const { action, leccion, tema, nivel, preguntasAnteriores, textoDelUsuario, textoEsperado, respuestaUsuario, respuestaCorrecta, mensaje, contextoUsuario } = await req.json();
 
-    const zai = await getZAI();
+    let zai;
+    try {
+      zai = await getZAI();
+    } catch (err) {
+      console.error("No se pudo inicializar Z.ai:", err);
+      return NextResponse.json(getFallback("tutor_kuntur", { mensaje }));
+    }
 
     let messages: { role: string; content: string }[] = [];
 
     switch (action) {
       case "tutor_kuntur": {
-        // Sistema: define claramente el rol
         messages = [
           {
             role: "system",
@@ -55,7 +88,6 @@ VOCABULARIO QUECHUA BÁSICO (usa estas traducciones correctas):
 - Familia = Ayllu
 - Hermoso = Sumaq
 - Cóndor = Kuntur
-- Agua = Unu
 - Noche = Tuta
 - Día = P'unchaw
 
@@ -78,7 +110,6 @@ Datos del estudiante (solo para contexto, NO los menciones a menos que sea relev
 
         const text = completion.choices[0]?.message?.content || "No pude procesar tu pregunta.";
 
-        // Devolver texto plano simple — sin formato JSON
         return NextResponse.json({
           respuesta: text.trim(),
           palabraQuechua: "",
@@ -262,12 +293,7 @@ Responde en JSON:
     }
   } catch (error) {
     console.error("Error en Motor IA:", error);
-    return NextResponse.json({
-      respuesta: "En este momento no puedo responder. Intenta de nuevo 🦙",
-      palabraQuechua: "",
-      traduccion: "",
-      animo: true,
-    });
+    return NextResponse.json(getFallback("tutor_kuntur", { mensaje }));
   }
 }
 
@@ -286,4 +312,20 @@ export async function GET() {
       "reto_diario",
     ],
   });
+}
+
+// Fallback simple si la IA falla
+function getFallback(action: string, ctx: any) {
+  const palabras = [
+    { r: "¡Sigue practicando! 🦙 Cada palabra cuenta.", p: "Yachay", t: "Saber" },
+    { r: "El quechua es hermoso 🏔️. ¡No te rindas!", p: "Kallpa", t: "Fuerza" },
+    { r: "Cada día te acercas más a dominar el quechua ✨.", p: "Wiñay", t: "Siempre" },
+  ];
+  const idx = Math.floor(Math.random() * palabras.length);
+  return {
+    respuesta: palabras[idx].r,
+    palabraQuechua: palabras[idx].p,
+    traduccion: palabras[idx].t,
+    animo: true,
+  };
 }
