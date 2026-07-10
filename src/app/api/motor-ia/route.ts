@@ -1,62 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 
-// Configuración de Z.ai
-async function getConfig() {
-  // Intentar leer del archivo .z-ai-config
-  try {
-    const configPath = path.join(process.cwd(), ".z-ai-config");
-    const configStr = await fs.readFile(configPath, "utf-8");
-    return JSON.parse(configStr);
-  } catch {
-    // Fallback: credenciales embebidas (para Vercel donde el archivo no es accesible)
-    return {
-      baseUrl: "https://internal-api.z.ai/v1",
-      apiKey: "Z.ai",
-      chatId: "chat-8680444a-b615-40b7-b800-16a2382270bd",
-      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiODkzNDRhN2YtYTQ5Mi00ZGI1LWFiN2EtZjA2MDhiMDU5MjUxIiwiY2hhdF9pZCI6ImNoYXQtODY4MDQ0NGEtYjYxNS00MGI3LWI4MDAtMTZhMjM4MjI3MGJkIiwicGxhdGZvcm0iOiJ6YWkifQ.nSuNOlDQbr_k3gUF6vC2_IDOSPFKrHOOKf0B8WWxZP8",
-      userId: "89344a7f-a492-4db5-ab7a-f0608b059251",
-    };
+// Gemini API de Google
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+
+// Llamar al API de Gemini directamente con fetch
+async function callGeminiChat(messages: { role: string; content: string }[]) {
+  if (!GEMINI_API_KEY) {
+    throw new Error("No GEMINI_API_KEY configured");
   }
-}
 
-// Llamar directamente al API de Z.ai con fetch (sin SDK)
-async function callZaiChat(messages: { role: string; content: string }[]) {
-  const config = await getConfig();
-  const url = `${config.baseUrl}/chat/completions`;
+  // Convertir mensajes al formato de Gemini
+  // Gemini usa "user" y "model" en lugar de "user" y "assistant"/"system"
+  const contents = messages.map((m) => ({
+    role: m.role === "assistant" || m.role === "system" ? "user" : "user",
+    parts: [{ text: m.content }],
+  }));
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${config.apiKey}`,
-    "X-Z-AI-From": "Z",
-  };
-  // El API requiere X-Token header
-  if (config.token) {
-    headers["X-Token"] = config.token;
-  }
+  // Combinar todos los mensajes system+assistant en uno solo de user
+  // Gemini no soporta system prompts directamente, así que lo incluimos en el primer mensaje
+  const systemMessages = messages.filter((m) => m.role === "system" || m.role === "assistant");
+  const userMessages = messages.filter((m) => m.role === "user");
+
+  const promptText = [
+    ...systemMessages.map((m) => m.content),
+    ...userMessages.map((m) => `Usuario: ${m.content}`),
+  ].join("\n\n");
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
   const body = {
-    messages,
-    // Usar chatId si existe para mantener contexto
-    ...(config.chatId ? { chat_id: config.chatId } : {}),
-    ...(config.userId ? { user_id: config.userId } : {}),
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: promptText }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 500,
+    },
   };
 
   const response = await fetch(url, {
     method: "POST",
-    headers,
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("Z.ai API error:", response.status, errorText);
-    throw new Error(`Z.ai API error: ${response.status}`);
+    console.error("Gemini API error:", response.status, errorText);
+    throw new Error(`Gemini API error: ${response.status}`);
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  return text;
 }
 
 export async function POST(req: NextRequest) {
@@ -120,7 +119,7 @@ Datos del estudiante (solo para contexto, NO los menciones a menos que sea relev
           }
         ];
 
-        responseText = await callZaiChat(messages);
+        responseText = await callGeminiChat(messages);
         return NextResponse.json({
           respuesta: responseText.trim(),
           palabraQuechua: "",
@@ -153,7 +152,7 @@ Responde en JSON válido:
           }
         ];
 
-        responseText = await callZaiChat(messages);
+        responseText = await callGeminiChat(messages);
         try {
           const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
           return NextResponse.json(JSON.parse(jsonText));
@@ -190,7 +189,7 @@ Responde en JSON:
           { role: "user", content: "Genera la pregunta" }
         ];
 
-        responseText = await callZaiChat(messages);
+        responseText = await callGeminiChat(messages);
         const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
@@ -215,7 +214,7 @@ Responde en JSON:
           { role: "user", content: "Corrige" }
         ];
 
-        responseText = await callZaiChat(messages);
+        responseText = await callGeminiChat(messages);
         const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
@@ -245,7 +244,7 @@ Responde en JSON:
           { role: "user", content: "Da feedback" }
         ];
 
-        responseText = await callZaiChat(messages);
+        responseText = await callGeminiChat(messages);
         const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
@@ -269,7 +268,7 @@ Responde en JSON:
           { role: "user", content: "Genera reto" }
         ];
 
-        responseText = await callZaiChat(messages);
+        responseText = await callGeminiChat(messages);
         const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
@@ -287,8 +286,8 @@ Responde en JSON:
 export async function GET() {
   return NextResponse.json({
     status: "ok",
-    iaActiva: true,
-    proveedor: "Z.ai (fetch directo)",
+    iaActiva: !!GEMINI_API_KEY,
+    proveedor: "Google Gemini",
     acciones: [
       "generar_pregunta",
       "corregir_pronunciacion",
@@ -300,7 +299,7 @@ export async function GET() {
   });
 }
 
-// Fallback simple si la IA falla
+// Fallback si la IA falla
 function getFallback(action: string, ctx: any) {
   const palabras = [
     { r: "¡Sigue practicando! 🦙 Cada palabra cuenta.", p: "Yachay", t: "Saber" },
