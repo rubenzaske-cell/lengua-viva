@@ -52,30 +52,36 @@ async function callGroqChat(messages: { role: string; content: string }[], useRe
 
   const data = await response.json();
   let text = data.choices?.[0]?.message?.content || "";
+
   // Limpiar markdown PERO mantener bloques de código (```...```)
   // Primero, extraer y proteger los bloques de código
   const codeBlocks: string[] = [];
-  text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+  // Regex más robusta: captura bloques de código con o sin lenguaje, con o sin salto de línea
+  text = text.replace(/```(\w+)?\s*\n?([\s\S]*?)```/g, (match, lang, code) => {
     const langLabel = lang || "code";
-    const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+    const placeholder = `\n__CODE_BLOCK_${codeBlocks.length}__\n`;
     codeBlocks.push(`\`\`\`${langLabel}\n${code.trim()}\n\`\`\``);
     return placeholder;
   });
 
   // Ahora limpiar markdown del resto del texto (sin tocar los placeholders)
   text = text.replace(/\*\*(.+?)\*\*/g, "$1"); // **texto** → texto
-  text = text.replace(/\*(.+?)\*/g, "$1");     // *texto* → texto
+  text = text.replace(/(?<!\w)\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, "$1"); // *texto* → texto (sin afectar multiplicación)
   text = text.replace(/__(.+?)__/g, "$1");     // __texto__ → texto
-  text = text.replace(/(?<!\w)_(.+?)_(?!\w)/g, "$1"); // _texto_ → texto (cuidado con palabras_con_guion)
+  // NO quitar _ individuales para no romper palabras como useState, my_var, etc.
   text = text.replace(/(?<!`)`([^`\n]+)`(?!`)/g, "$1"); // `texto` → texto (pero no ``` ```)
-  text = text.replace(/#{1,6}\s/g, "");        // # Título → Título
+  text = text.replace(/^#{1,6}\s/gm, "");       // # Título → Título (solo al inicio de línea)
+  text = text.replace(/^\s*[-*]\s/gm, "");      // - item → item (listas con viñetas al inicio)
 
   // Restaurar los bloques de código
   codeBlocks.forEach((block, i) => {
     text = text.replace(`__CODE_BLOCK_${i}__`, block);
   });
 
-  return text.trim();
+  // Limpiar espacios extra y saltos de línea múltiples
+  text = text.replace(/\n{3,}/g, "\n\n").trim();
+
+  return text;
 }
 
 export async function POST(req: NextRequest) {

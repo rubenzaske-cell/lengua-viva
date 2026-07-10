@@ -132,7 +132,11 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
       }];
       setMessages(finalMessages);
       saveHistory(finalMessages);
-      tts.speak(respuestaKuntur, "chuichui");
+      // TTS: solo leer el texto sin código (extraer texto fuera de bloques de código)
+      const textoParaHablar = respuestaKuntur.replace(/```[\s\S]*?```/g, "").trim();
+      if (textoParaHablar) {
+        tts.speak(textoParaHablar, "chuichui");
+      }
     } catch {
       const errorMsg = "No pude conectar, pero sigue practicando 🦙";
       const errorMessages = [...newMessages, { role: "kuntur" as const, text: errorMsg }];
