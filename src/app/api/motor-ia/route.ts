@@ -1,61 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Gemini API de Google
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+// Groq API (Llama 3.3 - gratis y rápido)
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 
-// Llamar al API de Gemini directamente con fetch
-async function callGeminiChat(messages: { role: string; content: string }[]) {
-  if (!GEMINI_API_KEY) {
-    throw new Error("No GEMINI_API_KEY configured");
+// Llamar al API de Groq (compatible con OpenAI)
+async function callGroqChat(messages: { role: string; content: string }[]) {
+  if (!GROQ_API_KEY) {
+    throw new Error("No GROQ_API_KEY configured");
   }
 
-  // Convertir mensajes al formato de Gemini
-  // Gemini usa "user" y "model" en lugar de "user" y "assistant"/"system"
-  const contents = messages.map((m) => ({
-    role: m.role === "assistant" || m.role === "system" ? "user" : "user",
-    parts: [{ text: m.content }],
+  // Convertir "system" a "system" (Groq lo soporta)
+  const groqMessages = messages.map((m) => ({
+    role: m.role === "assistant" || m.role === "system" ? "system" : "user",
+    content: m.content,
   }));
 
-  // Combinar todos los mensajes system+assistant en uno solo de user
-  // Gemini no soporta system prompts directamente, así que lo incluimos en el primer mensaje
-  const systemMessages = messages.filter((m) => m.role === "system" || m.role === "assistant");
-  const userMessages = messages.filter((m) => m.role === "user");
-
-  const promptText = [
-    ...systemMessages.map((m) => m.content),
-    ...userMessages.map((m) => `Usuario: ${m.content}`),
-  ].join("\n\n");
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-  const body = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: promptText }],
-      },
-    ],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 500,
-    },
-  };
-
-  const response = await fetch(url, {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers: {
+      "Authorization": `Bearer ${GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: groqMessages,
+      temperature: 0.7,
+      max_tokens: 500,
+    }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("Gemini API error:", response.status, errorText);
-    throw new Error(`Gemini API error: ${response.status}`);
+    console.error("Groq API error:", response.status, errorText);
+    throw new Error(`Groq API error: ${response.status}`);
   }
 
   const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  return text;
+  return data.choices?.[0]?.message?.content || "";
 }
 
 export async function POST(req: NextRequest) {
@@ -119,7 +100,7 @@ Datos del estudiante (solo para contexto, NO los menciones a menos que sea relev
           }
         ];
 
-        responseText = await callGeminiChat(messages);
+        responseText = await callGroqChat(messages);
         return NextResponse.json({
           respuesta: responseText.trim(),
           palabraQuechua: "",
@@ -152,7 +133,7 @@ Responde en JSON válido:
           }
         ];
 
-        responseText = await callGeminiChat(messages);
+        responseText = await callGroqChat(messages);
         try {
           const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
           return NextResponse.json(JSON.parse(jsonText));
@@ -189,7 +170,7 @@ Responde en JSON:
           { role: "user", content: "Genera la pregunta" }
         ];
 
-        responseText = await callGeminiChat(messages);
+        responseText = await callGroqChat(messages);
         const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
@@ -214,7 +195,7 @@ Responde en JSON:
           { role: "user", content: "Corrige" }
         ];
 
-        responseText = await callGeminiChat(messages);
+        responseText = await callGroqChat(messages);
         const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
@@ -244,7 +225,7 @@ Responde en JSON:
           { role: "user", content: "Da feedback" }
         ];
 
-        responseText = await callGeminiChat(messages);
+        responseText = await callGroqChat(messages);
         const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
@@ -268,7 +249,7 @@ Responde en JSON:
           { role: "user", content: "Genera reto" }
         ];
 
-        responseText = await callGeminiChat(messages);
+        responseText = await callGroqChat(messages);
         const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
@@ -286,8 +267,8 @@ Responde en JSON:
 export async function GET() {
   return NextResponse.json({
     status: "ok",
-    iaActiva: !!GEMINI_API_KEY,
-    proveedor: "Google Gemini",
+    iaActiva: !!GROQ_API_KEY,
+    proveedor: "Groq (Llama 3.3)",
     acciones: [
       "generar_pregunta",
       "corregir_pronunciacion",
