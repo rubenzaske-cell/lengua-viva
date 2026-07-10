@@ -3,13 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 // Groq API (Llama 3.3 - gratis y rápido)
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 
-// Llamar al API de Groq con razonamiento mejorado (optimizado para máxima calidad)
-async function callGroqChat(messages: { role: string; content: string }[], useReasoning: boolean = false) {
+// Llamar al API de Groq con reintentos y manejo de errores robusto
+async function callGroqChat(messages: { role: string; content: string }[], useReasoning: boolean = false): Promise<string> {
   if (!GROQ_API_KEY) {
     throw new Error("No GROQ_API_KEY configured");
   }
 
-  // Mapear roles: system y assistant se mantienen, user se mantiene
+  // Mapear roles correctamente para Groq
   const groqMessages = messages.map((m) => {
     if (m.role === "system") return { role: "system", content: m.content };
     if (m.role === "assistant") return { role: "assistant", content: m.content };
@@ -19,44 +19,75 @@ async function callGroqChat(messages: { role: string; content: string }[], useRe
   const body: any = {
     model: "llama-3.3-70b-versatile",
     messages: groqMessages,
-    // Parámetros optimizados para máxima calidad (estilo IA premium)
-    temperature: 0.6,       // balance entre creatividad y precisión
-    max_tokens: 800,        // respuestas más cortas y concisas
-    top_p: 0.95,            // diversidad de vocabulario
-    frequency_penalty: 0.2, // evita repetición
-    presence_penalty: 0.1,  // permite temas nuevos
-    seed: undefined,
+    temperature: useReasoning ? 0.5 : 0.6,
+    max_tokens: useReasoning ? 1000 : 800,
+    top_p: useReasoning ? 0.92 : 0.95,
+    frequency_penalty: 0.2,
+    presence_penalty: 0.1,
   };
 
-  // Si se requiere razonamiento profundo, ajustar parámetros
-  if (useReasoning) {
-    body.temperature = 0.5;
-    body.max_tokens = 1000;
-    body.top_p = 0.92;
+  // Sistema de reintentos (3 intentos)
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Groq API error (intento ${attempt}):`, response.status, errorText);
+        // Si es 429 (rate limit) o 5xx, reintentar
+        if (response.status === 429 || response.status >= 500) {
+          lastError = new Error(`Groq API error: ${response.status}`);
+          await new Promise(r => setTimeout(r, 1000 * attempt)); // backoff
+          continue;
+        }
+        // Si es 401/403, no reintentar (API key inválida)
+        throw new Error(`Groq API error: ${response.status} - ${errorText.slice(0, 200)}`);
+      }
+
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content || "";
+
+      if (!text) {
+        throw new Error("Respuesta vacía de Groq");
+      }
+
+      return cleanMarkdown(text);
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        console.error(`Timeout en intento ${attempt}`);
+        lastError = new Error("Timeout - Groq no respondió en 30s");
+      } else {
+        lastError = err;
+      }
+      // Si no es rate limit, no reintentar
+      if (!err.message?.includes("429") && !err.message?.includes("5")) {
+        break;
+      }
+      await new Promise(r => setTimeout(r, 1000 * attempt));
+    }
   }
 
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${GROQ_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  throw lastError || new Error("Error desconocido en Groq");
+}
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Groq API error:", response.status, errorText);
-    throw new Error(`Groq API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  let text = data.choices?.[0]?.message?.content || "";
-
-  // Limpiar markdown PERO mantener bloques de código (```...```)
-  // Primero, extraer y proteger los bloques de código
+// Función para limpiar markdown manteniendo bloques de código
+function cleanMarkdown(text: string): string {
+  // Extraer y proteger los bloques de código
   const codeBlocks: string[] = [];
-  // Regex más robusta: captura bloques de código con o sin lenguaje, con o sin salto de línea
   text = text.replace(/```(\w+)?\s*\n?([\s\S]*?)```/g, (match, lang, code) => {
     const langLabel = lang || "code";
     const placeholder = `\n__CODE_BLOCK_${codeBlocks.length}__\n`;
@@ -64,21 +95,20 @@ async function callGroqChat(messages: { role: string; content: string }[], useRe
     return placeholder;
   });
 
-  // Ahora limpiar markdown del resto del texto (sin tocar los placeholders)
-  text = text.replace(/\*\*(.+?)\*\*/g, "$1"); // **texto** → texto
-  text = text.replace(/(?<!\w)\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, "$1"); // *texto* → texto (sin afectar multiplicación)
-  text = text.replace(/__(.+?)__/g, "$1");     // __texto__ → texto
-  // NO quitar _ individuales para no romper palabras como useState, my_var, etc.
-  text = text.replace(/(?<!`)`([^`\n]+)`(?!`)/g, "$1"); // `texto` → texto (pero no ``` ```)
-  text = text.replace(/^#{1,6}\s/gm, "");       // # Título → Título (solo al inicio de línea)
-  text = text.replace(/^\s*[-*]\s/gm, "");      // - item → item (listas con viñetas al inicio)
+  // Limpiar markdown del texto (sin tocar placeholders)
+  text = text.replace(/\*\*(.+?)\*\*/g, "$1");
+  text = text.replace(/(?<!\w)\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, "$1");
+  text = text.replace(/__(.+?)__/g, "$1");
+  text = text.replace(/(?<!`)`([^`\n]+)`(?!`)/g, "$1");
+  text = text.replace(/^#{1,6}\s/gm, "");
+  text = text.replace(/^\s*[-*]\s/gm, "");
 
-  // Restaurar los bloques de código
+  // Restaurar bloques de código
   codeBlocks.forEach((block, i) => {
     text = text.replace(`__CODE_BLOCK_${i}__`, block);
   });
 
-  // Limpiar espacios extra y saltos de línea múltiples
+  // Limpiar saltos de línea múltiples
   text = text.replace(/\n{3,}/g, "\n\n").trim();
 
   return text;
@@ -443,7 +473,12 @@ Responde en JSON:
     }
   } catch (error) {
     console.error("Error en Motor IA:", error);
-    return NextResponse.json(getFallback("tutor_kuntur", { mensaje }));
+    const errorMsg = error instanceof Error ? error.message : "Error desconocido";
+    // Devolver fallback PERO con información del error para debug
+    return NextResponse.json({
+      ...getFallback("tutor_kuntur", { mensaje }),
+      _error: errorMsg, // info del error (para diagnóstico)
+    });
   }
 }
 
