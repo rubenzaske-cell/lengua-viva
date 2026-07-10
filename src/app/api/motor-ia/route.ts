@@ -173,13 +173,122 @@ Responde ÚNICAMENTE en JSON:
 // Respuestas de fallback cuando no hay API key o hay error
 function getFallback(action: string, ctx: any) {
   switch (action) {
-    case "tutor_kuntur":
-      return {
-        respuesta: `¡Allinllachu! Sigue practicando, cada palabra cuenta 🦙. Recuerda: la constancia es la clave del aprendizaje.`,
-        palabraQuechua: "Yachay",
-        traduccion: "Saber/conocimiento",
-        animo: true,
-      };
+    case "tutor_kuntur": {
+      // Respuestas variadas según lo que pregunte el usuario
+      const msg = (ctx.mensaje || "").toLowerCase();
+      const respuestas: any[] = [];
+
+      // Si pregunta por agradecimientos
+      if (msg.includes("gracias") || msg.includes("thank")) {
+        respuestas.push({
+          respuesta: "Para decir 'gracias' en quechua decimos 'Sulpayki' 🦙. ¡Úsala con tus amigos!",
+          palabraQuechua: "Sulpayki",
+          traduccion: "Gracias",
+          animo: true,
+        });
+      }
+      // Si pregunta por saludos
+      if (msg.includes("hola") || msg.includes("saludo") || msg.includes("buenos")) {
+        respuestas.push({
+          respuesta: "¡Allinllachu! Así saludamos en quechua 🦅. Significa 'buenos días'. También puedes decir 'Ima hinalla kachkanki' para '¿cómo estás?'.",
+          palabraQuechua: "Allinllachu",
+          traduccion: "Buenos días / Hola",
+          animo: true,
+        });
+      }
+      // Si pide un consejo
+      if (msg.includes("consejo") || msg.includes("recomend")) {
+        respuestas.push({
+          respuesta: "Mi consejo: practica 5 minutos cada día 🌱. La constancia vence al talento. ¡Tú puedes!",
+          palabraQuechua: "Hak'ay",
+          traduccion: "Esfuerzo / constancia",
+          animo: true,
+        });
+      }
+      // Si pregunta por una palabra específica
+      if (msg.includes("qué es") || msg.includes("que es") || msg.includes("significa") || msg.includes("yachay")) {
+        respuestas.push({
+          respuesta: "¡Yachay significa 'saber' o 'conocimiento' en quechua! 📚 Es la raíz de 'yachaq' (sabio). Los incas valoraban mucho el yachay.",
+          palabraQuechua: "Yachay",
+          traduccion: "Saber / conocimiento",
+          animo: true,
+        });
+      }
+      // Si pide una palabra nueva
+      if (msg.includes("palabra") || msg.includes("enseña") || msg.includes("enséñame")) {
+        const palabras = [
+          { r: "Te enseño 'Kuntur' 🦅, que significa 'cóndor'. ¡Como yo! Soy el rey de los Andes.", p: "Kuntur", t: "Cóndor" },
+          { r: "Aprende 'Mama' 🤱, significa 'madre'. En los Andes, la Pachamama es la madre tierra.", p: "Mama", t: "Madre" },
+          { r: "¿Sabías que 'Inti' ☀️ significa 'sol'? Era la deidad más importante del Tawantinsuyu.", p: "Inti", t: "Sol" },
+          { r: "'Pacha' 🌍 significa 'tiempo' o 'mundo'. De ahí viene Pachamama (madre tierra).", p: "Pacha", t: "Tiempo / mundo / tierra" },
+          { r: "'Sumaq' ✨ significa 'hermoso' o 'bueno'. Cuando algo te gusta, dices 'Sumaq!'", p: "Sumaq", t: "Hermoso / bueno" },
+          { r: "'Ayllu' 👨‍👩‍👧‍👦 es la familia extendida o comunidad. Muy importante en la cultura andina.", p: "Ayllu", t: "Familia / comunidad" },
+          { r: "'Chakra' 🌾 significa 'chacra' o 'campo de cultivo'. La base de la vida andina.", p: "Chakra", t: "Chacra / campo" },
+          { r: "'Unu' 💧 significa 'agua'. Vital en los Andes, donde se worshipa al agua como ser vivo.", p: "Unu", t: "Agua" },
+        ];
+        const idx = Math.floor(Math.random() * palabras.length);
+        const pw = palabras[idx];
+        respuestas.push({
+          respuesta: pw.r,
+          palabraQuechua: pw.p,
+          traduccion: pw.t,
+          animo: true,
+        });
+      }
+      // Si menciona racha
+      if (msg.includes("racha") || msg.includes("streak")) {
+        respuestas.push({
+          respuesta: "¡Mantén viva tu racha! 🔥 Cada día que practicas, tu cerebro retiene más. ¡No rompas la cadena!",
+          palabraQuechua: "Wiñay",
+          traduccion: "Siempre / para siempre",
+          animo: true,
+        });
+      }
+      // Si menciona motivación o estoy triste
+      if (msg.includes("triste") || msg.includes("difícil") || msg.includes("dificil") || msg.includes("no puedo")) {
+        respuestas.push({
+          respuesta: "No te rindas 🦙. Aprender un idioma toma tiempo. Cada error es un paso más hacia el dominio. ¡Tú puedes!",
+          palabraQuechua: "Kallpa",
+          traduccion: "Fuerza / energía",
+          animo: true,
+        });
+      }
+
+      // Si no coinció con nada, respuesta genérica variada
+      if (respuestas.length === 0) {
+        const genericas = [
+          {
+            respuesta: "Buena pregunta 🦅. Sigue practicando en las lecciones, cada palabra cuenta. ¿Quieres que te enseñe una palabra nueva?",
+            palabraQuechua: "Yachay",
+            traduccion: "Saber / conocimiento",
+            animo: true,
+          },
+          {
+            respuesta: "El quechua es una lengua milenaria y hermosa 🦙. Mientras más practiques, más te conectarás con la cultura andina.",
+            palabraQuechua: "Runa Simi",
+            traduccion: "Lengua del pueblo (quechua)",
+            animo: true,
+          },
+          {
+            respuesta: "Recuerda: en los Andes, aprender es un acto de respeto a los ancestros 🏔️. Cada palabra que aprendes honra su memoria.",
+            palabraQuechua: "Ñawpa",
+            traduccion: "Antiguo / ancestro",
+            animo: true,
+          },
+          {
+            respuesta: "Te recomiendo completar una lección diaria 🌱. La constancia es más importante que la velocidad.",
+            palabraQuechua: "Hak'ay",
+            traduccion: "Esfuerzo / constancia",
+            animo: true,
+          },
+        ];
+        const idx = Math.floor(Math.random() * genericas.length);
+        respuestas.push(genericas[idx]);
+      }
+
+      // Devolver una respuesta aleatoria de las que coincidieron
+      return respuestas[Math.floor(Math.random() * respuestas.length)];
+    }
     case "explicar_palabra":
       return {
         palabra: ctx.mensaje,
