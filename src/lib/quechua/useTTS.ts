@@ -15,14 +15,20 @@ export function useTTS() {
   const speak = useCallback(async (text: string, voice?: string) => {
     if (!text.trim()) return;
 
-    // Si ya está reproduciendo, detener
+    // DETENER todo audio anterior inmediatamente
+    // 1. Detener audio HTML5
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.currentTime = 0;
       audioRef.current = null;
     }
+    // 2. Detener Web Speech API si está activa
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setPlaying(false);
 
     setLoading(true);
-    setPlaying(false);
 
     try {
       // Verificar cache
@@ -45,6 +51,14 @@ export function useTTS() {
         cacheRef.current.set(cacheKey, audioUrl);
       }
 
+      // Verificar que no se haya iniciado otro speak mientras se generaba
+      // Si audioRef.current ya tiene algo, significa que otro speak() empezó
+      if (audioRef.current) {
+        // Otro speak started, abortar
+        setLoading(false);
+        return;
+      }
+
       // Reproducir audio
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
@@ -64,7 +78,9 @@ export function useTTS() {
       console.error("TTS error:", error);
       // Fallback: usar Web Speech API del navegador
       try {
-        if ("speechSynthesis" in window) {
+        if (typeof window !== "undefined" && "speechSynthesis" in window) {
+          // Cancelar cualquier síntesis anterior
+          window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.lang = "es-PE";
           utterance.rate = 0.85;
