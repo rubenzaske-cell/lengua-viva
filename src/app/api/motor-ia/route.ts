@@ -1,56 +1,73 @@
 import { NextRequest, NextResponse } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
 
-// Configuración de Z.ai desde variables de entorno o archivo local
-const ZAI_CONFIG = {
-  baseUrl: process.env.ZAI_BASE_URL || "https://internal-api.z.ai/v1",
-  apiKey: process.env.ZAI_API_KEY || "Z.ai",
-  chatId: process.env.ZAI_CHAT_ID || "",
-  token: process.env.ZAI_TOKEN || "",
-  userId: process.env.ZAI_USER_ID || "",
-};
-
-// Usar el SDK de Z.ai
-let zaiInstance: any = null;
-async function getZAI() {
-  if (!zaiInstance) {
-    // Intentar crear el archivo de configuración si no existe
-    const ZAI = (await import("z-ai-web-dev-sdk")).default;
-
-    // Si hay token en variables de entorno, usarlo
-    if (process.env.ZAI_TOKEN || process.env.ZAI_API_KEY) {
-      // Crear instancia con configuración de entorno
-      const fs = await import("fs");
-      const path = await import("path");
-      const configPath = path.join(process.cwd(), ".z-ai-config");
-      if (!fs.existsSync(configPath)) {
-        fs.writeFileSync(configPath, JSON.stringify({
-          baseUrl: ZAI_CONFIG.baseUrl,
-          apiKey: ZAI_CONFIG.apiKey,
-          chatId: ZAI_CONFIG.chatId,
-          token: ZAI_CONFIG.token,
-          userId: ZAI_CONFIG.userId,
-        }, null, 2));
-      }
-    }
-
-    zaiInstance = await ZAI.create();
+// Configuración de Z.ai
+async function getConfig() {
+  // Intentar leer del archivo .z-ai-config
+  try {
+    const configPath = path.join(process.cwd(), ".z-ai-config");
+    const configStr = await fs.readFile(configPath, "utf-8");
+    return JSON.parse(configStr);
+  } catch {
+    // Si no hay archivo, usar variables de entorno con defaults
+    return {
+      baseUrl: process.env.ZAI_BASE_URL || "https://internal-api.z.ai/v1",
+      apiKey: process.env.ZAI_API_KEY || "Z.ai",
+      chatId: process.env.ZAI_CHAT_ID || "",
+      token: process.env.ZAI_TOKEN || "",
+      userId: process.env.ZAI_USER_ID || "",
+    };
   }
-  return zaiInstance;
+}
+
+// Llamar directamente al API de Z.ai con fetch (sin SDK)
+async function callZaiChat(messages: { role: string; content: string }[]) {
+  const config = await getConfig();
+  const url = `${config.baseUrl}/chat/completions`;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${config.apiKey}`,
+    "X-Z-AI-From": "Z",
+  };
+  // El API requiere X-Token header
+  if (config.token) {
+    headers["X-Token"] = config.token;
+  }
+
+  const body = {
+    messages,
+    // Usar chatId si existe para mantener contexto
+    ...(config.chatId ? { chat_id: config.chatId } : {}),
+    ...(config.userId ? { user_id: config.userId } : {}),
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Z.ai API error:", response.status, errorText);
+    throw new Error(`Z.ai API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "";
 }
 
 export async function POST(req: NextRequest) {
+  let mensaje = "";
   try {
-    const { action, leccion, tema, nivel, preguntasAnteriores, textoDelUsuario, textoEsperado, respuestaUsuario, respuestaCorrecta, mensaje, contextoUsuario } = await req.json();
-
-    let zai;
-    try {
-      zai = await getZAI();
-    } catch (err) {
-      console.error("No se pudo inicializar Z.ai:", err);
-      return NextResponse.json(getFallback("tutor_kuntur", { mensaje }));
-    }
+    const body = await req.json();
+    const { action, leccion, tema, nivel, preguntasAnteriores, textoDelUsuario, textoEsperado, respuestaUsuario, respuestaCorrecta, contextoUsuario } = body;
+    mensaje = body.mensaje || "";
 
     let messages: { role: string; content: string }[] = [];
+    let responseText = "";
 
     switch (action) {
       case "tutor_kuntur": {
@@ -103,15 +120,9 @@ Datos del estudiante (solo para contexto, NO los menciones a menos que sea relev
           }
         ];
 
-        const completion = await zai.chat.completions.create({
-          messages,
-          thinking: { type: "disabled" },
-        });
-
-        const text = completion.choices[0]?.message?.content || "No pude procesar tu pregunta.";
-
+        responseText = await callZaiChat(messages);
         return NextResponse.json({
-          respuesta: text.trim(),
+          respuesta: responseText.trim(),
           palabraQuechua: "",
           traduccion: "",
           animo: true,
@@ -142,19 +153,14 @@ Responde en JSON válido:
           }
         ];
 
-        const completion = await zai.chat.completions.create({
-          messages,
-          thinking: { type: "disabled" },
-        });
-
-        const text = completion.choices[0]?.message?.content || "";
+        responseText = await callZaiChat(messages);
         try {
-          const jsonText = text.replace(/```json\n?|\n?```/g, "").trim();
+          const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
           return NextResponse.json(JSON.parse(jsonText));
         } catch {
           return NextResponse.json({
             palabra: mensaje,
-            significado: text,
+            significado: responseText,
             contextoCultural: "",
             ejemplo: "",
             traduccionEjemplo: "",
@@ -184,13 +190,8 @@ Responde en JSON:
           { role: "user", content: "Genera la pregunta" }
         ];
 
-        const completion = await zai.chat.completions.create({
-          messages,
-          thinking: { type: "disabled" },
-        });
-
-        const text = completion.choices[0]?.message?.content || "";
-        const jsonText = text.replace(/```json\n?|\n?```/g, "").trim();
+        responseText = await callZaiChat(messages);
+        const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
 
@@ -214,13 +215,8 @@ Responde en JSON:
           { role: "user", content: "Corrige" }
         ];
 
-        const completion = await zai.chat.completions.create({
-          messages,
-          thinking: { type: "disabled" },
-        });
-
-        const text = completion.choices[0]?.message?.content || "";
-        const jsonText = text.replace(/```json\n?|\n?```/g, "").trim();
+        responseText = await callZaiChat(messages);
+        const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
 
@@ -249,13 +245,8 @@ Responde en JSON:
           { role: "user", content: "Da feedback" }
         ];
 
-        const completion = await zai.chat.completions.create({
-          messages,
-          thinking: { type: "disabled" },
-        });
-
-        const text = completion.choices[0]?.message?.content || "";
-        const jsonText = text.replace(/```json\n?|\n?```/g, "").trim();
+        responseText = await callZaiChat(messages);
+        const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
 
@@ -278,13 +269,8 @@ Responde en JSON:
           { role: "user", content: "Genera reto" }
         ];
 
-        const completion = await zai.chat.completions.create({
-          messages,
-          thinking: { type: "disabled" },
-        });
-
-        const text = completion.choices[0]?.message?.content || "";
-        const jsonText = text.replace(/```json\n?|\n?```/g, "").trim();
+        responseText = await callZaiChat(messages);
+        const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
         return NextResponse.json(JSON.parse(jsonText));
       }
 
@@ -302,7 +288,7 @@ export async function GET() {
   return NextResponse.json({
     status: "ok",
     iaActiva: true,
-    proveedor: "Z.ai",
+    proveedor: "Z.ai (fetch directo)",
     acciones: [
       "generar_pregunta",
       "corregir_pronunciacion",
