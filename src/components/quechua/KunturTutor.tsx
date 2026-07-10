@@ -90,6 +90,17 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
     if (!input.trim() || loading) return;
     const mensaje = input.trim();
     setInput("");
+    await enviarMensaje(mensaje);
+  };
+
+  // Función para enviar un mensaje directo (usada por botones como "Crear más código")
+  const enviarMensajeDirecto = async (mensaje: string) => {
+    if (loading) return;
+    await enviarMensaje(mensaje);
+  };
+
+  // Función principal que envía el mensaje al API
+  const enviarMensaje = async (mensaje: string) => {
     const newMessages = [...messages, { role: "user" as const, text: mensaje }];
     setMessages(newMessages);
     setLoading(true);
@@ -126,9 +137,7 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
         traduccion: data.traduccion || "",
       }];
       setMessages(finalMessages);
-      // Guardar inmediatamente después de la respuesta
       saveHistory(finalMessages);
-      // Kuntur habla automáticamente con voz de niño
       tts.speak(respuestaKuntur, "chuichui");
     } catch {
       const errorMsg = "No pude conectar, pero sigue practicando 🦙";
@@ -196,7 +205,17 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
                     : "bg-card border border-border rounded-bl-md"
                 }`}
               >
-                {msg.role === "kuntur" ? <MessageContent text={msg.text} /> : <p className="text-sm font-semibold">{msg.text}</p>}
+                {msg.role === "kuntur" ? (
+                  <MessageContent
+                    text={msg.text}
+                    onPedirMas={() => {
+                      // Enviar mensaje para crear más código
+                      enviarMensajeDirecto("Crea más código similar, con variaciones y mejoras");
+                    }}
+                  />
+                ) : (
+                  <p className="text-sm font-semibold">{msg.text}</p>
+                )}
                 {msg.palabraQuechua && (
                   <div className="mt-2 pt-2 border-t border-border/30">
                     <p className="text-xs font-bold text-duo-purple">
@@ -267,7 +286,7 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
 }
 
 // Componente que renderiza texto separando los bloques de código
-function MessageContent({ text }: { text: string }) {
+function MessageContent({ text, onPedirMas }: { text: string; onPedirMas?: () => void }) {
   // Dividir el texto por bloques de código (```...```)
   const parts: { type: "text" | "code"; content: string; lang?: string }[] = [];
   const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
@@ -294,6 +313,15 @@ function MessageContent({ text }: { text: string }) {
     parts.push({ type: "text", content: text });
   }
 
+  const hasCode = parts.some((p) => p.type === "code");
+  const [copiado, setCopiado] = useState<number | null>(null);
+
+  const copiar = (content: string, i: number) => {
+    navigator.clipboard?.writeText(content);
+    setCopiado(i);
+    setTimeout(() => setCopiado(null), 2000);
+  };
+
   return (
     <div className="space-y-2">
       {parts.map((part, i) => {
@@ -303,12 +331,10 @@ function MessageContent({ text }: { text: string }) {
               <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-800 border-b border-zinc-700">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">{part.lang}</span>
                 <button
-                  onClick={() => {
-                    navigator.clipboard?.writeText(part.content);
-                  }}
+                  onClick={() => copiar(part.content, i)}
                   className="text-[10px] font-bold text-zinc-400 hover:text-white transition-colors"
                 >
-                  Copiar
+                  {copiado === i ? "✓ Copiado" : "Copiar"}
                 </button>
               </div>
               <pre className="p-3 overflow-x-auto text-xs leading-relaxed">
@@ -321,6 +347,15 @@ function MessageContent({ text }: { text: string }) {
           <p key={i} className="text-sm font-semibold whitespace-pre-wrap leading-relaxed">{part.content}</p>
         );
       })}
+      {hasCode && onPedirMas && (
+        <button
+          onClick={onPedirMas}
+          className="mt-2 flex items-center gap-1.5 text-xs font-bold text-duo-purple hover:opacity-80 transition-opacity"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          Crear más código
+        </button>
+      )}
     </div>
   );
 }
