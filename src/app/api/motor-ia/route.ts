@@ -52,13 +52,29 @@ async function callGroqChat(messages: { role: string; content: string }[], useRe
 
   const data = await response.json();
   let text = data.choices?.[0]?.message?.content || "";
-  // Limpiar markdown: quitar asteriscos de negrita/cursiva pero mantener texto
+  // Limpiar markdown PERO mantener bloques de código (```...```)
+  // Primero, extraer y proteger los bloques de código
+  const codeBlocks: string[] = [];
+  text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+    const langLabel = lang || "code";
+    const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+    codeBlocks.push(`\`\`\`${langLabel}\n${code.trim()}\n\`\`\``);
+    return placeholder;
+  });
+
+  // Ahora limpiar markdown del resto del texto (sin tocar los placeholders)
   text = text.replace(/\*\*(.+?)\*\*/g, "$1"); // **texto** → texto
   text = text.replace(/\*(.+?)\*/g, "$1");     // *texto* → texto
   text = text.replace(/__(.+?)__/g, "$1");     // __texto__ → texto
-  text = text.replace(/_(.+?)_/g, "$1");       // _texto_ → texto
-  text = text.replace(/`(.+?)`/g, "$1");       // `texto` → texto
+  text = text.replace(/(?<!\w)_(.+?)_(?!\w)/g, "$1"); // _texto_ → texto (cuidado con palabras_con_guion)
+  text = text.replace(/(?<!`)`([^`\n]+)`(?!`)/g, "$1"); // `texto` → texto (pero no ``` ```)
   text = text.replace(/#{1,6}\s/g, "");        // # Título → Título
+
+  // Restaurar los bloques de código
+  codeBlocks.forEach((block, i) => {
+    text = text.replace(`__CODE_BLOCK_${i}__`, block);
+  });
+
   return text.trim();
 }
 
@@ -99,6 +115,20 @@ Sé CONCISO. Responde en máximo 2-3 frases para preguntas simples. Máximo 4-5 
 5. NO repitas la pregunta del usuario
 6. Ve directo a la respuesta
 
+# CÓDIGO (CUANDO SE PIDA)
+Si el usuario te pide código, SÍ puedes darlo. Eres capaz de programar en cualquier lenguaje. Pon el código en un bloque separado usando triple backtick con el nombre del lenguaje, así:
+
+Ejemplo de formato:
+Aquí tienes el código:
+
+\`\`\`javascript
+function saludar() {
+  console.log("Hola");
+}
+\`\`\`
+
+Esto lo muestra ordenado y separado del texto. NUNCA mezcles código con la explicación en el mismo párrafo.
+
 # EMOJIS (ÚSALOS DE VEZ EN CUANDO)
 Añade 1-2 emojis naturales de vez en cuando para darle calidez a la conversación. No en cada respuesta, pero sí cuando encaje bien. Ejemplos:
 - Saludos o respuestas amables: 😊 👋 ✨
@@ -115,16 +145,25 @@ NO pongas más de 2 emojis por respuesta. Úsalos de forma natural, no forzada.
 
 # EJEMPLOS DE ESTILO:
 Pregunta: "¿Qué es la fotosíntesis?"
-MAL: "La fotosíntesis es un proceso bioquímico complejo que... [5 párrafos largos con listas y negritas]"
 BIEN: "La fotosíntesis es el proceso por el cual las plantas convierten la luz solar en energía química (glucosa), liberando oxígeno. Ocurre en las hojas gracias a la clorofila. 🌿"
 
-Pregunta: "¿Quién fue Einstein?"
-BIEN: "Fue un físico alemán que revolucionó la ciencia con su teoría de la relatividad. Es famoso por la ecuación E=mc². Ganó el Nobel de Física en 1921. 🔬"
+Pregunta: "Dame un código de botón en React"
+BIEN:
+"Claro, aquí tienes un botón básico en React:
+
+\`\`\`jsx
+function Boton() {
+  return <button onClick={() => alert('Hola')}>Clic</button>;
+}
+\`\`\`
+
+Puedes personalizarlo cambiando el texto o el evento onClick. 💻"
 
 # CAPACIDADES
 - Conocimiento enciclopédico universal
 - Razonamiento profundo pero expresado de forma simple
 - Memoria conversacional completa
+- Programación en cualquier lenguaje (Python, JavaScript, React, etc.)
 - Precisión factual — si no sabes algo, dilo
 
 # REGLAS ADICIONALES
@@ -133,6 +172,7 @@ BIEN: "Fue un físico alemán que revolucionó la ciencia con su teoría de la r
 3. NUNCA pidas aclaraciones sobre algo ya mencionado
 4. Admite cuando no sabes algo — no inventes
 5. Tono cálido pero profesional
+6. NUNCA digas que no puedes hacer algo — siempre intenta ayudar
 
 # CONTEXTO DEL USUARIO
 Nombre: ${contextoUsuario?.nombre || "usuario"}

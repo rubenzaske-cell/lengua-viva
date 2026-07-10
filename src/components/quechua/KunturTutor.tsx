@@ -190,13 +190,13 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
                 </div>
               )}
               <div
-                className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
                   msg.role === "user"
                     ? "bg-duo-green text-white rounded-br-md"
                     : "bg-card border border-border rounded-bl-md"
                 }`}
               >
-                <p className="text-sm font-semibold">{msg.text}</p>
+                {msg.role === "kuntur" ? <MessageContent text={msg.text} /> : <p className="text-sm font-semibold">{msg.text}</p>}
                 {msg.palabraQuechua && (
                   <div className="mt-2 pt-2 border-t border-border/30">
                     <p className="text-xs font-bold text-duo-purple">
@@ -263,5 +263,64 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// Componente que renderiza texto separando los bloques de código
+function MessageContent({ text }: { text: string }) {
+  // Dividir el texto por bloques de código (```...```)
+  const parts: { type: "text" | "code"; content: string; lang?: string }[] = [];
+  const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = codeBlockRegex.exec(text)) !== null) {
+    // Texto antes del bloque de código
+    if (match.index > lastIndex) {
+      const beforeText = text.slice(lastIndex, match.index).trim();
+      if (beforeText) parts.push({ type: "text", content: beforeText });
+    }
+    // El bloque de código
+    parts.push({ type: "code", content: match[2].trim(), lang: match[1] || "code" });
+    lastIndex = codeBlockRegex.lastIndex;
+  }
+  // Texto después del último bloque
+  if (lastIndex < text.length) {
+    const afterText = text.slice(lastIndex).trim();
+    if (afterText) parts.push({ type: "text", content: afterText });
+  }
+  // Si no había bloques de código, todo es texto
+  if (parts.length === 0) {
+    parts.push({ type: "text", content: text });
+  }
+
+  return (
+    <div className="space-y-2">
+      {parts.map((part, i) => {
+        if (part.type === "code") {
+          return (
+            <div key={i} className="my-2 rounded-xl overflow-hidden border border-border bg-zinc-900">
+              <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-800 border-b border-zinc-700">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">{part.lang}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard?.writeText(part.content);
+                  }}
+                  className="text-[10px] font-bold text-zinc-400 hover:text-white transition-colors"
+                >
+                  Copiar
+                </button>
+              </div>
+              <pre className="p-3 overflow-x-auto text-xs leading-relaxed">
+                <code className="text-zinc-100 font-mono whitespace-pre">{part.content}</code>
+              </pre>
+            </div>
+          );
+        }
+        return (
+          <p key={i} className="text-sm font-semibold whitespace-pre-wrap leading-relaxed">{part.content}</p>
+        );
+      })}
+    </div>
   );
 }
