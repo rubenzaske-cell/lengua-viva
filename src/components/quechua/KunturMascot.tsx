@@ -92,7 +92,7 @@ export function KunturMascot({
       }}
     >
       {/* Kuntur a la izquierda */}
-      <div style={{ position: "relative", width: kunturSize, height: kunturSize, flexShrink: 0 }}>
+      <div style={{ position: "relative", width: kunturSize, height: kunturSize, flexShrink: 0, filter: "drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4))" }}>
         <video ref={idleRef} src="/kuntur/kuntur-asking-combined.webm" loop muted playsInline
           className="absolute inset-0 w-full h-full object-contain"
           style={{ pointerEvents: "none", opacity: writing ? 0 : 1, transition: "opacity 0.15s ease" }}
