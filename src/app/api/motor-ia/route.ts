@@ -163,19 +163,24 @@ async function callOpenRouter(messages: { role: string; content: string }[], use
   }
 }
 
-// Función principal: intenta Z.ai → Groq → OpenRouter
-// Z.ai primero porque tiene token embebido (siempre disponible)
+// Función principal: Pollinations (gratis, sin key, ilimitado) → Z.ai → Groq → OpenRouter
 async function callGroqChat(messages: { role: string; content: string }[], useReasoning: boolean = false): Promise<string> {
-  // 1. Intentar Z.ai (siempre disponible con token embebido)
-  let result = await callZai(messages, useReasoning);
+  // 1. Intentar Pollinations PRIMERO (gratis, sin API key, ilimitado, compatible con Vercel)
+  let result = await callPollinations(messages, useReasoning);
 
-  // 2. Si Z.ai falla, intentar Groq
+  // 2. Si Pollinations falla, intentar Z.ai
+  if (!result) {
+    console.log("Pollinations falló, intentando Z.ai...");
+    result = await callZai(messages, useReasoning);
+  }
+
+  // 3. Si Z.ai falla, intentar Groq
   if (!result) {
     console.log("Z.ai falló, intentando Groq...");
     result = await callGroq(messages, useReasoning);
   }
 
-  // 3. Si Groq falla, intentar OpenRouter
+  // 4. Si Groq falla, intentar OpenRouter
   if (!result) {
     console.log("Groq falló, intentando OpenRouter...");
     result = await callOpenRouter(messages, useReasoning);
@@ -186,6 +191,43 @@ async function callGroqChat(messages: { role: string; content: string }[], useRe
   }
 
   return cleanMarkdown(result);
+}
+
+// Pollinations Text API - GRATIS, SIN API KEY, ILIMITADO
+async function callPollinations(messages: { role: string; content: string }[], useReasoning: boolean): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000);
+
+    const response = await fetch("https://text.pollinations.ai/openai", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "openai",
+        messages: messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      console.error("Pollinations error:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content || "";
+    return text || null;
+  } catch (err) {
+    console.error("Pollinations failed:", err);
+    return null;
+  }
 }
 
 // Función para limpiar markdown manteniendo bloques de código
