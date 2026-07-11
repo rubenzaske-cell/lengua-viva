@@ -21,38 +21,113 @@ async function getZaiConfig() {
 function buildProfessionalPrompt(userPrompt: string): string {
   const lower = userPrompt.toLowerCase();
 
-  // Detectar estilo anime/kawaii/chibi
+  // Estilo anime/kawaii/chibi
   if (lower.includes("kawaii") || lower.includes("chibi") || lower.includes("anime") || lower.includes("manga")) {
     return `${userPrompt}, anime style, kawaii, chibi, big adorable eyes, soft pastel colors, cute, digital art illustration, high quality, detailed`;
   }
 
-  // Detectar estilo realista/foto
-  if (lower.includes("foto") || lower.includes("realista") || lower.includes("realistic") || lower.includes("real")) {
+  // Estilo realista/fotográfico
+  if (lower.includes("foto") || lower.includes("realista") || lower.includes("realistic") || lower.includes("fotorrealista") || lower.includes("fotografía")) {
     return `${userPrompt}, photorealistic, ultra detailed, 8k resolution, professional photography, sharp focus, natural lighting, high resolution, DSLR quality`;
   }
 
-  // Detectar logo
+  // Estilo logo
   if (lower.includes("logo")) {
     return `${userPrompt}, logo design, clean, minimalist, professional, vector style, high contrast, modern`;
   }
 
-  // Detectar arte digital/dibujo
-  if (lower.includes("dibujo") || lower.includes("dibuja") || lower.includes("art") || lower.includes("ilustración") || lower.includes("ilustracion")) {
+  // Estilo arte digital
+  if (lower.includes("arte digital") || lower.includes("digital art") || lower.includes("concept art")) {
     return `${userPrompt}, digital art, highly detailed, vibrant colors, professional illustration, trending on artstation, concept art`;
   }
 
-  // Detectar paisaje
-  if (lower.includes("paisaje") || lower.includes("landscape") || lower.includes("montaña") || lower.includes("montanas") || lower.includes("nature")) {
+  // Estilo dibujo/ilustración
+  if (lower.includes("dibujo") || lower.includes("dibuja") || lower.includes("ilustración") || lower.includes("ilustracion") || lower.includes("sketch") || lower.includes("bosquejo")) {
+    return `${userPrompt}, hand drawn illustration, sketch style, artistic, detailed line work, professional drawing`;
+  }
+
+  // Estilo acuarela
+  if (lower.includes("acuarela") || lower.includes("watercolor")) {
+    return `${userPrompt}, watercolor painting, soft colors, artistic, flowing, delicate brushstrokes, traditional art`;
+  }
+
+  // Estilo óleo/pintura
+  if (lower.includes("óleo") || lower.includes("oleo") || lower.includes("pintura") || lower.includes("painting") || lower.includes("cuadro")) {
+    return `${userPrompt}, oil painting, classical art style, rich textures, dramatic lighting, museum quality, detailed brushstrokes`;
+  }
+
+  // Estilo pixel art
+  if (lower.includes("pixel") || lower.includes("pixel art") || lower.includes("8bit") || lower.includes("8-bit")) {
+    return `${userPrompt}, pixel art, retro game style, 8-bit, pixelated, vibrant colors, detailed pixel work`;
+  }
+
+  // Estilo 3D render
+  if (lower.includes("3d") || lower.includes("render") || lower.includes("blender") || lower.includes("cinema 4d")) {
+    return `${userPrompt}, 3D render, octane render, cinema 4d, ultra detailed, realistic materials, professional lighting, 8k`;
+  }
+
+  // Estilo cyberpunk
+  if (lower.includes("cyberpunk") || lower.includes("cyber") || lower.includes("futurista") || lower.includes("futuristic") || lower.includes("neon")) {
+    return `${userPrompt}, cyberpunk style, neon lights, futuristic, sci-fi, dark atmosphere, glowing elements, blade runner aesthetic`;
+  }
+
+  // Estilo fantasía
+  if (lower.includes("fantasía") || lower.includes("fantasia") || lower.includes("fantasy") || lower.includes("mágico") || lower.includes("magico") || lower.includes("dragón") || lower.includes("dragon")) {
+    return `${userPrompt}, fantasy art, magical, ethereal, mystical atmosphere, detailed, concept art, trending on artstation`;
+  }
+
+  // Estilo minimalista
+  if (lower.includes("minimalista") || lower.includes("minimalist") || lower.includes("simple") || lower.includes("limpio")) {
+    return `${userPrompt}, minimalist design, clean, simple, elegant, lots of negative space, modern aesthetic`;
+  }
+
+  // Estilo vintage/retro
+  if (lower.includes("vintage") || lower.includes("retro") || lower.includes("antiguo") || lower.includes("clásico") || lower.includes("clasico")) {
+    return `${userPrompt}, vintage style, retro aesthetic, nostalgic, film grain, aged colors, classic look`;
+  }
+
+  // Estilo cartoon
+  if (lower.includes("cartoon") || lower.includes("caricatura") || lower.includes("dibujos animados")) {
+    return `${userPrompt}, cartoon style, animated, vibrant colors, fun, playful, professional animation style`;
+  }
+
+  // Estilo gótico
+  if (lower.includes("gótico") || lower.includes("gotico") || lower.includes("gothic") || lower.includes("oscuro") || lower.includes("dark")) {
+    return `${userPrompt}, gothic style, dark atmosphere, moody lighting, dramatic shadows, mysterious, detailed`;
+  }
+
+  // Estilo pop art
+  if (lower.includes("pop art") || lower.includes("pop-art") || lower.includes("warhol")) {
+    return `${userPrompt}, pop art style, bold colors, comic book aesthetic, Andy Warhol inspired, vibrant, high contrast`;
+  }
+
+  // Estilo surrealista
+  if (lower.includes("surrealista") || lower.includes("surreal") || lower.includes("dalí") || lower.includes("dali") || lower.includes("onírico")) {
+    return `${userPrompt}, surrealist art, dreamlike, Salvador Dali inspired, imaginative, unusual compositions, artistic`;
+  }
+
+  // Estilo paisaje
+  if (lower.includes("paisaje") || lower.includes("landscape") || lower.includes("montaña") || lower.includes("montanas") || lower.includes("nature") || lower.includes("naturaleza")) {
     return `${userPrompt}, beautiful landscape, scenic, atmospheric, golden hour lighting, ultra detailed, 4k, professional photography`;
   }
 
-  // Detectar retrato/persona
+  // Estilo retrato
   if (lower.includes("persona") || lower.includes("retrato") || lower.includes("portrait") || lower.includes("hombre") || lower.includes("mujer") || lower.includes("niño") || lower.includes("niña")) {
     return `${userPrompt}, portrait, detailed face, professional photography, soft lighting, 8k, sharp focus`;
   }
 
-  // Default: alta calidad
-  return `${userPrompt}, high quality, detailed, professional, vibrant colors, 4k, masterpiece, sharp focus`;
+  // Estilo comida
+  if (lower.includes("comida") || lower.includes("food") || lower.includes("plato") || lower.includes("postre") || lower.includes("pizza") || lower.includes("hamburguesa")) {
+    return `${userPrompt}, food photography, appetizing, professional lighting, detailed, magazine quality, shallow depth of field`;
+  }
+
+  // Estilo arquitectura
+  if (lower.includes("casa") || lower.includes("edificio") || lower.includes("arquitectura") || lower.includes("architecture") || lower.includes("construcción")) {
+    return `${userPrompt}, architectural photography, professional, detailed, dramatic angles, professional lighting, 8k`;
+  }
+
+  // Default: alta calidad general (sin forzar realista)
+  return `${userPrompt}, high quality, detailed, professional, vibrant colors, 4k, masterpiece, sharp focus, beautiful composition`;
 }
 
 // Generar imagen con Z.ai (mejor calidad)
@@ -155,7 +230,12 @@ export async function GET() {
   return NextResponse.json({
     status: "ok",
     proveedores: ["Z.ai (premium)", "Pollinations FLUX (fallback)"],
-    estilos: ["kawaii", "realista", "logo", "arte digital", "paisaje", "retrato"],
+    estilos: [
+      "kawaii/anime", "realista/foto", "logo", "arte digital", "dibujo",
+      "acuarela", "óleo/pintura", "pixel art", "3D render", "cyberpunk",
+      "fantasía", "minimalista", "vintage/retro", "cartoon", "gótico",
+      "pop art", "surrealista", "paisaje", "retrato", "comida", "arquitectura"
+    ],
     gratis: true,
   });
 }
