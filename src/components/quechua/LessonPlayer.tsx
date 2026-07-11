@@ -214,9 +214,9 @@ export function LessonPlayer() {
   const noHearts = hearts <= 0 && feedback === "none";
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
-      {/* Barra superior: progreso + corazón + salir */}
-      <div className="px-4 py-3 flex items-center gap-3 max-w-2xl mx-auto w-full">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col patron-andino">
+      {/* Barra superior: progreso + corazón + salir - ESTILO ANDINO */}
+      <div className="px-4 py-3 flex items-center gap-3 max-w-2xl mx-auto w-full bg-card/80 backdrop-blur-sm border-b border-duo-orange/20">
         <button
           onClick={() => setConfirmExit(true)}
           className="text-muted-foreground hover:text-foreground shrink-0"
@@ -224,15 +224,15 @@ export function LessonPlayer() {
         >
           <X className="w-7 h-7" />
         </button>
-        <div className="flex-1 h-4 rounded-full bg-muted overflow-hidden">
+        <div className="flex-1 h-4 rounded-full bg-muted overflow-hidden border border-duo-orange/20">
           <motion.div
-            className="h-full bg-duo-green rounded-full"
+            className="h-full gradiente-andino rounded-full"
             animate={{ width: `${((idx + (feedback !== "none" ? 1 : 0)) / total) * 100}%` }}
             transition={{ type: "spring", stiffness: 200, damping: 30 }}
           />
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <Heart className="w-6 h-6 text-duo-red" fill="currentColor" />
+          <Heart className="w-6 h-6 text-duo-red animate-shine" fill="currentColor" />
           <span className="font-extrabold text-duo-red text-lg">{Math.max(0, hearts)}</span>
         </div>
       </div>
@@ -305,7 +305,8 @@ function ExerciseRenderer(props: {
   if (ex.type === "select" || ex.type === "reverse") {
     return (
       <div>
-        <p className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wide">
+        <p className="text-sm font-bold text-duo-orange mb-4 uppercase tracking-wide flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-duo-orange animate-pulse" />
           {ex.type === "select" ? "Selecciona el significado" : "Selecciona la palabra en quechua"}
         </p>
         <div className="mb-6">
@@ -314,16 +315,17 @@ function ExerciseRenderer(props: {
             {ex.audio && (
               <button
                 onClick={() => props.speak(ex.audio!)}
-                className="shrink-0 w-11 h-11 rounded-xl bg-duo-blue text-white flex items-center justify-center hover:opacity-90 transition-opacity"
-                aria-label="Escuchar"
+                className="shrink-0 w-12 h-12 rounded-full bg-duo-blue text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-md animate-shine"
+                aria-label="Escuchar pronunciación"
+                title="Escuchar pronunciación"
               >
-                <Volume2 className="w-5 h-5" />
+                <Volume2 className="w-6 h-6" />
               </button>
             )}
           </div>
           {ex.hint && (
             <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
-              <Lightbulb className="w-4 h-4" /> {ex.hint}
+              <Lightbulb className="w-4 h-4 text-duo-yellow" /> {ex.hint}
             </p>
           )}
         </div>
@@ -355,22 +357,24 @@ function ExerciseRenderer(props: {
   if (ex.type === "listen") {
     return (
       <div>
-        <p className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wide">
+        <p className="text-sm font-bold text-duo-orange mb-4 uppercase tracking-wide flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-duo-orange animate-pulse" />
           ¿Qué significa lo que escuchaste?
         </p>
         <div className="mb-6 flex flex-col items-center gap-3">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             onClick={() => props.speak(ex.audio!)}
-            className="w-20 h-20 rounded-full bg-duo-blue text-white flex items-center justify-center hover:opacity-90 transition-opacity"
+            className="relative w-24 h-24 rounded-full bg-duo-blue text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-lg animate-shine"
             aria-label="Reproducir audio"
           >
-            <Volume2 className="w-10 h-10" />
-          </button>
+            <Volume2 className="w-12 h-12" />
+          </motion.button>
           <button
             onClick={() => props.speak(ex.audio!)}
-            className="text-sm font-bold text-duo-blue underline"
+            className="text-sm font-bold text-duo-blue hover:underline"
           >
-            Repetir
+            🔊 Repetir audio
           </button>
         </div>
         <div className="grid gap-3">
@@ -612,16 +616,16 @@ function FeedbackBar(props: {
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className={`border-t-4 ${correct ? "bg-duo-green/10 border-duo-green" : "bg-duo-red/10 border-duo-red"}`}
+      className={`border-t-4 ${correct ? "bg-duo-green/10 border-duo-green patron-andino" : "bg-duo-red/10 border-duo-red patron-andino"}`}
     >
       <div className="mx-auto max-w-2xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <KunturMascot
               mood={correct ? "risa" : "triste"}
-              size={56}
+              size={64}
               animate={false}
-              className="shrink-0"
+              className="shrink-0 animate-fly"
             />
             <div className="min-w-0">
               <div className={`flex items-center gap-2 mb-0.5 ${correct ? "text-duo-green-dark" : "text-duo-red"}`}>
@@ -640,13 +644,34 @@ function FeedbackBar(props: {
               )}
             </div>
           </div>
-          <button
-            onClick={onContinue}
-            disabled={props.submitting}
-            className={`duo-btn ${correct ? "duo-btn-primary" : "duo-btn-danger"} shrink-0`}
-          >
-            {props.submitting ? "Guardando..." : "Continuar"}
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {correct && correctAnswer && (
+              <button
+                onClick={() => {
+                  if (typeof window !== "undefined" && window.speechSynthesis) {
+                    window.speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance(correctAnswer);
+                    u.lang = "es-PE";
+                    u.rate = 0.7;
+                    u.pitch = 1.1;
+                    window.speechSynthesis.speak(u);
+                  }
+                }}
+                className="p-2.5 rounded-xl bg-duo-blue/15 text-duo-blue hover:bg-duo-blue/25 transition-colors"
+                title="Escuchar y repite"
+                aria-label="Escuchar respuesta"
+              >
+                <Volume2 className="w-5 h-5" />
+              </button>
+            )}
+            <button
+              onClick={onContinue}
+              disabled={props.submitting}
+              className={`duo-btn ${correct ? "duo-btn-primary" : "duo-btn-danger"}`}
+            >
+              {props.submitting ? "Guardando..." : "Continuar"}
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -705,7 +730,7 @@ function CompletionScreen({
   onContinue: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-background patron-andino flex flex-col items-center justify-center p-6 overflow-y-auto">
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
