@@ -166,12 +166,136 @@ async function generateWithHuggingFace(prompt: string): Promise<string | null> {
   }
 }
 
-// Generar imagen con Pollinations (respaldo - menor calidad pero siempre disponible)
+// Generar imagen con Pollinations (calidad optimizada al máximo)
 async function generateWithPollinations(prompt: string): Promise<string> {
-  const encodedPrompt = encodeURIComponent(prompt);
+  // Prompt en inglés para mejor comprensión del modelo
+  const englishPrompt = translateToEnglish(prompt);
+  const encodedPrompt = encodeURIComponent(englishPrompt);
   const seed = Math.floor(Math.random() * 1000000);
-  const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true&model=flux&enhance=true&private=true`;
+
+  // Usar todas las opciones de calidad disponibles
+  const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true&enhance=true&private=true&model=flux`;
   return url;
+}
+
+// Traducir prompt al inglés para mejor calidad (el modelo FLUX entiende mejor inglés)
+function translateToEnglish(prompt: string): string {
+  // Si el prompt ya está en inglés o tiene keywords en inglés, dejarlo
+  if (/[a-zA-Z]{3,}/.test(prompt) && !prompt.match(/[áéíóúñ¿¡]/)) {
+    return prompt;
+  }
+
+  // Traducciones comunes español → inglés
+  const translations: Record<string, string> = {
+    "cóndor": "condor",
+    "andino": "andean",
+    "andina": "andean",
+    "montaña": "mountain",
+    "montañas": "mountains",
+    "atardecer": "sunset",
+    "amanecer": "sunrise",
+    "gato": "cat",
+    "perro": "dog",
+    "paisaje": "landscape",
+    "persona": "person",
+    "hombre": "man",
+    "mujer": "woman",
+    "niño": "boy",
+    "niña": "girl",
+    "casa": "house",
+    "edificio": "building",
+    "comida": "food",
+    "pizza": "pizza",
+    "dibujo": "drawing",
+    "pintura": "painting",
+    "acuarela": "watercolor",
+    "realista": "realistic",
+    "fotografía": "photography",
+    "anime": "anime",
+    "kawaii": "kawaii",
+    "chibi": "chibi",
+    "cyberpunk": "cyberpunk",
+    "fantasía": "fantasy",
+    "fantasia": "fantasy",
+    "dragón": "dragon",
+    "dragon": "dragon",
+    "mágico": "magical",
+    "magico": "magical",
+    "futurista": "futuristic",
+    "vintage": "vintage",
+    "retro": "retro",
+    "minimalista": "minimalist",
+    "gótico": "gothic",
+    "gotico": "gothic",
+    "oscuro": "dark",
+    "vibrante": "vibrant",
+    "hermoso": "beautiful",
+    "hermosa": "beautiful",
+    "lindo": "cute",
+    "linda": "cute",
+    "adorable": "adorable",
+    "majestuoso": "majestic",
+    "majestuosa": "majestic",
+    "volando": "flying",
+    "sobre": "over",
+    "bajo": "under",
+    "cielo": "sky",
+    "nube": "cloud",
+    "nubes": "clouds",
+    "sol": "sun",
+    "luna": "moon",
+    "estrellas": "stars",
+    "río": "river",
+    "rio": "river",
+    "lago": "lake",
+    "mar": "sea",
+    "océano": "ocean",
+    "oceano": "ocean",
+    "bosque": "forest",
+    "árbol": "tree",
+    "arbol": "tree",
+    "flor": "flower",
+    "flores": "flowers",
+    "animal": "animal",
+    "animales": "animals",
+    "pájaro": "bird",
+    "pajaro": "bird",
+    "águila": "eagle",
+    "aguila": "eagle",
+    "león": "lion",
+    "leon": "lion",
+    "tigre": "tiger",
+    "lobo": "wolf",
+    "zorro": "fox",
+    "caballo": "horse",
+    "vaca": "cow",
+    "oveja": "sheep",
+    "cerdo": "pig",
+    "conejo": "rabbit",
+    "ratón": "mouse",
+    "raton": "mouse",
+    "pez": "fish",
+    "tiburón": "shark",
+    "tiburon": "shark",
+    "ballena": "whale",
+    "delfín": "dolphin",
+    "delfin": "dolphin",
+    "tortuga": "turtle",
+    "serpiente": "snake",
+    "lagarto": "lizard",
+    "mariposa": "butterfly",
+    "abeja": "bee",
+    "araña": "spider",
+    "arana": "spider",
+  };
+
+  let translated = prompt.toLowerCase();
+  for (const [esp, eng] of Object.entries(translations)) {
+    const regex = new RegExp(`\\b${esp}\\b`, "gi");
+    translated = translated.replace(regex, eng);
+  }
+
+  return translated;
 }
 
 export async function POST(req: NextRequest) {
