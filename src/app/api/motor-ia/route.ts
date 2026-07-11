@@ -17,7 +17,7 @@ async function callGroqChat(messages: { role: string; content: string }[], useRe
   });
 
   const body: any = {
-    model: "meta-llama/llama-3.3-70b-instruct:free",
+    model: "nvidia/nemotron-3-ultra-550b-a55b:free",
     messages: apiMessages,
     temperature: useReasoning ? 0.5 : 0.6,
     max_tokens: useReasoning ? 1000 : 800,
