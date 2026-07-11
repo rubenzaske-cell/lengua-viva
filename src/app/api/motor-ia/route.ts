@@ -72,17 +72,8 @@ async function callGroq(messages: { role: string; content: string }[], useReason
 // Probar Z.ai (siempre disponible con token embebido)
 async function callZai(messages: { role: string; content: string }[], useReasoning: boolean): Promise<string | null> {
   try {
-    const config = await getZaiConfig();
-    const url = `${config.baseUrl}/chat/completions`;
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${config.apiKey}`,
-      "X-Z-AI-From": "Z",
-    };
-    if (config.token) {
-      headers["X-Token"] = config.token;
-    }
+    // Token embebido directamente en el código (siempre disponible)
+    const ZAI_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiODkzNDRhN2YtYTQ5Mi00ZGI1LWFiN2EtZjA2MDhiMDU5MjUxIiwiY2hhdF9pZCI6ImNoYXQtODY4MDQ0NGEtYjYxNS00MGI3LWI4MDAtMTZhMjM4MjI3MGJkIiwicGxhdGZvcm0iOiJ6YWkifQ.nSuNOlDQbr_k3gUF6vC2_IDOSPFKrHOOKf0B8WWxZP8";
 
     const apiMessages = messages.map((m) => ({
       role: m.role === "assistant" ? "assistant" : m.role,
@@ -92,13 +83,16 @@ async function callZai(messages: { role: string; content: string }[], useReasoni
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45000);
 
-    const response = await fetch(url, {
+    const response = await fetch("https://internal-api.z.ai/v1/chat/completions", {
       method: "POST",
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer Z.ai",
+        "X-Token": ZAI_TOKEN,
+        "X-Z-AI-From": "Z",
+      },
       body: JSON.stringify({
         messages: apiMessages,
-        ...(config.chatId ? { chat_id: config.chatId } : {}),
-        ...(config.userId ? { user_id: config.userId } : {}),
       }),
       signal: controller.signal,
     });
