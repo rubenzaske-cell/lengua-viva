@@ -15,6 +15,8 @@ interface Message {
   traduccion?: string;
   imageUrl?: string;
   generatingImage?: boolean;
+  imageProgress?: number; // 0-100
+  imageError?: boolean;
 }
 
 const WELCOME_MESSAGE: Message = {
@@ -220,21 +222,56 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
           return;
         }
 
+        // Marcar como generando imagen
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[imagePromptIndex] = {
+            ...updated[imagePromptIndex],
+            generatingImage: true,
+            imageProgress: 5,
+          };
+          return updated;
+        });
+
+        // Simular progreso de carga mientras se genera
+        const progressInterval = setInterval(() => {
+          setMessages((prev) => {
+            const updated = [...prev];
+            const msg = updated[imagePromptIndex];
+            if (msg && msg.generatingImage && (msg.imageProgress || 0) < 90) {
+              updated[imagePromptIndex] = {
+                ...msg,
+                imageProgress: Math.min(90, (msg.imageProgress || 5) + Math.random() * 15),
+              };
+            }
+            return updated;
+          });
+        }, 500);
+
         try {
           const imgResponse = await fetch("/api/generate-image", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ prompt: imagePrompt }),
           });
+
+          if (!imgResponse.ok) {
+            throw new Error("Error en el servidor");
+          }
+
           const imgData = await imgResponse.json();
 
+          clearInterval(progressInterval);
+
           if (imgData.imageUrl) {
+            // Progreso al 100% y mostrar imagen
             setMessages((prev) => {
               const updated = [...prev];
               updated[imagePromptIndex] = {
                 ...updated[imagePromptIndex],
                 imageUrl: imgData.imageUrl,
                 generatingImage: false,
+                imageProgress: 100,
               };
               return updated;
             });
@@ -244,9 +281,30 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
                 return prev;
               });
             }, 100);
+          } else {
+            // No se pudo generar
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[imagePromptIndex] = {
+                ...updated[imagePromptIndex],
+                generatingImage: false,
+                imageError: true,
+              };
+              return updated;
+            });
           }
         } catch (err) {
+          clearInterval(progressInterval);
           console.error("Error generando imagen:", err);
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[imagePromptIndex] = {
+              ...updated[imagePromptIndex],
+              generatingImage: false,
+              imageError: true,
+            };
+            return updated;
+          });
         }
       }
     } catch {
@@ -316,7 +374,13 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
                 }`}
               >
                 {msg.role === "kuntur" ? (
-                  <MessageContent text={msg.text} imageUrl={msg.imageUrl} generatingImage={msg.generatingImage} />
+                  <MessageContent
+                    text={msg.text}
+                    imageUrl={msg.imageUrl}
+                    generatingImage={msg.generatingImage}
+                    imageProgress={msg.imageProgress}
+                    imageError={msg.imageError}
+                  />
                 ) : (
                   <p className="text-sm font-semibold">{msg.text}</p>
                 )}
@@ -390,7 +454,13 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
 }
 
 // Componente que renderiza texto separando los bloques de código
-function MessageContent({ text, imageUrl, generatingImage }: { text: string; imageUrl?: string; generatingImage?: boolean }) {
+function MessageContent({ text, imageUrl, generatingImage, imageProgress, imageError }: {
+  text: string;
+  imageUrl?: string;
+  generatingImage?: boolean;
+  imageProgress?: number;
+  imageError?: boolean;
+}) {
   // Dividir el texto por bloques de código (```...```)
   const parts: { type: "text" | "code"; content: string; lang?: string }[] = [];
   const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
@@ -488,9 +558,38 @@ function MessageContent({ text, imageUrl, generatingImage }: { text: string; ima
 
       {/* Imagen generada */}
       {generatingImage && (
-        <div className="mt-3 flex items-center gap-2 text-xs font-bold text-muted-foreground">
-          <span className="w-2 h-2 rounded-full bg-duo-purple animate-pulse" />
-          Generando imagen de alta calidad...
+        <div className="mt-3 rounded-xl border border-border bg-muted/30 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+              <span className="w-2 h-2 rounded-full bg-duo-purple animate-pulse" />
+              Generando imagen...
+            </span>
+            <span className="text-xs font-bold text-duo-purple">
+              {Math.round(imageProgress || 0)}%
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-duo-purple to-duo-blue rounded-full transition-all duration-500"
+              style={{ width: `${imageProgress || 5}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2">
+            {imageProgress && imageProgress < 30 ? "Analizando tu petición..." :
+             imageProgress && imageProgress < 60 ? "Creando la composición..." :
+             imageProgress && imageProgress < 90 ? "Añadiendo detalles..." :
+             "Finalizando..."}
+          </p>
+        </div>
+      )}
+      {imageError && !imageUrl && (
+        <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
+          <p className="text-xs font-bold text-destructive">
+            No se pudo generar la imagen en este momento.
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Intenta de nuevo en unos segundos.
+          </p>
         </div>
       )}
       {imageUrl && (
