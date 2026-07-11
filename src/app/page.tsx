@@ -122,7 +122,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background patron-andino">
+    <div className="min-h-screen flex flex-col bg-transparent">
       <TopBar />
       <main className="flex-1">
         <AnimatePresence mode="wait">
