@@ -1,21 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
-
-// Configuración de Z.ai
-async function getZaiConfig() {
-  try {
-    const configPath = path.join(process.cwd(), ".z-ai-config");
-    const configStr = await fs.readFile(configPath, "utf-8");
-    return JSON.parse(configStr);
-  } catch {
-    return {
-      baseUrl: "https://internal-api.z.ai/v1",
-      apiKey: "Z.ai",
-      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiODkzNDRhN2YtYTQ5Mi00ZGI1LWFiN2EtZjA2MDhiMDU5MjUxIiwiY2hhdF9pZCI6ImNoYXQtODY4MDQ0NGEtYjYxNS00MGI3LWI4MDAtMTZhMjM4MjI3MGJkIiwicGxhdGZvcm0iOiJ6YWkifQ.nSuNOlDQbr_k3gUF6vC2_IDOSPFKrHOOKf0B8WWxZP8",
-    };
-  }
-}
 
 // Detectar el estilo solicitado y construir prompt profesional
 function buildProfessionalPrompt(userPrompt: string): string {
@@ -126,60 +109,16 @@ function buildProfessionalPrompt(userPrompt: string): string {
     return `${userPrompt}, architectural photography, professional, detailed, dramatic angles, professional lighting, 8k`;
   }
 
-  // Default: alta calidad general (sin forzar realista)
+  // Default: alta calidad general
   return `${userPrompt}, high quality, detailed, professional, vibrant colors, 4k, masterpiece, sharp focus, beautiful composition`;
 }
 
-// Generar imagen con Z.ai (mejor calidad)
-async function generateWithZai(prompt: string): Promise<string | null> {
-  try {
-    const config = await getZaiConfig();
-    const url = `${config.baseUrl}/images/generations`;
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${config.apiKey}`,
-      "X-Z-AI-From": "Z",
-    };
-    if (config.token) {
-      headers["X-Token"] = config.token;
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        prompt,
-        size: "1024x1024",
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      console.error("Z.ai image error:", response.status);
-      return null;
-    }
-
-    const data = await response.json();
-    const imageUrl = data.data?.[0]?.url;
-    return imageUrl || null;
-  } catch (err) {
-    console.error("Z.ai image failed:", err);
-    return null;
-  }
-}
-
-// Generar imagen con Pollinations (respaldo)
+// Generar imagen con Pollinations FLUX (GRATIS, SIN API KEY, ILIMITADO)
 async function generateWithPollinations(prompt: string): Promise<string> {
   const encodedPrompt = encodeURIComponent(prompt);
   const seed = Math.floor(Math.random() * 1000000);
 
-  // Usar flux que es el modelo más potente de Pollinations
+  // FLUX es el modelo más potente de Pollinations
   const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true&model=flux`;
   return url;
 }
@@ -217,28 +156,16 @@ export async function POST(req: NextRequest) {
 
       const styleKeywords = styleMap[style];
       if (styleKeywords) {
-        // Si el estilo es específico, reemplazar el prompt profesional con el estilo forzado
         professionalPrompt = `${prompt}, ${styleKeywords}`;
       }
     }
 
-    // Intentar primero con Z.ai (mejor calidad)
-    const zaiImageUrl = await generateWithZai(professionalPrompt);
+    // Generar imagen con Pollinations (único proveedor, gratis e ilimitado)
+    const imageUrl = await generateWithPollinations(professionalPrompt);
 
-    if (zaiImageUrl) {
-      return NextResponse.json({
-        ok: true,
-        imageUrl: zaiImageUrl,
-        prompt: professionalPrompt,
-        provider: "Z.ai (premium)",
-      });
-    }
-
-    // Si Z.ai falla, usar Pollinations con prompt profesional
-    const pollinationsUrl = await generateWithPollinations(professionalPrompt);
     return NextResponse.json({
       ok: true,
-      imageUrl: pollinationsUrl,
+      imageUrl,
       prompt: professionalPrompt,
       provider: "Pollinations FLUX",
     });
@@ -255,7 +182,7 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     status: "ok",
-    proveedores: ["Z.ai (premium)", "Pollinations FLUX (fallback)"],
+    proveedor: "Pollinations FLUX (gratis, sin API key, ilimitado)",
     estilos: [
       "kawaii/anime", "realista/foto", "logo", "arte digital", "dibujo",
       "acuarela", "óleo/pintura", "pixel art", "3D render", "cyberpunk",
@@ -263,5 +190,6 @@ export async function GET() {
       "pop art", "surrealista", "paisaje", "retrato", "comida", "arquitectura"
     ],
     gratis: true,
+    ilimitado: true,
   });
 }
