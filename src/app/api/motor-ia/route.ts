@@ -169,20 +169,21 @@ async function callOpenRouter(messages: { role: string; content: string }[], use
   }
 }
 
-// Función principal: intenta Groq → Z.ai → OpenRouter
+// Función principal: intenta Z.ai → Groq → OpenRouter
+// Z.ai primero porque tiene token embebido (siempre disponible)
 async function callGroqChat(messages: { role: string; content: string }[], useReasoning: boolean = false): Promise<string> {
-  // 1. Intentar Groq (más rápido)
-  let result = await callGroq(messages, useReasoning);
+  // 1. Intentar Z.ai (siempre disponible con token embebido)
+  let result = await callZai(messages, useReasoning);
 
-  // 2. Si Groq falla, intentar Z.ai (siempre disponible)
+  // 2. Si Z.ai falla, intentar Groq
   if (!result) {
-    console.log("Groq falló, intentando Z.ai...");
-    result = await callZai(messages, useReasoning);
+    console.log("Z.ai falló, intentando Groq...");
+    result = await callGroq(messages, useReasoning);
   }
 
-  // 3. Si Z.ai falla, intentar OpenRouter
+  // 3. Si Groq falla, intentar OpenRouter
   if (!result) {
-    console.log("Z.ai falló, intentando OpenRouter...");
+    console.log("Groq falló, intentando OpenRouter...");
     result = await callOpenRouter(messages, useReasoning);
   }
 
