@@ -153,17 +153,37 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
         userMessage.includes("muéstrame") && userMessage.includes("imagen") ||
         userMessage.includes("crea un logo") ||
         userMessage.includes("diseña") ||
-        userMessage.includes("diseñar")
+        userMessage.includes("diseñar") ||
+        userMessage.includes("fotografía") ||
+        userMessage.includes("fotografia")
       );
 
       if (wantsImage) {
         // Generar imagen en segundo plano
         const imagePromptIndex = finalMessages.length - 1;
+
+        // Usar el mensaje ORIGINAL del usuario como prompt para la imagen
+        // (no el texto de Kuntur, que puede ser una descripción diferente)
+        // Pero extraer el tema principal del mensaje del usuario
+        let imagePrompt = mensaje;
+
+        // Limpiar el prompt: quitar palabras de comando, dejar solo el contenido
+        imagePrompt = imagePrompt
+          .replace(/^(crea|genera|dibuja|dibujar|hazme|muéstrame|muestrame|haz|diseña|diseñar|crea una|genera una)\s+/i, "")
+          .replace(/^(una|un|la|el|los|las)\s+/i, "")
+          .replace(/^(imagen|foto|fotografía|fotografia|dibujo|ilustración|ilustracion|logo|diseño|diseno)\s+(de|del|de la|de un|de una)?\s*/i, "")
+          .trim();
+
+        // Si después de limpiar queda vacío, usar el mensaje original
+        if (!imagePrompt || imagePrompt.length < 3) {
+          imagePrompt = mensaje;
+        }
+
         try {
           const imgResponse = await fetch("/api/generate-image", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: userMessage }),
+            body: JSON.stringify({ prompt: imagePrompt }),
           });
           const imgData = await imgResponse.json();
 
