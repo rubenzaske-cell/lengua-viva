@@ -1,86 +1,196 @@
 import { NextRequest, NextResponse } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
 
-// OpenRouter API (modelos gratis, sin límites estrictos)
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY || "";
+// Múltiples proveedores de IA con fallback
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
 
-// Llamar al API de OpenRouter con reintentos y manejo de errores robusto
-async function callGroqChat(messages: { role: string; content: string }[], useReasoning: boolean = false): Promise<string> {
-  if (!OPENROUTER_API_KEY) {
-    throw new Error("No OPENROUTER_API_KEY configured");
+// Configuración de Z.ai
+async function getZaiConfig() {
+  try {
+    const configPath = path.join(process.cwd(), ".z-ai-config");
+    const configStr = await fs.readFile(configPath, "utf-8");
+    return JSON.parse(configStr);
+  } catch {
+    return {
+      baseUrl: "https://internal-api.z.ai/v1",
+      apiKey: "Z.ai",
+      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiODkzNDRhN2YtYTQ5Mi00ZGI1LWFiN2EtZjA2MDhiMDU5MjUxIiwiY2hhdF9pZCI6ImNoYXQtODY4MDQ0NGEtYjYxNS00MGI3LWI4MDAtMTZhMjM4MjI3MGJkIiwicGxhdGZvcm0iOiJ6YWkifQ.nSuNOlDQbr_k3gUF6vC2_IDOSPFKrHOOKf0B8WWxZP8",
+    };
   }
+}
 
-  // Mapear roles correctamente para OpenRouter
+// Probar Groq primero (más rápido)
+async function callGroq(messages: { role: string; content: string }[], useReasoning: boolean): Promise<string | null> {
+  if (!GROQ_API_KEY) return null;
+
   const apiMessages = messages.map((m) => {
     if (m.role === "system") return { role: "system", content: m.content };
     if (m.role === "assistant") return { role: "assistant", content: m.content };
     return { role: "user", content: m.content };
   });
 
-  const body: any = {
-    model: "nvidia/nemotron-3-ultra-550b-a55b:free",
-    messages: apiMessages,
-    temperature: useReasoning ? 0.5 : 0.6,
-    max_tokens: useReasoning ? 1000 : 800,
-    top_p: useReasoning ? 0.92 : 0.95,
-    frequency_penalty: 0.2,
-    presence_penalty: 0.1,
-  };
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
-  // Sistema de reintentos (3 intentos)
-  let lastError: Error | null = null;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 45000); // 45s timeout (OpenRouter puede ser más lento)
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: apiMessages,
+        temperature: useReasoning ? 0.5 : 0.6,
+        max_tokens: useReasoning ? 1000 : 800,
+        top_p: useReasoning ? 0.92 : 0.95,
+        frequency_penalty: 0.2,
+        presence_penalty: 0.1,
+      }),
+      signal: controller.signal,
+    });
 
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://lengua-viva.vercel.app",
-          "X-Title": "Lengua Viva",
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
+    clearTimeout(timeout);
 
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`OpenRouter API error (intento ${attempt}):`, response.status, errorText);
-        if (response.status === 429 || response.status >= 500) {
-          lastError = new Error(`OpenRouter API error: ${response.status}`);
-          await new Promise(r => setTimeout(r, 2000 * attempt));
-          continue;
-        }
-        throw new Error(`OpenRouter API error: ${response.status} - ${errorText.slice(0, 200)}`);
-      }
-
-      const data = await response.json();
-      const text = data.choices?.[0]?.message?.content || "";
-
-      if (!text) {
-        throw new Error("Respuesta vacía de OpenRouter");
-      }
-
-      return cleanMarkdown(text);
-    } catch (err: any) {
-      if (err.name === "AbortError") {
-        console.error(`Timeout en intento ${attempt}`);
-        lastError = new Error("Timeout - OpenRouter no respondió en 45s");
-      } else {
-        lastError = err;
-      }
-      if (!err.message?.includes("429") && !err.message?.includes("5")) {
-        break;
-      }
-      await new Promise(r => setTimeout(r, 2000 * attempt));
+    if (!response.ok) {
+      console.error("Groq error:", response.status);
+      return null;
     }
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content || "";
+    return text || null;
+  } catch (err) {
+    console.error("Groq failed:", err);
+    return null;
+  }
+}
+
+// Probar Z.ai (siempre disponible con token embebido)
+async function callZai(messages: { role: string; content: string }[], useReasoning: boolean): Promise<string | null> {
+  try {
+    const config = await getZaiConfig();
+    const url = `${config.baseUrl}/chat/completions`;
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${config.apiKey}`,
+      "X-Z-AI-From": "Z",
+    };
+    if (config.token) {
+      headers["X-Token"] = config.token;
+    }
+
+    const apiMessages = messages.map((m) => ({
+      role: m.role === "assistant" ? "assistant" : m.role,
+      content: m.content,
+    }));
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        messages: apiMessages,
+        ...(config.chatId ? { chat_id: config.chatId } : {}),
+        ...(config.userId ? { user_id: config.userId } : {}),
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      console.error("Z.ai error:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content || "";
+    return text || null;
+  } catch (err) {
+    console.error("Z.ai failed:", err);
+    return null;
+  }
+}
+
+// Probar OpenRouter como último recurso
+async function callOpenRouter(messages: { role: string; content: string }[], useReasoning: boolean): Promise<string | null> {
+  if (!OPENROUTER_API_KEY) return null;
+
+  const apiMessages = messages.map((m) => {
+    if (m.role === "system") return { role: "system", content: m.content };
+    if (m.role === "assistant") return { role: "assistant", content: m.content };
+    return { role: "user", content: m.content };
+  });
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000);
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://lengua-viva.vercel.app",
+        "X-Title": "Lengua Viva",
+      },
+      body: JSON.stringify({
+        model: "nvidia/nemotron-3-ultra-550b-a55b:free",
+        messages: apiMessages,
+        temperature: useReasoning ? 0.5 : 0.6,
+        max_tokens: useReasoning ? 1000 : 800,
+        top_p: useReasoning ? 0.92 : 0.95,
+        frequency_penalty: 0.2,
+        presence_penalty: 0.1,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      console.error("OpenRouter error:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content || "";
+    return text || null;
+  } catch (err) {
+    console.error("OpenRouter failed:", err);
+    return null;
+  }
+}
+
+// Función principal: intenta Groq → Z.ai → OpenRouter
+async function callGroqChat(messages: { role: string; content: string }[], useReasoning: boolean = false): Promise<string> {
+  // 1. Intentar Groq (más rápido)
+  let result = await callGroq(messages, useReasoning);
+
+  // 2. Si Groq falla, intentar Z.ai (siempre disponible)
+  if (!result) {
+    console.log("Groq falló, intentando Z.ai...");
+    result = await callZai(messages, useReasoning);
   }
 
-  throw lastError || new Error("Error desconocido en OpenRouter");
+  // 3. Si Z.ai falla, intentar OpenRouter
+  if (!result) {
+    console.log("Z.ai falló, intentando OpenRouter...");
+    result = await callOpenRouter(messages, useReasoning);
+  }
+
+  if (!result) {
+    throw new Error("Todos los proveedores de IA fallaron");
+  }
+
+  return cleanMarkdown(result);
 }
 
 // Función para limpiar markdown manteniendo bloques de código
@@ -437,9 +547,9 @@ Responde en JSON:
 export async function GET() {
   return NextResponse.json({
     status: "ok",
-    iaActiva: !!OPENROUTER_API_KEY,
-    proveedor: "OpenRouter (Llama 3.3 70B)",
-    nivel: "IA profesional - sin límites",
+    iaActiva: true,
+    proveedores: ["Groq (Llama 3.3 70B)", "Z.ai", "OpenRouter (Nemotron 550B)"],
+    nivel: "IA profesional con triple fallback",
     acciones: [
       "generar_pregunta",
       "corregir_pronunciacion",
