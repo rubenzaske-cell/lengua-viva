@@ -219,131 +219,154 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
         const genericWords = ["imagen", "imagenes", "imágenes", "dibujo", "foto", "si", "sí", "puedes", "sabes"];
         if (!imagePrompt || imagePrompt.length < 3 || genericWords.includes(imagePrompt.toLowerCase())) {
           // El usuario solo preguntó si puede, no pidió una imagen específica
-          return;
-        }
-
-        // Marcar como generando imagen
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[imagePromptIndex] = {
-            ...updated[imagePromptIndex],
-            generatingImage: true,
-            imageProgress: 10,
-            imageError: false,
-          };
-          return updated;
-        });
-
-        // Progreso simulado mientras se genera
-        const progressInterval = setInterval(() => {
+        } else {
+          // Marcar como generando imagen INMEDIATAMENTE
           setMessages((prev) => {
             const updated = [...prev];
-            const msg = updated[imagePromptIndex];
-            if (msg && msg.generatingImage && (msg.imageProgress || 0) < 85) {
+            if (updated[imagePromptIndex]) {
               updated[imagePromptIndex] = {
-                ...msg,
-                imageProgress: Math.min(85, (msg.imageProgress || 10) + Math.random() * 10),
+                ...updated[imagePromptIndex],
+                generatingImage: true,
+                imageProgress: 5,
+                imageError: false,
               };
             }
             return updated;
           });
-        }, 800);
 
-        try {
-          const imgResponse = await fetch("/api/generate-image", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: imagePrompt }),
-          });
+          // Progreso simulado mientras se genera
+          const progressInterval = setInterval(() => {
+            setMessages((prev) => {
+              const updated = [...prev];
+              const msg = updated[imagePromptIndex];
+              if (msg && msg.generatingImage && (msg.imageProgress || 0) < 85) {
+                updated[imagePromptIndex] = {
+                  ...msg,
+                  imageProgress: Math.min(85, (msg.imageProgress || 5) + Math.random() * 8),
+                };
+              }
+              return updated;
+            });
+          }, 600);
 
-          if (!imgResponse.ok) {
-            throw new Error("Error en el servidor");
-          }
+          try {
+            const imgResponse = await fetch("/api/generate-image", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ prompt: imagePrompt }),
+            });
 
-          const imgData = await imgResponse.json();
+            if (!imgResponse.ok) {
+              throw new Error("Error en el servidor");
+            }
 
-          if (imgData.imageUrl) {
-            // Precargar la imagen antes de mostrarla
-            const img = new Image();
-            let loaded = false;
-            // Timeout de 40 segundos
-            const timeout = setTimeout(() => {
-              if (!loaded) {
+            const imgData = await imgResponse.json();
+
+            if (imgData.imageUrl) {
+              // Actualizar progreso a 50% cuando tenemos la URL
+              setMessages((prev) => {
+                const updated = [...prev];
+                if (updated[imagePromptIndex]) {
+                  updated[imagePromptIndex] = {
+                    ...updated[imagePromptIndex],
+                    imageProgress: 50,
+                  };
+                }
+                return updated;
+              });
+
+              // Precargar la imagen antes de mostrarla
+              const img = new Image();
+              let loaded = false;
+              // Timeout de 45 segundos
+              const timeout = setTimeout(() => {
+                if (!loaded) {
+                  clearInterval(progressInterval);
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    if (updated[imagePromptIndex]) {
+                      updated[imagePromptIndex] = {
+                        ...updated[imagePromptIndex],
+                        generatingImage: false,
+                        imageError: true,
+                      };
+                    }
+                    return updated;
+                  });
+                }
+              }, 45000);
+
+              img.onload = () => {
+                loaded = true;
+                clearTimeout(timeout);
                 clearInterval(progressInterval);
                 setMessages((prev) => {
                   const updated = [...prev];
+                  if (updated[imagePromptIndex]) {
+                    updated[imagePromptIndex] = {
+                      ...updated[imagePromptIndex],
+                      imageUrl: imgData.imageUrl,
+                      generatingImage: false,
+                      imageProgress: 100,
+                      imageError: false,
+                    };
+                  }
+                  return updated;
+                });
+                setTimeout(() => {
+                  setMessages((prev) => {
+                    saveHistory(prev);
+                    return prev;
+                  });
+                }, 100);
+              };
+              img.onerror = () => {
+                loaded = true;
+                clearTimeout(timeout);
+                clearInterval(progressInterval);
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  if (updated[imagePromptIndex]) {
+                    updated[imagePromptIndex] = {
+                      ...updated[imagePromptIndex],
+                      generatingImage: false,
+                      imageError: true,
+                    };
+                  }
+                  return updated;
+                });
+              };
+              // Iniciar carga
+              img.src = imgData.imageUrl;
+            } else {
+              clearInterval(progressInterval);
+              setMessages((prev) => {
+                const updated = [...prev];
+                if (updated[imagePromptIndex]) {
                   updated[imagePromptIndex] = {
                     ...updated[imagePromptIndex],
                     generatingImage: false,
                     imageError: true,
                   };
-                  return updated;
-                });
-              }
-            }, 40000);
-
-            img.onload = () => {
-              loaded = true;
-              clearTimeout(timeout);
-              clearInterval(progressInterval);
-              setMessages((prev) => {
-                const updated = [...prev];
-                updated[imagePromptIndex] = {
-                  ...updated[imagePromptIndex],
-                  imageUrl: imgData.imageUrl,
-                  generatingImage: false,
-                  imageProgress: 100,
-                  imageError: false,
-                };
+                }
                 return updated;
               });
-              setTimeout(() => {
-                setMessages((prev) => {
-                  saveHistory(prev);
-                  return prev;
-                });
-              }, 100);
-            };
-            img.onerror = () => {
-              loaded = true;
-              clearTimeout(timeout);
-              clearInterval(progressInterval);
-              setMessages((prev) => {
-                const updated = [...prev];
+            }
+          } catch (err) {
+            clearInterval(progressInterval);
+            console.error("Error generando imagen:", err);
+            setMessages((prev) => {
+              const updated = [...prev];
+              if (updated[imagePromptIndex]) {
                 updated[imagePromptIndex] = {
                   ...updated[imagePromptIndex],
                   generatingImage: false,
                   imageError: true,
                 };
-                return updated;
-              });
-            };
-            // Iniciar carga
-            img.src = imgData.imageUrl;
-          } else {
-            clearInterval(progressInterval);
-            setMessages((prev) => {
-              const updated = [...prev];
-              updated[imagePromptIndex] = {
-                ...updated[imagePromptIndex],
-                generatingImage: false,
-                imageError: true,
-              };
+              }
               return updated;
             });
           }
-        } catch (err) {
-          clearInterval(progressInterval);
-          console.error("Error generando imagen:", err);
-          setMessages((prev) => {
-            const updated = [...prev];
-            updated[imagePromptIndex] = {
-              ...updated[imagePromptIndex],
-              generatingImage: false,
-              imageError: true,
-            };
-            return updated;
-          });
         }
       }
     } catch {
