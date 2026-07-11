@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Hugging Face API - GRATIS con token gratuito
+// Modelos disponibles: FLUX.1-schnell, Stable Diffusion XL, etc.
+const HF_TOKEN = process.env.HF_TOKEN || process.env.HUGGINGFACE_TOKEN || "";
+
 // Detectar el estilo solicitado y construir prompt profesional ULTRA DETALLADO
 function buildProfessionalPrompt(userPrompt: string): string {
   const lower = userPrompt.toLowerCase();
@@ -113,14 +117,59 @@ function buildProfessionalPrompt(userPrompt: string): string {
   return `${userPrompt}, ultra high quality, highly detailed, professional, vibrant colors, 4k, masterpiece, sharp focus, beautiful composition, award-winning`;
 }
 
-// Generar imagen con Pollinations FLUX (GRATIS, SIN API KEY, ILIMITADO)
-// Usa enhance=true para que la IA mejore el prompt automáticamente
+// Generar imagen con Hugging Face (FLUX.1-schnell - CALIDAD PROFESIONAL)
+async function generateWithHuggingFace(prompt: string): Promise<string | null> {
+  if (!HF_TOKEN) {
+    return null;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
+    const response = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${HF_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          width: 1024,
+          height: 1024,
+          num_inference_steps: 4, // FLUX schnell es rápido
+          guidance_scale: 7.5,
+        },
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      console.error("Hugging Face error:", response.status);
+      return null;
+    }
+
+    // La respuesta es una imagen binaria
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Convertir a base64 data URL
+    const base64 = buffer.toString("base64");
+    return `data:image/jpeg;base64,${base64}`;
+  } catch (err) {
+    console.error("Hugging Face failed:", err);
+    return null;
+  }
+}
+
+// Generar imagen con Pollinations (respaldo - menor calidad pero siempre disponible)
 async function generateWithPollinations(prompt: string): Promise<string> {
   const encodedPrompt = encodeURIComponent(prompt);
   const seed = Math.floor(Math.random() * 1000000);
-
-  // FLUX con enhance=true (la IA mejora el prompt automáticamente)
-  // private=true para mejores resultados
   const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true&model=flux&enhance=true&private=true`;
   return url;
 }
@@ -162,14 +211,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Generar imagen con Pollinations (único proveedor, gratis e ilimitado)
-    const imageUrl = await generateWithPollinations(professionalPrompt);
+    // 1. Intentar primero con Hugging Face (CALIDAD PROFESIONAL)
+    const hfImageUrl = await generateWithHuggingFace(professionalPrompt);
 
+    if (hfImageUrl) {
+      return NextResponse.json({
+        ok: true,
+        imageUrl: hfImageUrl,
+        prompt: professionalPrompt,
+        provider: "Hugging Face FLUX.1-schnell (profesional)",
+      });
+    }
+
+    // 2. Si Hugging Face falla, usar Pollinations (respaldo)
+    const pollinationsUrl = await generateWithPollinations(professionalPrompt);
     return NextResponse.json({
       ok: true,
-      imageUrl,
+      imageUrl: pollinationsUrl,
       prompt: professionalPrompt,
-      provider: "Pollinations FLUX",
+      provider: "Pollinations (respaldo)",
     });
   } catch (error) {
     console.error("Error generating image:", error);
@@ -184,7 +244,11 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     status: "ok",
-    proveedor: "Pollinations FLUX (gratis, sin API key, ilimitado)",
+    proveedores: [
+      "Hugging Face FLUX.1-schnell (profesional)",
+      "Pollinations (respaldo)"
+    ],
+    hfConfigurado: !!HF_TOKEN,
     estilos: [
       "kawaii/anime", "realista/foto", "logo", "arte digital", "dibujo",
       "acuarela", "óleo/pintura", "pixel art", "3D render", "cyberpunk",
@@ -192,6 +256,5 @@ export async function GET() {
       "pop art", "surrealista", "paisaje", "retrato", "comida", "arquitectura"
     ],
     gratis: true,
-    ilimitado: true,
   });
 }
