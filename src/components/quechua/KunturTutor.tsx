@@ -28,6 +28,25 @@ interface UploadedFile {
   dataUrl?: string;
 }
 
+const IMAGE_STYLES = [
+  { id: "auto", label: "Automático", emoji: "✨", keywords: "" },
+  { id: "realista", label: "Realista", emoji: "📸", keywords: "photorealistic, ultra detailed, 8k, professional photography" },
+  { id: "anime", label: "Anime", emoji: "🎌", keywords: "anime style, kawaii, chibi, big adorable eyes, soft pastel colors" },
+  { id: "digital-art", label: "Arte Digital", emoji: "🎨", keywords: "digital art, highly detailed, vibrant colors, trending on artstation" },
+  { id: "pintura", label: "Óleo", emoji: "🖼️", keywords: "oil painting, classical art, rich textures, dramatic lighting, museum quality" },
+  { id: "acuarela", label: "Acuarela", emoji: "💧", keywords: "watercolor painting, soft colors, artistic, flowing, delicate brushstrokes" },
+  { id: "3d", label: "3D Render", emoji: "🧊", keywords: "3D render, octane render, ultra detailed, realistic materials, professional lighting" },
+  { id: "cyberpunk", label: "Cyberpunk", emoji: "🌃", keywords: "cyberpunk style, neon lights, futuristic, sci-fi, blade runner aesthetic" },
+  { id: "fantasia", label: "Fantasía", emoji: "🐉", keywords: "fantasy art, magical, ethereal, mystical atmosphere, concept art" },
+  { id: "pixel", label: "Pixel Art", emoji: "👾", keywords: "pixel art, retro game style, 8-bit, pixelated, vibrant colors" },
+  { id: "cartoon", label: "Cartoon", emoji: "🎭", keywords: "cartoon style, animated, vibrant colors, fun, playful" },
+  { id: "minimalista", label: "Minimalista", emoji: "⚪", keywords: "minimalist design, clean, simple, elegant, modern aesthetic" },
+  { id: "vintage", label: "Vintage", emoji: "📼", keywords: "vintage style, retro aesthetic, nostalgic, film grain, aged colors" },
+  { id: "gotico", label: "Gótico", emoji: "🦇", keywords: "gothic style, dark atmosphere, moody lighting, dramatic shadows" },
+  { id: "pop-art", label: "Pop Art", emoji: "🎪", keywords: "pop art style, bold colors, comic book aesthetic, Andy Warhol inspired" },
+  { id: "surrealista", label: "Surrealista", emoji: "🌀", keywords: "surrealist art, dreamlike, imaginative, unusual compositions" },
+];
+
 const WELCOME_MESSAGE: Message = {
   role: "kuntur",
   text: "¡Hola! Soy Kuntur, tu asistente de IA. Puedes preguntarme sobre cualquier tema — ciencia, historia, tecnología, cultura, consejos, o lo que necesites. ¿En qué puedo ayudarte?",
@@ -41,6 +60,8 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [imageStyle, setImageStyle] = useState<string>("auto");
+  const [showStylePicker, setShowStylePicker] = useState(false);
   const user = useAppStore((s) => s.user);
   const stats = useAppStore((s) => s.stats);
   const survey = useAppStore((s) => s.survey);
@@ -307,7 +328,7 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
             const imgResponse = await fetch("/api/generate-image", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ prompt: imagePrompt }),
+              body: JSON.stringify({ prompt: imagePrompt, style: imageStyle }),
             });
 
             if (!imgResponse.ok) {
@@ -603,16 +624,53 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
               className="hidden"
             />
 
-            {/* Botón generar imagen */}
-            <button
-              onClick={() => setInput("Genera una imagen de ")}
-              disabled={loading}
-              className="p-2.5 rounded-xl hover:bg-duo-purple/10 text-muted-foreground hover:text-duo-purple transition-colors shrink-0"
-              aria-label="Generar imagen"
-              title="Generar imagen"
-            >
-              <ImageIcon className="w-5 h-5" />
-            </button>
+            {/* Botón generar imagen con selector de estilo */}
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setShowStylePicker(!showStylePicker)}
+                disabled={loading}
+                className="p-2.5 rounded-xl hover:bg-duo-purple/10 text-muted-foreground hover:text-duo-purple transition-colors"
+                aria-label="Generar imagen"
+                title="Generar imagen"
+              >
+                <ImageIcon className="w-5 h-5" />
+              </button>
+
+              {/* Indicador de estilo seleccionado */}
+              {imageStyle !== "auto" && (
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-duo-purple border-2 border-card" />
+              )}
+
+              {/* Selector de estilos */}
+              {showStylePicker && (
+                <div className="absolute bottom-full mb-2 left-0 bg-card border border-border rounded-2xl shadow-xl p-3 z-50 w-72 max-h-80 overflow-y-auto scroll-quechua">
+                  <p className="text-xs font-bold text-muted-foreground uppercase mb-2 px-1">Estilo de imagen</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {IMAGE_STYLES.map((style) => (
+                      <button
+                        key={style.id}
+                        onClick={() => {
+                          setImageStyle(style.id);
+                          setShowStylePicker(false);
+                          if (!input.trim()) {
+                            setInput("Genera una imagen de ");
+                          }
+                          toast.success(`Estilo: ${style.label}`);
+                        }}
+                        className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-bold transition-colors ${
+                          imageStyle === style.id
+                            ? "bg-duo-purple text-white"
+                            : "hover:bg-muted text-foreground"
+                        }`}
+                      >
+                        <span>{style.emoji}</span>
+                        <span className="truncate">{style.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Input de texto */}
             <input

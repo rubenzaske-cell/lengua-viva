@@ -176,8 +176,7 @@ async function generateWithZai(prompt: string): Promise<string | null> {
 
 // Generar imagen con Pollinations (respaldo)
 async function generateWithPollinations(prompt: string): Promise<string> {
-  const enhanced = buildProfessionalPrompt(prompt);
-  const encodedPrompt = encodeURIComponent(enhanced);
+  const encodedPrompt = encodeURIComponent(prompt);
   const seed = Math.floor(Math.random() * 1000000);
 
   // Usar flux que es el modelo más potente de Pollinations
@@ -187,14 +186,41 @@ async function generateWithPollinations(prompt: string): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt } = await req.json();
+    const { prompt, style } = await req.json();
 
     if (!prompt || typeof prompt !== "string") {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
     }
 
     // Construir prompt profesional
-    const professionalPrompt = buildProfessionalPrompt(prompt);
+    let professionalPrompt = buildProfessionalPrompt(prompt);
+
+    // Si el usuario seleccionó un estilo específico, añadir sus keywords
+    if (style && style !== "auto") {
+      const styleMap: Record<string, string> = {
+        "realista": "photorealistic, ultra detailed, 8k, professional photography, sharp focus, natural lighting, DSLR quality",
+        "anime": "anime style, kawaii, chibi, big adorable eyes, soft pastel colors, cute, digital art illustration",
+        "digital-art": "digital art, highly detailed, vibrant colors, professional illustration, trending on artstation, concept art",
+        "pintura": "oil painting, classical art style, rich textures, dramatic lighting, museum quality, detailed brushstrokes",
+        "acuarela": "watercolor painting, soft colors, artistic, flowing, delicate brushstrokes, traditional art",
+        "3d": "3D render, octane render, cinema 4d, ultra detailed, realistic materials, professional lighting, 8k",
+        "cyberpunk": "cyberpunk style, neon lights, futuristic, sci-fi, dark atmosphere, glowing elements, blade runner aesthetic",
+        "fantasia": "fantasy art, magical, ethereal, mystical atmosphere, detailed, concept art, trending on artstation",
+        "pixel": "pixel art, retro game style, 8-bit, pixelated, vibrant colors, detailed pixel work",
+        "cartoon": "cartoon style, animated, vibrant colors, fun, playful, professional animation style",
+        "minimalista": "minimalist design, clean, simple, elegant, lots of negative space, modern aesthetic",
+        "vintage": "vintage style, retro aesthetic, nostalgic, film grain, aged colors, classic look",
+        "gotico": "gothic style, dark atmosphere, moody lighting, dramatic shadows, mysterious, detailed",
+        "pop-art": "pop art style, bold colors, comic book aesthetic, Andy Warhol inspired, vibrant, high contrast",
+        "surrealista": "surrealist art, dreamlike, Salvador Dali inspired, imaginative, unusual compositions, artistic",
+      };
+
+      const styleKeywords = styleMap[style];
+      if (styleKeywords) {
+        // Si el estilo es específico, reemplazar el prompt profesional con el estilo forzado
+        professionalPrompt = `${prompt}, ${styleKeywords}`;
+      }
+    }
 
     // Intentar primero con Z.ai (mejor calidad)
     const zaiImageUrl = await generateWithZai(professionalPrompt);
@@ -209,7 +235,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Si Z.ai falla, usar Pollinations con prompt profesional
-    const pollinationsUrl = await generateWithPollinations(prompt);
+    const pollinationsUrl = await generateWithPollinations(professionalPrompt);
     return NextResponse.json({
       ok: true,
       imageUrl: pollinationsUrl,
