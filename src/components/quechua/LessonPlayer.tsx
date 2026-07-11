@@ -4,11 +4,12 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useAppStore } from "@/lib/quechua/store";
 import type { Exercise } from "@/lib/quechua/content";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Heart, Volume2, Check, Lightbulb } from "lucide-react";
+import { X, Heart, Volume2, Check, Lightbulb, Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
 import { KunturMascot, randomPhrase } from "@/components/quechua/KunturMascot";
 import { IntiCoin } from "@/components/quechua/IntiCoin";
 import { QuipuKnot } from "@/components/quechua/QuipuKnot";
+import { PronunciationExercise } from "@/lib/quechua/learning-engine";
 
 type Feedback = "none" | "correct" | "wrong";
 
@@ -42,22 +43,30 @@ export function LessonPlayer() {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "es-ES";
-    u.rate = 0.85;
-    // Intentar usar una voz en español
+    u.lang = "es-PE";
+    u.rate = 0.75; // Más lento para aprendizaje
+    u.pitch = 1.1; // Tono más amigable
     const voices = window.speechSynthesis.getVoices();
-    const es = voices.find((v) => v.lang.startsWith("es"));
+    const es = voices.find((v) => v.lang.startsWith("es-PE")) ||
+               voices.find((v) => v.lang.startsWith("es-MX")) ||
+               voices.find((v) => v.lang.startsWith("es-US")) ||
+               voices.find((v) => v.lang.startsWith("es"));
     if (es) u.voice = es;
     window.speechSynthesis.speak(u);
   }, []);
 
-  // Reproducir audio automáticamente en ejercicios "listen"
+  // AUDIO AUTOMÁTICO: reproducir audio cuando aparece cada ejercicio
   useEffect(() => {
-    if (current && current.type === "listen" && current.audio) {
-      const t = setTimeout(() => speak(current.audio!), 300);
-      return () => clearTimeout(t);
+    if (!current || feedback !== "none") return;
+    // Reproducir audio automáticamente después de 500ms
+    const audioText = current.audio || current.prompt || current.answer;
+    if (audioText) {
+      const timer = setTimeout(() => {
+        speak(audioText);
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [current, speak]);
+  }, [idx, current, feedback, speak]);
 
   // Precargar voces
   useEffect(() => {
