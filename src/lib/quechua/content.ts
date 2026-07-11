@@ -56,9 +56,9 @@ export interface Unit {
   lessons: Lesson[];
 }
 
-// Currículo importado del archivo de datos (5 meses completo)
-import { CURRICULUM_DATA } from "./curriculum-data";
-export const CURRICULUM: Unit[] = CURRICULUM_DATA;
+// Currículo generado automáticamente - 5 meses, 80+ lecciones, 400+ ejercicios
+import { generateFullCurriculum } from "./curriculum-generator";
+export const CURRICULUM: Unit[] = generateFullCurriculum();
 
 // Logros disponibles
 export interface Achievement {
