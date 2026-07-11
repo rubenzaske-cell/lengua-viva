@@ -55,8 +55,8 @@ export function LearnPath() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
-      {/* Encabezado con Kuntur */}
-      <div className="text-center mb-6">
+      {/* Kuntur flotante - se queda visible al hacer scroll */}
+      <div className="sticky top-16 z-20 text-center mb-6 bg-transparent pointer-events-none">
         <KunturMascot
           mood={stats && stats.streak >= 3 ? "enamorado" : "feliz"}
           size={220}
@@ -72,6 +72,10 @@ export function LearnPath() {
               : KUNTUR_PHRASES.greeting[0]
           }
         />
+      </div>
+
+      {/* Título y stats */}
+      <div className="text-center mb-6">
         <h1 className="text-2xl font-extrabold text-foreground mt-3">
           Lengua Viva
         </h1>
