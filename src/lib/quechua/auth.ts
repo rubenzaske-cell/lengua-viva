@@ -343,8 +343,56 @@ export async function getSnapshot(): Promise<GameSnapshot | null> {
   const achRows = await db.achievementProgress.findMany({ where: { userId } });
   const streakRows = await db.streakDay.findMany({ where: { userId }, orderBy: { date: "asc" } });
 
+  // MIGRACIÓN: Si el usuario tiene lessonIds viejos, desbloquear la primera lección del nuevo currículo
+  const { CURRICULUM } = await import("@/lib/quechua/content");
+  const allLessonIds = CURRICULUM.flatMap((u) => u.lessons.map((l) => l.id));
+  const firstLessonId = allLessonIds[0];
+
+  // Verificar si hay alguna lección ACTIVE o COMPLETED en el nuevo currículo
+  const hasValidProgress = progressRows.some((p) =>
+    allLessonIds.includes(p.lessonId) && (p.status === "ACTIVE" || p.status === "COMPLETED")
+  );
+
+  if (!hasValidProgress) {
+    // Desbloquear la primera lección del nuevo currículo
+    await db.lessonProgress.upsert({
+      where: { userId_lessonId: { userId, lessonId: firstLessonId } },
+      create: { userId, lessonId: firstLessonId, status: "ACTIVE" },
+      update: { status: "ACTIVE" },
+    });
+    // Volver a leer los progress
+    const newProgressRows = await db.lessonProgress.findMany({ where: { userId } });
+    const progress: GameSnapshot["progress"] = {};
+    for (const p of newProgressRows) {
+      progress[p.lessonId] = {
+        status: p.status as "LOCKED" | "ACTIVE" | "COMPLETED",
+        crowns: p.crowns,
+        bestScore: p.bestScore,
+        attempts: p.attempts,
+        completedAt: p.completedAt ? p.completedAt.toISOString() : null,
+      };
+    }
+    // Continuar con el resto del snapshot
+  } else {
+    // Asegurar que la primera lección esté desbloqueada
+    const firstLessonProgress = progressRows.find((p) => p.lessonId === firstLessonId);
+    if (!firstLessonProgress) {
+      await db.lessonProgress.create({
+        data: { userId, lessonId: firstLessonId, status: "ACTIVE" },
+      });
+    } else if (firstLessonProgress.status === "LOCKED") {
+      await db.lessonProgress.update({
+        where: { id: firstLessonProgress.id },
+        data: { status: "ACTIVE" },
+      });
+    }
+  }
+
+  // Re-leer progress después de migración
+  const finalProgressRows = await db.lessonProgress.findMany({ where: { userId } });
+
   const progress: GameSnapshot["progress"] = {};
-  for (const p of progressRows) {
+  for (const p of finalProgressRows) {
     progress[p.lessonId] = {
       status: p.status as "LOCKED" | "ACTIVE" | "COMPLETED",
       crowns: p.crowns,
