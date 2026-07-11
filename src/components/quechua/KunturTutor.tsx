@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, Sparkles, Trash2, Copy, Check } from "lucide-react";
+import { Send, X, Sparkles, Trash2, Copy, Check, Download } from "lucide-react";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { useAppStore } from "@/lib/quechua/store";
 import { useTTS } from "@/lib/quechua/useTTS";
@@ -432,17 +432,27 @@ function MessageContent({ text, imageUrl, generatingImage }: { text: string; ima
       {generatingImage && (
         <div className="mt-3 flex items-center gap-2 text-xs font-bold text-muted-foreground">
           <span className="w-2 h-2 rounded-full bg-duo-purple animate-pulse" />
-          Generando imagen...
+          Generando imagen de alta calidad...
         </div>
       )}
       {imageUrl && (
-        <div className="mt-3 rounded-xl overflow-hidden border border-border">
+        <div className="mt-3 rounded-xl overflow-hidden border border-border shadow-md">
           <img
             src={imageUrl}
             alt="Imagen generada por Kuntur"
             className="w-full h-auto"
             loading="lazy"
           />
+          <a
+            href={imageUrl}
+            download="imagen-kuntur.png"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 py-2 bg-muted/50 hover:bg-muted text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Descargar imagen
+          </a>
         </div>
       )}
     </div>
