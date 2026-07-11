@@ -228,25 +228,26 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
           updated[imagePromptIndex] = {
             ...updated[imagePromptIndex],
             generatingImage: true,
-            imageProgress: 5,
+            imageProgress: 10,
+            imageError: false,
           };
           return updated;
         });
 
-        // Simular progreso de carga mientras se genera
+        // Progreso simulado mientras se genera
         const progressInterval = setInterval(() => {
           setMessages((prev) => {
             const updated = [...prev];
             const msg = updated[imagePromptIndex];
-            if (msg && msg.generatingImage && (msg.imageProgress || 0) < 90) {
+            if (msg && msg.generatingImage && (msg.imageProgress || 0) < 85) {
               updated[imagePromptIndex] = {
                 ...msg,
-                imageProgress: Math.min(90, (msg.imageProgress || 5) + Math.random() * 15),
+                imageProgress: Math.min(85, (msg.imageProgress || 10) + Math.random() * 10),
               };
             }
             return updated;
           });
-        }, 500);
+        }, 800);
 
         try {
           const imgResponse = await fetch("/api/generate-image", {
@@ -261,28 +262,66 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
 
           const imgData = await imgResponse.json();
 
-          clearInterval(progressInterval);
-
           if (imgData.imageUrl) {
-            // Progreso al 100% y mostrar imagen
-            setMessages((prev) => {
-              const updated = [...prev];
-              updated[imagePromptIndex] = {
-                ...updated[imagePromptIndex],
-                imageUrl: imgData.imageUrl,
-                generatingImage: false,
-                imageProgress: 100,
-              };
-              return updated;
-            });
-            setTimeout(() => {
+            // Precargar la imagen antes de mostrarla
+            const img = new Image();
+            let loaded = false;
+            // Timeout de 40 segundos
+            const timeout = setTimeout(() => {
+              if (!loaded) {
+                clearInterval(progressInterval);
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[imagePromptIndex] = {
+                    ...updated[imagePromptIndex],
+                    generatingImage: false,
+                    imageError: true,
+                  };
+                  return updated;
+                });
+              }
+            }, 40000);
+
+            img.onload = () => {
+              loaded = true;
+              clearTimeout(timeout);
+              clearInterval(progressInterval);
               setMessages((prev) => {
-                saveHistory(prev);
-                return prev;
+                const updated = [...prev];
+                updated[imagePromptIndex] = {
+                  ...updated[imagePromptIndex],
+                  imageUrl: imgData.imageUrl,
+                  generatingImage: false,
+                  imageProgress: 100,
+                  imageError: false,
+                };
+                return updated;
               });
-            }, 100);
+              setTimeout(() => {
+                setMessages((prev) => {
+                  saveHistory(prev);
+                  return prev;
+                });
+              }, 100);
+            };
+            img.onerror = () => {
+              loaded = true;
+              clearTimeout(timeout);
+              clearInterval(progressInterval);
+              setMessages((prev) => {
+                const updated = [...prev];
+                updated[imagePromptIndex] = {
+                  ...updated[imagePromptIndex],
+                  generatingImage: false,
+                  imageError: true,
+                };
+                return updated;
+              });
+            };
+            // Iniciar carga
+            img.src = imgData.imageUrl;
           } else {
-            // No se pudo generar
+            clearInterval(progressInterval);
             setMessages((prev) => {
               const updated = [...prev];
               updated[imagePromptIndex] = {
@@ -585,10 +624,10 @@ function MessageContent({ text, imageUrl, generatingImage, imageProgress, imageE
       {imageError && !imageUrl && (
         <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
           <p className="text-xs font-bold text-destructive">
-            No se pudo generar la imagen en este momento.
+            No se pudo generar la imagen.
           </p>
           <p className="text-[10px] text-muted-foreground mt-1">
-            Intenta de nuevo en unos segundos.
+            El servicio puede estar saturado. Intenta con otra descripción.
           </p>
         </div>
       )}
