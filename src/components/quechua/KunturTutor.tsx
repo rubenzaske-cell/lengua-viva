@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, Sparkles, Trash2, Copy, Check, Download } from "lucide-react";
+import { Send, X, Sparkles, Trash2, Copy, Check, Download, Paperclip, FileText, ImageIcon } from "lucide-react";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { useAppStore } from "@/lib/quechua/store";
 import { useTTS } from "@/lib/quechua/useTTS";
@@ -17,6 +17,15 @@ interface Message {
   generatingImage?: boolean;
   imageProgress?: number; // 0-100
   imageError?: boolean;
+  attachments?: { name: string; preview?: string; type: string }[];
+}
+
+interface UploadedFile {
+  name: string;
+  type: string;
+  size: number;
+  preview?: string;
+  dataUrl?: string;
 }
 
 const WELCOME_MESSAGE: Message = {
@@ -31,11 +40,50 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const user = useAppStore((s) => s.user);
   const stats = useAppStore((s) => s.stats);
   const survey = useAppStore((s) => s.survey);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const tts = useTTS();
+
+  // Manejar subida de archivos
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      // Máximo 5MB por archivo
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} es muy grande (máx 5MB)`);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        setUploadedFiles((prev) => [
+          ...prev,
+          {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            preview: file.type.startsWith("image/") ? dataUrl : undefined,
+            dataUrl,
+          },
+        ]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Limpiar el input para permitir subir el mismo archivo otra vez
+    e.target.value = "";
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   // Cargar historial desde la BD al abrir el chat
   useEffect(() => {
@@ -91,15 +139,21 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
   };
 
   const enviar = async () => {
-    if (!input.trim() || loading) return;
-    const mensaje = input.trim();
+    if ((!input.trim() && uploadedFiles.length === 0) || loading) return;
+    const mensaje = input.trim() || "He subido un archivo para que lo revises.";
+    const attachments = uploadedFiles.map((f) => ({
+      name: f.name,
+      type: f.type,
+      preview: f.preview,
+    }));
     setInput("");
-    await enviarMensaje(mensaje);
+    setUploadedFiles([]);
+    await enviarMensaje(mensaje, attachments);
   };
 
   // Función principal que envía el mensaje al API
-  const enviarMensaje = async (mensaje: string) => {
-    const newMessages = [...messages, { role: "user" as const, text: mensaje }];
+  const enviarMensaje = async (mensaje: string, attachments?: { name: string; type: string; preview?: string }[]) => {
+    const newMessages = [...messages, { role: "user" as const, text: mensaje, attachments }];
     setMessages(newMessages);
     setLoading(true);
 
@@ -444,7 +498,23 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
                     imageError={msg.imageError}
                   />
                 ) : (
-                  <p className="text-sm font-semibold">{msg.text}</p>
+                  <div>
+                    <p className="text-sm font-semibold">{msg.text}</p>
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {msg.attachments.map((att, i) => (
+                          <div key={i} className="flex items-center gap-1.5 bg-white/20 rounded-lg px-2 py-1 text-xs">
+                            {att.preview ? (
+                              <img src={att.preview} alt={att.name} className="w-8 h-8 rounded object-cover" />
+                            ) : (
+                              <FileText className="w-4 h-4" />
+                            )}
+                            <span className="max-w-[100px] truncate">{att.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
                 {msg.palabraQuechua && (
                   <div className="mt-2 pt-2 border-t border-border/30">
@@ -490,25 +560,86 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
 
       {/* Input */}
       <div className="border-t border-border bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto max-w-2xl flex items-center gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") enviar(); }}
-            placeholder="Escribe tu pregunta..."
-            className="flex-1 px-4 py-3 rounded-xl border border-border bg-background font-bold focus:outline-none focus:border-duo-green"
-            disabled={loading}
-            autoFocus
-          />
-          <button
-            onClick={enviar}
-            disabled={!input.trim() || loading}
-            className="duo-btn duo-btn-primary shrink-0"
-            style={{ padding: "0.75rem 1rem" }}
-          >
-            <Send className="w-5 h-5" />
-          </button>
+        <div className="mx-auto max-w-2xl">
+          {/* Vista previa de archivos subidos */}
+          {uploadedFiles.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-2">
+              {uploadedFiles.map((file, i) => (
+                <div key={i} className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 text-xs font-bold">
+                  {file.type.startsWith("image/") ? (
+                    <img src={file.preview} alt={file.name} className="w-6 h-6 rounded object-cover" />
+                  ) : (
+                    <FileText className="w-4 h-4 text-muted-foreground" />
+                  )}
+                  <span className="max-w-[120px] truncate">{file.name}</span>
+                  <button
+                    onClick={() => removeFile(i)}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-1.5">
+            {/* Botón subir archivo */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              className="p-2.5 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              aria-label="Subir archivo"
+              title="Subir archivo"
+            >
+              <Paperclip className="w-5 h-5" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,.pdf,.txt,.doc,.docx"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+
+            {/* Botón generar imagen */}
+            <button
+              onClick={() => setInput("Genera una imagen de ")}
+              disabled={loading}
+              className="p-2.5 rounded-xl hover:bg-duo-purple/10 text-muted-foreground hover:text-duo-purple transition-colors shrink-0"
+              aria-label="Generar imagen"
+              title="Generar imagen"
+            >
+              <ImageIcon className="w-5 h-5" />
+            </button>
+
+            {/* Input de texto */}
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") enviar(); }}
+              placeholder="Escribe tu mensaje..."
+              className="flex-1 px-4 py-3 rounded-xl border border-border bg-background font-bold focus:outline-none focus:border-duo-green"
+              disabled={loading}
+              autoFocus
+            />
+
+            {/* Botón enviar */}
+            <button
+              onClick={enviar}
+              disabled={(!input.trim() && uploadedFiles.length === 0) || loading}
+              className="duo-btn duo-btn-primary shrink-0"
+              style={{ padding: "0.75rem 1rem" }}
+            >
+              {loading ? (
+                <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>
