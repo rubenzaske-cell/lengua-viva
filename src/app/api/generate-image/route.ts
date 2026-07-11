@@ -17,35 +17,42 @@ async function getZaiConfig() {
   }
 }
 
-// Mejorar el prompt para generar imágenes de mejor calidad
-function enhancePrompt(prompt: string): string {
-  // Detectar el tipo de imagen para añadir keywords apropiados
-  const lower = prompt.toLowerCase();
+// Detectar el estilo solicitado y construir prompt profesional
+function buildProfessionalPrompt(userPrompt: string): string {
+  const lower = userPrompt.toLowerCase();
 
-  let enhanced = prompt;
+  // Detectar estilo anime/kawaii/chibi
+  if (lower.includes("kawaii") || lower.includes("chibi") || lower.includes("anime") || lower.includes("manga")) {
+    return `${userPrompt}, anime style, kawaii, chibi, big adorable eyes, soft pastel colors, cute, digital art illustration, high quality, detailed`;
+  }
 
-  // Detectar estilo realista
+  // Detectar estilo realista/foto
   if (lower.includes("foto") || lower.includes("realista") || lower.includes("realistic") || lower.includes("real")) {
-    enhanced += ", photorealistic, ultra detailed, 8k, professional photography, sharp focus, natural lighting, high resolution";
-  }
-  // Detectar estilo arte/dibujo
-  else if (lower.includes("dibujo") || lower.includes("dibuja") || lower.includes("art") || lower.includes("ilustración") || lower.includes("illustration")) {
-    enhanced += ", digital art, highly detailed, vibrant colors, professional illustration, trending on artstation";
-  }
-  // Detectar logo
-  else if (lower.includes("logo")) {
-    enhanced += ", logo design, clean, minimalist, professional, vector style, high contrast";
-  }
-  // Detectar anime
-  else if (lower.includes("anime") || lower.includes("manga")) {
-    enhanced += ", anime style, high quality, detailed, studio ghibli inspired, vibrant";
-  }
-  // Default: alta calidad general
-  else {
-    enhanced += ", high quality, detailed, professional, vibrant colors, 4k, masterpiece";
+    return `${userPrompt}, photorealistic, ultra detailed, 8k resolution, professional photography, sharp focus, natural lighting, high resolution, DSLR quality`;
   }
 
-  return enhanced;
+  // Detectar logo
+  if (lower.includes("logo")) {
+    return `${userPrompt}, logo design, clean, minimalist, professional, vector style, high contrast, modern`;
+  }
+
+  // Detectar arte digital/dibujo
+  if (lower.includes("dibujo") || lower.includes("dibuja") || lower.includes("art") || lower.includes("ilustración") || lower.includes("ilustracion")) {
+    return `${userPrompt}, digital art, highly detailed, vibrant colors, professional illustration, trending on artstation, concept art`;
+  }
+
+  // Detectar paisaje
+  if (lower.includes("paisaje") || lower.includes("landscape") || lower.includes("montaña") || lower.includes("montanas") || lower.includes("nature")) {
+    return `${userPrompt}, beautiful landscape, scenic, atmospheric, golden hour lighting, ultra detailed, 4k, professional photography`;
+  }
+
+  // Detectar retrato/persona
+  if (lower.includes("persona") || lower.includes("retrato") || lower.includes("portrait") || lower.includes("hombre") || lower.includes("mujer") || lower.includes("niño") || lower.includes("niña")) {
+    return `${userPrompt}, portrait, detailed face, professional photography, soft lighting, 8k, sharp focus`;
+  }
+
+  // Default: alta calidad
+  return `${userPrompt}, high quality, detailed, professional, vibrant colors, 4k, masterpiece, sharp focus`;
 }
 
 // Generar imagen con Z.ai (mejor calidad)
@@ -63,6 +70,9 @@ async function generateWithZai(prompt: string): Promise<string | null> {
       headers["X-Token"] = config.token;
     }
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
     const response = await fetch(url, {
       method: "POST",
       headers,
@@ -70,7 +80,10 @@ async function generateWithZai(prompt: string): Promise<string | null> {
         prompt,
         size: "1024x1024",
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) {
       console.error("Z.ai image error:", response.status);
@@ -86,9 +99,9 @@ async function generateWithZai(prompt: string): Promise<string | null> {
   }
 }
 
-// Generar imagen con Pollinations (respaldo, siempre funciona)
+// Generar imagen con Pollinations (respaldo)
 async function generateWithPollinations(prompt: string): Promise<string> {
-  const enhanced = enhancePrompt(prompt);
+  const enhanced = buildProfessionalPrompt(prompt);
   const encodedPrompt = encodeURIComponent(enhanced);
   const seed = Math.floor(Math.random() * 1000000);
 
@@ -105,27 +118,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
     }
 
-    // Mejorar el prompt
-    const enhancedPrompt = enhancePrompt(prompt);
+    // Construir prompt profesional
+    const professionalPrompt = buildProfessionalPrompt(prompt);
 
     // Intentar primero con Z.ai (mejor calidad)
-    const zaiImageUrl = await generateWithZai(enhancedPrompt);
+    const zaiImageUrl = await generateWithZai(professionalPrompt);
 
     if (zaiImageUrl) {
       return NextResponse.json({
         ok: true,
         imageUrl: zaiImageUrl,
-        prompt: enhancedPrompt,
+        prompt: professionalPrompt,
         provider: "Z.ai (premium)",
       });
     }
 
-    // Si Z.ai falla, usar Pollinations
+    // Si Z.ai falla, usar Pollinations con prompt profesional
     const pollinationsUrl = await generateWithPollinations(prompt);
     return NextResponse.json({
       ok: true,
       imageUrl: pollinationsUrl,
-      prompt: enhancedPrompt,
+      prompt: professionalPrompt,
       provider: "Pollinations FLUX",
     });
   } catch (error) {
@@ -142,6 +155,7 @@ export async function GET() {
   return NextResponse.json({
     status: "ok",
     proveedores: ["Z.ai (premium)", "Pollinations FLUX (fallback)"],
+    estilos: ["kawaii", "realista", "logo", "arte digital", "paisaje", "retrato"],
     gratis: true,
   });
 }
