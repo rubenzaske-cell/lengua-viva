@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, Sparkles, Trash2, Copy, Check, Download, Paperclip, FileText, ImageIcon } from "lucide-react";
+import { Send, X, Sparkles, Trash2, Copy, Check, Download, Paperclip, FileText, ImageIcon, Languages, FileText as DocIcon, Code2, Calculator, PenTool, Search, Brain, Mic } from "lucide-react";
 import { KunturMascot } from "@/components/quechua/KunturMascot";
 import { useAppStore } from "@/lib/quechua/store";
 import { useTTS } from "@/lib/quechua/useTTS";
@@ -672,6 +672,17 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
               )}
             </div>
 
+            {/* Barra de herramientas profesional - acciones rápidas */}
+            <div className="flex items-center gap-1 mb-2 overflow-x-auto scroll-quechua pb-1">
+              <QuickAction icon={Languages} label="Traducir" color="text-duo-blue" onClick={() => setInput("Traduce al inglés: ")} />
+              <QuickAction icon={DocIcon} label="Resumir" color="text-duo-green" onClick={() => setInput("Resume el siguiente texto: ")} />
+              <QuickAction icon={Brain} label="Explicar" color="text-duo-purple" onClick={() => setInput("Explícame de forma simple: ")} />
+              <QuickAction icon={Code2} label="Código" color="text-duo-orange" onClick={() => setInput("Crea un código de ")} />
+              <QuickAction icon={Calculator} label="Matemáticas" color="text-duo-blue" onClick={() => setInput("Resuelve este problema matemático: ")} />
+              <QuickAction icon={PenTool} label="Escribir" color="text-duo-purple" onClick={() => setInput("Escribe un texto sobre ")} />
+              <QuickAction icon={Search} label="Buscar" color="text-duo-green" onClick={() => setInput("Busca información sobre ")} />
+            </div>
+
             {/* Input de texto */}
             <input
               type="text"
@@ -1029,5 +1040,25 @@ function HighlightedCode({ code, lang }: { code: string; lang: string }) {
         </span>
       ))}
     </>
+  );
+}
+
+// Componente de acción rápida profesional
+function QuickAction({ icon: Icon, label, color, onClick }: {
+  icon: typeof Send;
+  label: string;
+  color: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={false}
+      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-muted transition-colors shrink-0"
+      title={label}
+    >
+      <Icon className={`w-4 h-4 ${color}`} />
+      <span className="text-xs font-bold text-muted-foreground">{label}</span>
+    </button>
   );
 }
