@@ -125,7 +125,62 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
         }),
       });
       const data = await r.json();
-      const respuestaKuntur = data.respuesta || "No pude procesar tu pregunta 🦙";
+      let respuestaKuntur = data.respuesta || "No pude procesar tu pregunta 🦙";
+
+      // Detectar si el usuario pidió generar una imagen (o preguntó si puede)
+      const userMessage = mensaje.toLowerCase();
+      const wantsImage = (
+        // Pedidos directos de imagen
+        userMessage.includes("imagen") ||
+        userMessage.includes("dibuja") ||
+        userMessage.includes("dibujar") ||
+        userMessage.includes("crea una imagen") ||
+        userMessage.includes("genera una imagen") ||
+        userMessage.includes("genera imagen") ||
+        userMessage.includes("hazme una imagen") ||
+        userMessage.includes("crea un logo") ||
+        userMessage.includes("diseña") ||
+        userMessage.includes("diseñar") ||
+        userMessage.includes("fotografía") ||
+        userMessage.includes("fotografia") ||
+        userMessage.includes("pintura") ||
+        userMessage.includes("cuadro") ||
+        // Preguntas sobre si puede generar imágenes
+        (userMessage.includes("puedes") && (userMessage.includes("imagen") || userMessage.includes("dibuj") || userMessage.includes("generar"))) ||
+        (userMessage.includes("puedes") && userMessage.includes("crear") && userMessage.includes("imag")) ||
+        userMessage.includes("sabes dibujar") ||
+        userMessage.includes("sabes generar") ||
+        userMessage.includes("generas imagenes") ||
+        userMessage.includes("generas imágenes")
+      );
+
+      // Si preguntó si puede generar imágenes, forzar respuesta positiva
+      if (wantsImage) {
+        // Si Kuntur dijo que no puede, sobrescribir
+        if (
+          respuestaKuntur.toLowerCase().includes("no puedo") ||
+          respuestaKuntur.toLowerCase().includes("modelo de texto") ||
+          respuestaKuntur.toLowerCase().includes("no puedo generar") ||
+          respuestaKuntur.toLowerCase().includes("no estoy diseñado") ||
+          respuestaKuntur.toLowerCase().includes("no tengo la capacidad")
+        ) {
+          // Extraer el tema de la imagen del mensaje del usuario
+          let tema = mensaje
+            .replace(/^(puedes|puedes|sabes|generas|creas)\s+/i, "")
+            .replace(/^(dibujar|generar|crear|hacer)\s+/i, "")
+            .replace(/^(imagenes|imágenes|una imagen|un dibujo|una foto)\s+/i, "")
+            .replace(/^(de|del|de la|de un|de una)?\s*/i, "")
+            .replace(/\?/g, "")
+            .trim();
+
+          if (!tema || tema.length < 3) {
+            respuestaKuntur = "¡Sí, puedo generar imágenes! Dime qué quieres que cree. 🎨";
+          } else {
+            respuestaKuntur = `¡Sí puedo! Generando imagen de ${tema}. 🎨`;
+          }
+        }
+      }
+
       const finalMessages = [...newMessages, {
         role: "kuntur" as const,
         text: respuestaKuntur,
@@ -134,49 +189,35 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
       }];
       setMessages(finalMessages);
       saveHistory(finalMessages);
-      // TTS: solo leer el texto sin código (extraer texto fuera de bloques de código)
+      // TTS: solo leer el texto sin código
       const textoParaHablar = respuestaKuntur.replace(/```[\s\S]*?```/g, "").trim();
       if (textoParaHablar) {
         tts.speak(textoParaHablar, "chuichui");
       }
 
-      // Detectar si el usuario pidió generar una imagen
-      const userMessage = mensaje.toLowerCase();
-      const wantsImage = (
-        userMessage.includes("imagen") ||
-        userMessage.includes("dibuja") ||
-        userMessage.includes("dibujar") ||
-        userMessage.includes("crea una imagen") ||
-        userMessage.includes("genera una imagen") ||
-        userMessage.includes("genera imagen") ||
-        userMessage.includes("hazme una imagen") ||
-        userMessage.includes("muéstrame") && userMessage.includes("imagen") ||
-        userMessage.includes("crea un logo") ||
-        userMessage.includes("diseña") ||
-        userMessage.includes("diseñar") ||
-        userMessage.includes("fotografía") ||
-        userMessage.includes("fotografia")
-      );
-
+      // Si pidió imagen, generarla
       if (wantsImage) {
-        // Generar imagen en segundo plano
         const imagePromptIndex = finalMessages.length - 1;
 
-        // Usar el mensaje ORIGINAL del usuario como prompt para la imagen
-        // (no el texto de Kuntur, que puede ser una descripción diferente)
-        // Pero extraer el tema principal del mensaje del usuario
+        // Extraer el tema de la imagen del mensaje del usuario
         let imagePrompt = mensaje;
 
-        // Limpiar el prompt: quitar palabras de comando, dejar solo el contenido
+        // Limpiar el prompt
         imagePrompt = imagePrompt
-          .replace(/^(crea|genera|dibuja|dibujar|hazme|muéstrame|muestrame|haz|diseña|diseñar|crea una|genera una)\s+/i, "")
-          .replace(/^(una|un|la|el|los|las)\s+/i, "")
-          .replace(/^(imagen|foto|fotografía|fotografia|dibujo|ilustración|ilustracion|logo|diseño|diseno)\s+(de|del|de la|de un|de una)?\s*/i, "")
+          .replace(/^(puedes|sabes|generas|creas|hazme|muéstrame|muestrame|haz|diseña|diseñar|crea|genera|dibuja|dibujar)\s+/i, "")
+          .replace(/^(crea una|genera una|crea un|genera un)\s+/i, "")
+          .replace(/^(una|un|la|el|los|las|algunas|alguna|unos|unas)\s+/i, "")
+          .replace(/^(imagen|imágenes|imagenes|foto|fotografía|fotografia|dibujo|ilustración|ilustracion|logo|diseño|diseno|cuadro|pintura)\s+/i, "")
+          .replace(/^(de|del|de la|de un|de una|sobre|me|para)?\s*/i, "")
+          .replace(/\?/g, "")
+          .replace(/^(crear|generar|hacer|dibujar)\s*$/i, "")
           .trim();
 
-        // Si después de limpiar queda vacío, usar el mensaje original
-        if (!imagePrompt || imagePrompt.length < 3) {
-          imagePrompt = mensaje;
+        // Si después de limpiar queda vacío o es muy genérico, no generar imagen
+        const genericWords = ["imagen", "imagenes", "imágenes", "dibujo", "foto", "si", "sí", "puedes", "sabes"];
+        if (!imagePrompt || imagePrompt.length < 3 || genericWords.includes(imagePrompt.toLowerCase())) {
+          // El usuario solo preguntó si puede, no pidió una imagen específica
+          return;
         }
 
         try {
@@ -188,7 +229,6 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
           const imgData = await imgResponse.json();
 
           if (imgData.imageUrl) {
-            // Actualizar el mensaje con la imagen
             setMessages((prev) => {
               const updated = [...prev];
               updated[imagePromptIndex] = {
@@ -198,7 +238,6 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
               };
               return updated;
             });
-            // Guardar historial actualizado
             setTimeout(() => {
               setMessages((prev) => {
                 saveHistory(prev);
@@ -207,7 +246,6 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
             }, 100);
           }
         } catch (err) {
-          // Si falla la imagen, no romper el chat
           console.error("Error generando imagen:", err);
         }
       }
