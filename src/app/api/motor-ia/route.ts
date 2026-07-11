@@ -104,7 +104,13 @@ function cleanMarkdown(text: string): string {
 
   // Restaurar bloques de código
   codeBlocks.forEach((block, i) => {
-    text = text.replace(`__CODE_BLOCK_${i}__`, block);
+    // Múltiples reemplazos por si acaso
+    const placeholders = [`__CODE_BLOCK_${i}__`, `CODE_BLOCK_${i}`];
+    for (const ph of placeholders) {
+      while (text.includes(ph)) {
+        text = text.replace(ph, block);
+      }
+    }
   });
 
   // Limpiar saltos de línea múltiples
