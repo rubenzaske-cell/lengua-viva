@@ -1,0 +1,967 @@
+     1→// Lengua Viva - Currículo de Quechua
+     2→// Fuente de verdad del contenido de aprendizaje (no se guarda en DB, solo el progreso)
+     3→
+     4→export type ExerciseType =
+     5→  | "select" // Mostrar quechua, elegir traducción en español
+     6→  | "reverse" // Mostrar español, elegir quechua
+     7→  | "match" // Emparejar pares
+     8→  | "bank" // Traducir usando banco de palabras
+     9→  | "listen"; // Escuchar (TTS) y elegir
+    10→
+    11→export interface BaseExercise {
+    12→  id: string;
+    13→  type: ExerciseType;
+    14→  prompt: string;
+    15→  hint?: string;
+    16→  audio?: string; // texto para TTS (quechua)
+    17→}
+    18→
+    19→export interface ChoiceExercise extends BaseExercise {
+    20→  type: "select" | "reverse" | "listen";
+    21→  choices: string[];
+    22→  answer: string;
+    23→  image?: string;
+    24→}
+    25→
+    26→export interface MatchExercise extends BaseExercise {
+    27→  type: "match";
+    28→  pairs: { q: string; a: string }[];
+    29→}
+    30→
+    31→export interface BankExercise extends BaseExercise {
+    32→  type: "bank";
+    33→  words: string[]; // banco de palabras (orden mostrado se mezcla)
+    34→  answer: string[]; // secuencia correcta
+    35→}
+    36→
+    37→export type Exercise = ChoiceExercise | MatchExercise | BankExercise;
+    38→
+    39→export interface Lesson {
+    40→  id: string;
+    41→  title: string;
+    42→  emoji: string;
+    43→  description: string;
+    44→  xpReward: number;
+    45→  gemReward: number;
+    46→  exercises: Exercise[];
+    47→}
+    48→
+    49→export interface Unit {
+    50→  id: string;
+    51→  title: string;
+    52→  subtitle: string;
+    53→  color: string; // clase de color tailwind para el tema
+    54→  emoji: string;
+    55→  description: string;
+    56→  lessons: Lesson[];
+    57→}
+    58→
+    59→// Palabras y frases reales en Quechua (Runa Simi / Quechua chanka)
+    60→export const CURRICULUM: Unit[] = [
+    61→  {
+    62→    id: "u1",
+    63→    title: "Unidad 1",
+    64→    subtitle: "Fundamentos",
+    65→    color: "green",
+    66→    emoji: "🌱",
+    67→    description: "Saludos y palabras básicas para empezar tu camino en el quechua.",
+    68→    lessons: [
+    69→      {
+    70→        id: "u1l1",
+    71→        title: "Saludos",
+    72→        emoji: "👋",
+    73→        description: "Aprende a saludar y presentarte",
+    74→        xpReward: 15,
+    75→        gemReward: 5,
+    76→        exercises: [
+    77→          {
+    78→            id: "u1l1e1",
+    79→            type: "select",
+    80→            prompt: "allinllachu",
+    81→            hint: "Saludo común en quechua",
+    82→            audio: "allinllachu",
+    83→            choices: ["Hola", "Adiós", "Gracias", "Perdón"],
+    84→            answer: "Hola",
+    85→          },
+    86→          {
+    87→            id: "u1l1e2",
+    88→            type: "reverse",
+    89→            prompt: "¿Cómo se dice «Gracias»?",
+    90→            choices: ["añay", "ari", "mana", "suti"],
+    91→            answer: "añay",
+    92→          },
+    93→          {
+    94→            id: "u1l1e3",
+    95→            type: "match",
+    96→            prompt: "Empareja las palabras",
+    97→            pairs: [
+    98→              { q: "allinllachu", a: "Hola" },
+    99→              { q: "añay", a: "Gracias" },
+   100→              { q: "tupananchiskama", a: "Adiós" },
+   101→              { q: "ari", a: "Sí" },
+   102→            ],
+   103→          },
+   104→          {
+   105→            id: "u1l1e4",
+   106→            type: "bank",
+   107→            prompt: "Mi nombre es Carlos",
+   108→            hint: "sutiymi = mi nombre es",
+   109→            words: ["sutiymi", "Carlos", "mana", "allinllachu", "añay"],
+   110→            answer: ["sutiymi", "Carlos"],
+   111→          },
+   112→          {
+   113→            id: "u1l1e5",
+   114→            type: "listen",
+   115→            prompt: "Escucha y elige el significado",
+   116→            audio: "añay",
+   117→            choices: ["Gracias", "Hola", "Sí", "Adiós"],
+   118→            answer: "Gracias",
+   119→          },
+   120→          {
+   121→            id: "u1l1e6",
+   122→            type: "select",
+   123→            prompt: "imata sutiyki",
+   124→            hint: "Pregunta para conocer a alguien",
+   125→            audio: "imata sutiyki",
+   126→            choices: ["¿Cómo te llamas?", "¿Cómo estás?", "¿De dónde eres?", "¿Cuántos años tienes?"],
+   127→            answer: "¿Cómo te llamas?",
+   128→          },
+   129→        ],
+   130→      },
+   131→      {
+   132→        id: "u1l2",
+   133→        title: "Sí y No",
+   134→        emoji: "✅",
+   135→        description: "Afirmaciones y negaciones básicas",
+   136→        xpReward: 15,
+   137→        gemReward: 5,
+   138→        exercises: [
+   139→          {
+   140→            id: "u1l2e1",
+   141→            type: "select",
+   142→            prompt: "ari",
+   143→            audio: "ari",
+   144→            choices: ["Sí", "No", "Tal vez", "Siempre"],
+   145→            answer: "Sí",
+   146→          },
+   147→          {
+   148→            id: "u1l2e2",
+   149→            type: "select",
+   150→            prompt: "mana",
+   151→            audio: "mana",
+   152→            choices: ["No", "Sí", "Nunca", "Quizá"],
+   153→            answer: "No",
+   154→          },
+   155→          {
+   156→            id: "u1l2e3",
+   157→            type: "match",
+   158→            prompt: "Empareja afirmaciones",
+   159→            pairs: [
+   160→              { q: "ari", a: "Sí" },
+   161→              { q: "mana", a: "No" },
+   162→              { q: "mana ni", a: "Tampoco" },
+   163→              { q: "ari chaymi", a: "Así es" },
+   164→            ],
+   165→          },
+   166→          {
+   167→            id: "u1l2e4",
+   168→            type: "reverse",
+   169→            prompt: "¿Cómo se dice «No»?",
+   170→            choices: ["mana", "ari", "allin", "manaña"],
+   171→            answer: "mana",
+   172→          },
+   173→          {
+   174→            id: "u1l2e5",
+   175→            type: "bank",
+   176→            prompt: "No, gracias",
+   177→            words: ["mana", "añay", "ari", "allinllachu"],
+   178→            answer: ["mana", "añay"],
+   179→          },
+   180→          {
+   181→            id: "u1l2e6",
+   182→            type: "listen",
+   183→            prompt: "Escucha y elige",
+   184→            audio: "ari",
+   185→            choices: ["Sí", "No", "Gracias", "Hola"],
+   186→            answer: "Sí",
+   187→          },
+   188→        ],
+   189→      },
+   190→      {
+   191→        id: "u1l3",
+   192→        title: "Familia",
+   193→        emoji: "👨‍👩‍👧",
+   194→        description: "Miembros de la familia",
+   195→        xpReward: 20,
+   196→        gemReward: 5,
+   197→        exercises: [
+   198→          {
+   199→            id: "u1l3e1",
+   200→            type: "select",
+   201→            prompt: "warmi",
+   202→            audio: "warmi",
+   203→            choices: ["Mujer", "Hombre", "Niño", "Madre"],
+   204→            answer: "Mujer",
+   205→          },
+   206→          {
+   207→            id: "u1l3e2",
+   208→            type: "select",
+   209→            prompt: "qhari",
+   210→            audio: "qhari",
+   211→            choices: ["Hombre", "Mujer", "Padre", "Niño"],
+   212→            answer: "Hombre",
+   213→          },
+   214→          {
+   215→            id: "u1l3e3",
+   216→            type: "select",
+   217→            prompt: "wawa",
+   218→            audio: "wawa",
+   219→            choices: ["Niño/a", "Adulto", "Anciano", "Joven"],
+   220→            answer: "Niño/a",
+   221→          },
+   222→          {
+   223→            id: "u1l3e4",
+   224→            type: "match",
+   225→            prompt: "Empareja la familia",
+   226→            pairs: [
+   227→              { q: "warmi", a: "Mujer" },
+   228→              { q: "qhari", a: "Hombre" },
+   229→              { q: "wawa", a: "Niño/a" },
+   230→              { q: "mama", a: "Madre" },
+   231→              { q: "tayta", a: "Padre" },
+   232→            ],
+   233→          },
+   234→          {
+   235→            id: "u1l3e5",
+   236→            type: "reverse",
+   237→            prompt: "¿Cómo se dice «Padre»?",
+   238→            choices: ["tayta", "mama", "wawa", "qhari"],
+   239→            answer: "tayta",
+   240→          },
+   241→          {
+   242→            id: "u1l3e6",
+   243→            type: "bank",
+   244→            prompt: "Mi madre cocina",
+   245→            hint: "mama = madre, wayk'uq = cocinera",
+   246→            words: ["mama", "wayk'uq", "wawa", "qhari", "añay"],
+   247→            answer: ["mama", "wayk'uq"],
+   248→          },
+   249→          {
+   250→            id: "u1l3e7",
+   251→            type: "listen",
+   252→            prompt: "Escucha y elige",
+   253→            audio: "wawa",
+   254→            choices: ["Niño/a", "Mujer", "Hombre", "Madre"],
+   255→            answer: "Niño/a",
+   256→          },
+   257→        ],
+   258→      },
+   259→      {
+   260→        id: "u1l4",
+   261→        title: "Números 1-5",
+   262→        emoji: "🔢",
+   263→        description: "Contar del uno al cinco",
+   264→        xpReward: 20,
+   265→        gemReward: 5,
+   266→        exercises: [
+   267→          {
+   268→            id: "u1l4e1",
+   269→            type: "select",
+   270→            prompt: "huk",
+   271→            audio: "huk",
+   272→            choices: ["Uno", "Dos", "Tres", "Cinco"],
+   273→            answer: "Uno",
+   274→          },
+   275→          {
+   276→            id: "u1l4e2",
+   277→            type: "select",
+   278→            prompt: "iskay",
+   279→            audio: "iskay",
+   280→            choices: ["Dos", "Uno", "Cuatro", "Cinco"],
+   281→            answer: "Dos",
+   282→          },
+   283→          {
+   284→            id: "u1l4e3",
+   285→            type: "select",
+   286→            prompt: "kimsa",
+   287→            audio: "kimsa",
+   288→            choices: ["Tres", "Cinco", "Uno", "Dos"],
+   289→            answer: "Tres",
+   290→          },
+   291→          {
+   292→            id: "u1l4e4",
+   293→            type: "match",
+   294→            prompt: "Empareja los números",
+   295→            pairs: [
+   296→              { q: "huk", a: "1" },
+   297→              { q: "iskay", a: "2" },
+   298→              { q: "kimsa", a: "3" },
+   299→              { q: "tawa", a: "4" },
+   300→              { q: "phisqa", a: "5" },
+   301→            ],
+   302→          },
+   303→          {
+   304→            id: "u1l4e5",
+   305→            type: "reverse",
+   306→            prompt: "¿Cómo se dice «5»?",
+   307→            choices: ["phisqa", "tawa", "kimsa", "iskay"],
+   308→            answer: "phisqa",
+   309→          },
+   310→          {
+   311→            id: "u1l4e6",
+   312→            type: "bank",
+   313→            prompt: "Tres mujeres",
+   314→            words: ["kimsa", "warmi", "qhari", "huk", "wawa"],
+   315→            answer: ["kimsa", "warmi"],
+   316→          },
+   317→        ],
+   318→      },
+   319→    ],
+   320→  },
+   321→  {
+   322→    id: "u2",
+   323→    title: "Unidad 2",
+   324→    subtitle: "La Naturaleza",
+   325→    color: "emerald",
+   326→    emoji: "🌿",
+   327→    description: "El sol, la luna, el agua y los elementos del mundo andino.",
+   328→    lessons: [
+   329→      {
+   330→        id: "u2l1",
+   331→        title: "Sol y Luna",
+   332→        emoji: "☀️",
+   333→        description: "Inti y Killa, astros sagrados",
+   334→        xpReward: 20,
+   335→        gemReward: 5,
+   336→        exercises: [
+   337→          {
+   338→            id: "u2l1e1",
+   339→            type: "select",
+   340→            prompt: "inti",
+   341→            audio: "inti",
+   342→            choices: ["Sol", "Luna", "Estrella", "Cielo"],
+   343→            answer: "Sol",
+   344→          },
+   345→          {
+   346→            id: "u2l1e2",
+   347→            type: "select",
+   348→            prompt: "killa",
+   349→            audio: "killa",
+   350→            choices: ["Luna", "Sol", "Nube", "Noche"],
+   351→            answer: "Luna",
+   352→          },
+   353→          {
+   354→            id: "u2l1e3",
+   355→            type: "match",
+   356→            prompt: "Empareja los astros",
+   357→            pairs: [
+   358→              { q: "inti", a: "Sol" },
+   359→              { q: "killa", a: "Luna" },
+   360→              { q: "chaska", a: "Estrella" },
+   361→              { q: "pacha", a: "Tierra" },
+   362→            ],
+   363→          },
+   364→          {
+   365→            id: "u2l1e4",
+   366→            type: "reverse",
+   367→            prompt: "¿Cómo se dice «Sol»?",
+   368→            choices: ["inti", "killa", "pacha", "wayra"],
+   369→            answer: "inti",
+   370→          },
+   371→          {
+   372→            id: "u2l1e5",
+   373→            type: "listen",
+   374→            prompt: "Escucha y elige",
+   375→            audio: "inti",
+   376→            choices: ["Sol", "Luna", "Tierra", "Viento"],
+   377→            answer: "Sol",
+   378→          },
+   379→          {
+   380→            id: "u2l1e6",
+   381→            type: "bank",
+   382→            prompt: "El sol brilla",
+   383→            hint: "lliphiq = que brilla",
+   384→            words: ["inti", "lliphiq", "killa", "wawa", "mana"],
+   385→            answer: ["inti", "lliphiq"],
+   386→          },
+   387→        ],
+   388→      },
+   389→      {
+   390→        id: "u2l2",
+   391→        title: "Agua y Fuego",
+   392→        emoji: "💧",
+   393→        description: "Elementos esenciales de la vida",
+   394→        xpReward: 20,
+   395→        gemReward: 5,
+   396→        exercises: [
+   397→          {
+   398→            id: "u2l2e1",
+   399→            type: "select",
+   400→            prompt: "yaku",
+   401→            audio: "yaku",
+   402→            choices: ["Agua", "Fuego", "Aire", "Tierra"],
+   403→            answer: "Agua",
+   404→          },
+   405→          {
+   406→            id: "u2l2e2",
+   407→            type: "select",
+   408→            prompt: "nina",
+   409→            audio: "nina",
+   410→            choices: ["Fuego", "Agua", "Viento", "Piedra"],
+   411→            answer: "Fuego",
+   412→          },
+   413→          {
+   414→            id: "u2l2e3",
+   415→            type: "select",
+   416→            prompt: "wayra",
+   417→            audio: "wayra",
+   418→            choices: ["Viento", "Agua", "Sol", "Luna"],
+   419→            answer: "Viento",
+   420→          },
+   421→          {
+   422→            id: "u2l2e4",
+   423→            type: "match",
+   424→            prompt: "Empareja los elementos",
+   425→            pairs: [
+   426→              { q: "yaku", a: "Agua" },
+   427→              { q: "nina", a: "Fuego" },
+   428→              { q: "wayra", a: "Viento" },
+   429→              { q: "rumi", a: "Piedra" },
+   430→            ],
+   431→          },
+   432→          {
+   433→            id: "u2l2e5",
+   434→            type: "reverse",
+   435→            prompt: "¿Cómo se dice «Agua»?",
+   436→            choices: ["yaku", "nina", "wayra", "rumi"],
+   437→            answer: "yaku",
+   438→          },
+   439→          {
+   440→            id: "u2l2e6",
+   441→            type: "listen",
+   442→            prompt: "Escucha y elige",
+   443→            audio: "nina",
+   444→            choices: ["Fuego", "Agua", "Viento", "Sol"],
+   445→            answer: "Fuego",
+   446→          },
+   447→          {
+   448→            id: "u2l2e7",
+   449→            type: "bank",
+   450→            prompt: "Fuego y agua",
+   451→            words: ["nina", "yaku", "inti", "wawa", "ari"],
+   452→            answer: ["nina", "yaku"],
+   453→          },
+   454→        ],
+   455→      },
+   456→      {
+   457→        id: "u2l3",
+   458→        title: "Día y Noche",
+   459→        emoji: "🌗",
+   460→        description: "El tiempo que pasa",
+   461→        xpReward: 20,
+   462→        gemReward: 5,
+   463→        exercises: [
+   464→          {
+   465→            id: "u2l3e1",
+   466→            type: "select",
+   467→            prompt: "p'unchaw",
+   468→            audio: "p'unchaw",
+   469→            choices: ["Día", "Noche", "Tarde", "Mañana"],
+   470→            answer: "Día",
+   471→          },
+   472→          {
+   473→            id: "u2l3e2",
+   474→            type: "select",
+   475→            prompt: "tuta",
+   476→            audio: "tuta",
+   477→            choices: ["Noche", "Día", "Mediodía", "Amanecer"],
+   478→            answer: "Noche",
+   479→          },
+   480→          {
+   481→            id: "u2l3e3",
+   482→            type: "match",
+   483→            prompt: "Empareja el tiempo",
+   484→            pairs: [
+   485→              { q: "p'unchaw", a: "Día" },
+   486→              { q: "tuta", a: "Noche" },
+   487→              { q: "chawpi", a: "Medio" },
+   488→              { q: "pacha", a: "Tiempo" },
+   489→            ],
+   490→          },
+   491→          {
+   492→            id: "u2l3e4",
+   493→            type: "reverse",
+   494→            prompt: "¿Cómo se dice «Noche»?",
+   495→            choices: ["tuta", "p'unchaw", "chawpi", "killa"],
+   496→            answer: "tuta",
+   497→          },
+   498→          {
+   499→            id: "u2l3e5",
+   500→            type: "listen",
+   501→            prompt: "Escucha y elige",
+   502→            audio: "tuta",
+   503→            choices: ["Noche", "Día", "Tiempo", "Sol"],
+   504→            answer: "Noche",
+   505→          },
+   506→          {
+   507→            id: "u2l3e6",
+   508→            type: "bank",
+   509→            prompt: "Buenos días",
+   510→            hint: "allin = bueno",
+   511→            words: ["allin", "p'unchaw", "tuta", "mana", "wawa"],
+   512→            answer: ["allin", "p'unchaw"],
+   513→          },
+   514→        ],
+   515→      },
+   516→      {
+   517→        id: "u2l4",
+   518→        title: "Animales",
+   519→        emoji: "🦙",
+   520→        description: "Animales de los Andes",
+   521→        xpReward: 25,
+   522→        gemReward: 5,
+   523→        exercises: [
+   524→          {
+   525→            id: "u2l4e1",
+   526→            type: "select",
+   527→            prompt: "llama",
+   528→            audio: "llama",
+   529→            choices: ["Llama", "Perro", "Gato", "Vaca"],
+   530→            answer: "Llama",
+   531→          },
+   532→          {
+   533→            id: "u2l4e2",
+   534→            type: "select",
+   535→            prompt: "allqu",
+   536→            audio: "allqu",
+   537→            choices: ["Perro", "Gato", "Llama", "Caballo"],
+   538→            answer: "Perro",
+   539→          },
+   540→          {
+   541→            id: "u2l4e3",
+   542→            type: "select",
+   543→            prompt: "misimichiq",
+   544→            audio: "misimichiq",
+   545→            choices: ["Gato", "Perro", "Pájaro", "Pez"],
+   546→            answer: "Gato",
+   547→          },
+   548→          {
+   549→            id: "u2l4e4",
+   550→            type: "match",
+   551→            prompt: "Empareja los animales",
+   552→            pairs: [
+   553→              { q: "llama", a: "Llama" },
+   554→              { q: "allqu", a: "Perro" },
+   555→              { q: "pisqu", a: "Pájaro" },
+   556→              { q: "hatun", a: "Grande" },
+   557→            ],
+   558→          },
+   559→          {
+   560→            id: "u2l4e5",
+   561→            type: "reverse",
+   562→            prompt: "¿Cómo se dice «Perro»?",
+   563→            choices: ["allqu", "llama", "pisqu", "wawa"],
+   564→            answer: "allqu",
+   565→          },
+   566→          {
+   567→            id: "u2l4e6",
+   568→            type: "listen",
+   569→            prompt: "Escucha y elige",
+   570→            audio: "allqu",
+   571→            choices: ["Perro", "Gato", "Llama", "Pájaro"],
+   572→            answer: "Perro",
+   573→          },
+   574→          {
+   575→            id: "u2l4e7",
+   576→            type: "bank",
+   577→            prompt: "El perro grande",
+   578→            words: ["allqu", "hatun", "wawa", "mana", "inti"],
+   579→            answer: ["allqu", "hatun"],
+   580→          },
+   581→        ],
+   582→      },
+   583→    ],
+   584→  },
+   585→  {
+   586→    id: "u3",
+   587→    title: "Unidad 3",
+   588→    subtitle: "Vida Diaria",
+   589→    color: "amber",
+   590→    emoji: "🍞",
+   591→    description: "Comida, acciones y objetos del día a día.",
+   592→    lessons: [
+   593→      {
+   594→        id: "u3l1",
+   595→        title: "Comida",
+   596→        emoji: "🍎",
+   597→        description: "Alimentos básicos",
+   598→        xpReward: 25,
+   599→        gemReward: 5,
+   600→        exercises: [
+   601→          {
+   602→            id: "u3l1e1",
+   603→            type: "select",
+   604→            prompt: "tanta",
+   605→            audio: "tanta",
+   606→            choices: ["Pan", "Agua", "Carne", "Leche"],
+   607→            answer: "Pan",
+   608→          },
+   609→          {
+   610→            id: "u3l1e2",
+   611→            type: "select",
+   612→            prompt: "papa",
+   613→            audio: "papa",
+   614→            choices: ["Papa", "Maíz", "Trigo", "Arroz"],
+   615→            answer: "Papa",
+   616→          },
+   617→          {
+   618→            id: "u3l1e3",
+   619→            type: "select",
+   620→            prompt: "sara",
+   621→            audio: "sara",
+   622→            choices: ["Maíz", "Papa", "Pan", "Fruta"],
+   623→            answer: "Maíz",
+   624→          },
+   625→          {
+   626→            id: "u3l1e4",
+   627→            type: "match",
+   628→            prompt: "Empareja los alimentos",
+   629→            pairs: [
+   630→              { q: "tanta", a: "Pan" },
+   631→              { q: "papa", a: "Papa" },
+   632→              { q: "sara", a: "Maíz" },
+   633→              { q: "yaku", a: "Agua" },
+   634→            ],
+   635→          },
+   636→          {
+   637→            id: "u3l1e5",
+   638→            type: "reverse",
+   639→            prompt: "¿Cómo se dice «Pan»?",
+   640→            choices: ["tanta", "papa", "sara", "yaku"],
+   641→            answer: "tanta",
+   642→          },
+   643→          {
+   644→            id: "u3l1e6",
+   645→            type: "listen",
+   646→            prompt: "Escucha y elige",
+   647→            audio: "sara",
+   648→            choices: ["Maíz", "Papa", "Pan", "Agua"],
+   649→            answer: "Maíz",
+   650→          },
+   651→          {
+   652→            id: "u3l1e7",
+   653→            type: "bank",
+   654→            prompt: "Pan y agua",
+   655→            words: ["tanta", "yaku", "sara", "papa", "ari"],
+   656→            answer: ["tanta", "yaku"],
+   657→          },
+   658→        ],
+   659→      },
+   660→      {
+   661→        id: "u3l2",
+   662→        title: "Verbos",
+   663→        emoji: "🏃",
+   664→        description: "Acciones cotidianas",
+   665→        xpReward: 25,
+   666→        gemReward: 5,
+   667→        exercises: [
+   668→          {
+   669→            id: "u3l2e1",
+   670→            type: "select",
+   671→            prompt: "mikhuy",
+   672→            audio: "mikhuy",
+   673→            choices: ["Comer", "Beber", "Dormir", "Caminar"],
+   674→            answer: "Comer",
+   675→          },
+   676→          {
+   677→            id: "u3l2e2",
+   678→            type: "select",
+   679→            prompt: "puñuy",
+   680→            audio: "puñuy",
+   681→            choices: ["Dormir", "Comer", "Hablar", "Correr"],
+   682→            answer: "Dormir",
+   683→          },
+   684→          {
+   685→            id: "u3l2e3",
+   686→            type: "select",
+   687→            prompt: "puriy",
+   688→            audio: "puriy",
+   689→            choices: ["Caminar", "Dormir", "Comer", "Ver"],
+   690→            answer: "Caminar",
+   691→          },
+   692→          {
+   693→            id: "u3l2e4",
+   694→            type: "match",
+   695→            prompt: "Empareja las acciones",
+   696→            pairs: [
+   697→              { q: "mikhuy", a: "Comer" },
+   698→              { q: "puñuy", a: "Dormir" },
+   699→              { q: "puriy", a: "Caminar" },
+   700→              { q: "rimay", a: "Hablar" },
+   701→            ],
+   702→          },
+   703→          {
+   704→            id: "u3l2e5",
+   705→            type: "reverse",
+   706→            prompt: "¿Cómo se dice «Comer»?",
+   707→            choices: ["mikhuy", "puñuy", "puriy", "rimay"],
+   708→            answer: "mikhuy",
+   709→          },
+   710→          {
+   711→            id: "u3l2e6",
+   712→            type: "listen",
+   713→            prompt: "Escucha y elige",
+   714→            audio: "puñuy",
+   715→            choices: ["Dormir", "Comer", "Caminar", "Hablar"],
+   716→            answer: "Dormir",
+   717→          },
+   718→          {
+   719→            id: "u3l2e7",
+   720→            type: "bank",
+   721→            prompt: "Quiero comer pan",
+   722→            hint: "muna = querer",
+   723→            words: ["tanta", "mikhuy", "muna", "puñuy", "mana"],
+   724→            answer: ["tanta", "mikhuy", "muna"],
+   725→          },
+   726→        ],
+   727→      },
+   728→      {
+   729→        id: "u3l3",
+   730→        title: "Adjetivos",
+   731→        emoji: "📐",
+   732→        description: "Grande, pequeño, bueno",
+   733→        xpReward: 25,
+   734→        gemReward: 5,
+   735→        exercises: [
+   736→          {
+   737→            id: "u3l3e1",
+   738→            type: "select",
+   739→            prompt: "hatun",
+   740→            audio: "hatun",
+   741→            choices: ["Grande", "Pequeño", "Bueno", "Malo"],
+   742→            answer: "Grande",
+   743→          },
+   744→          {
+   745→            id: "u3l3e2",
+   746→            type: "select",
+   747→            prompt: "huch'uy",
+   748→            audio: "huch'uy",
+   749→            choices: ["Pequeño", "Grande", "Fuerte", "Débil"],
+   750→            answer: "Pequeño",
+   751→          },
+   752→          {
+   753→            id: "u3l3e3",
+   754→            type: "select",
+   755→            prompt: "sumaq",
+   756→            audio: "sumaq",
+   757→            choices: ["Hermoso", "Feo", "Triste", "Feliz"],
+   758→            answer: "Hermoso",
+   759→          },
+   760→          {
+   761→            id: "u3l3e4",
+   762→            type: "match",
+   763→            prompt: "Empareja los adjetivos",
+   764→            pairs: [
+   765→              { q: "hatun", a: "Grande" },
+   766→              { q: "huch'uy", a: "Pequeño" },
+   767→              { q: "sumaq", a: "Hermoso" },
+   768→              { q: "allin", a: "Bueno" },
+   769→            ],
+   770→          },
+   771→          {
+   772→            id: "u3l3e5",
+   773→            type: "reverse",
+   774→            prompt: "¿Cómo se dice «Grande»?",
+   775→            choices: ["hatun", "huch'uy", "sumaq", "allin"],
+   776→            answer: "hatun",
+   777→          },
+   778→          {
+   779→            id: "u3l3e6",
+   780→            type: "listen",
+   781→            prompt: "Escucha y elige",
+   782→            audio: "sumaq",
+   783→            choices: ["Hermoso", "Grande", "Bueno", "Pequeño"],
+   784→            answer: "Hermoso",
+   785→          },
+   786→          {
+   787→            id: "u3l3e7",
+   788→            type: "bank",
+   789→            prompt: "Casa grande",
+   790→            hint: "wasi = casa",
+   791→            words: ["hatun", "wasi", "wawa", "mana", "yaku"],
+   792→            answer: ["hatun", "wasi"],
+   793→          },
+   794→        ],
+   795→      },
+   796→      {
+   797→        id: "u3l4",
+   798→        title: "Frases Útiles",
+   799→        emoji: "💬",
+   800→        description: "Conversación práctica",
+   801→        xpReward: 30,
+   802→        gemReward: 10,
+   803→        exercises: [
+   804→          {
+   805→            id: "u3l4e1",
+   806→            type: "select",
+   807→            prompt: "imaynallam kachkanki",
+   808→            hint: "Pregunta amistosa",
+   809→            audio: "imaynallam kachkanki",
+   810→            choices: ["¿Cómo estás?", "¿Cómo te llamas?", "¿De dónde eres?", "¿Qué haces?"],
+   811→            answer: "¿Cómo estás?",
+   812→          },
+   813→          {
+   814→            id: "u3l4e2",
+   815→            type: "select",
+   816→            prompt: "allinllam kachkani",
+   817→            audio: "allinllam kachkani",
+   818→            choices: ["Estoy bien", "Estoy mal", "No sé", "Adiós"],
+   819→            answer: "Estoy bien",
+   820→          },
+   821→          {
+   822→            id: "u3l4e3",
+   823→            type: "match",
+   824→            prompt: "Empareja las frases",
+   825→            pairs: [
+   826→              { q: "imaynallam kachkanki", a: "¿Cómo estás?" },
+   827→              { q: "allinllam kachkani", a: "Estoy bien" },
+   828→              { q: "allinllachu", a: "Hola" },
+   829→              { q: "tupananchiskama", a: "Adiós" },
+   830→            ],
+   831→          },
+   832→          {
+   833→            id: "u3l4e4",
+   834→            type: "reverse",
+   835→            prompt: "¿Cómo se dice «Estoy bien»?",
+   836→            choices: ["allinllam kachkani", "imaynallam kachkanki", "tupananchiskama", "allinllachu"],
+   837→            answer: "allinllam kachkani",
+   838→          },
+   839→          {
+   840→            id: "u3l4e5",
+   841→            type: "bank",
+   842→            prompt: "Estoy muy bien, gracias",
+   843→            words: ["allinllam", "kachkani", "añay", "mana", "wawa"],
+   844→            answer: ["allinllam", "kachkani", "añay"],
+   845→          },
+   846→          {
+   847→            id: "u3l4e6",
+   848→            type: "listen",
+   849→            prompt: "Escucha y elige",
+   850→            audio: "imaynallam kachkanki",
+   851→            choices: ["¿Cómo estás?", "Hola", "Gracias", "Adiós"],
+   852→            answer: "¿Cómo estás?",
+   853→          },
+   854→          {
+   855→            id: "u3l4e7",
+   856→            type: "bank",
+   857→            prompt: "Hasta pronto, amigo",
+   858→            hint: "masi = amigo",
+   859→            words: ["tupananchiskama", "masi", "mana", "yaku", "wawa"],
+   860→            answer: ["tupananchiskama", "masi"],
+   861→          },
+   862→        ],
+   863→      },
+   864→    ],
+   865→  },
+   866→];
+   867→
+   868→// Logros disponibles
+   869→export interface Achievement {
+   870→  id: string;
+   871→  name: string;
+   872→  description: string;
+   873→  emoji: string;
+   874→  target: number;
+   875→  metric: "lessons" | "xp" | "streak" | "perfect" | "gems";
+   876→  tier: "bronze" | "silver" | "gold" | "diamond";
+   877→}
+   878→
+   879→export const ACHIEVEMENTS: Achievement[] = [
+   880→  { id: "first_lesson", name: "Primer Paso", description: "Completa tu primera lección", emoji: "🎯", target: 1, metric: "lessons", tier: "bronze" },
+   881→  { id: "lessons_5", name: "Estudiante", description: "Completa 5 lecciones", emoji: "📚", target: 5, metric: "lessons", tier: "bronze" },
+   882→  { id: "lessons_10", name: "Dedicado", description: "Completa 10 lecciones", emoji: "📖", target: 10, metric: "lessons", tier: "silver" },
+   883→  { id: "xp_100", name: "Tejedor", description: "Teje 100 quipus", emoji: "🎋", target: 100, metric: "xp", tier: "bronze" },
+   884→  { id: "xp_500", name: "Maestro Tejedor", description: "Teje 500 quipus", emoji: "🧵", target: 500, metric: "xp", tier: "silver" },
+   885→  { id: "xp_1000", name: "Leyenda", description: "Teje 1000 quipus", emoji: "💫", target: 1000, metric: "xp", tier: "gold" },
+   886→  { id: "streak_3", name: "En Racha", description: "Mantén una racha de 3 días", emoji: "🔥", target: 3, metric: "streak", tier: "bronze" },
+   887→  { id: "streak_7", name: "Semana Perfecta", description: "Mantén una racha de 7 días", emoji: "📅", target: 7, metric: "streak", tier: "silver" },
+   888→  { id: "streak_30", name: "Inquebrantable", description: "Mantén una racha de 30 días", emoji: "💎", target: 30, metric: "streak", tier: "gold" },
+   889→  { id: "perfect_1", name: "Impecable", description: "Completa una lección sin errores", emoji: "✨", target: 1, metric: "perfect", tier: "bronze" },
+   890→  { id: "perfect_5", name: "Perfeccionista", description: "Completa 5 lecciones sin errores", emoji: "🏆", target: 5, metric: "perfect", tier: "gold" },
+   891→  { id: "gems_100", name: "Ahorrador", description: "Acumula 100 intis", emoji: "☀️", target: 100, metric: "gems", tier: "silver" },
+   892→];
+   893→
+   894→// Ligas
+   895→export interface League {
+   896→  id: string;
+   897→  name: string;
+   898→  emoji: string;
+   899→  color: string;
+   900→  min: number; // XP mínimo para no descender (aprox)
+   901→}
+   902→
+   903→export const LEAGUES: League[] = [
+   904→  { id: "BRONZE", name: "Bronce", emoji: "🥉", color: "amber-7", min: 0 },
+   905→  { id: "SILVER", name: "Plata", emoji: "🥈", color: "slate", min: 50 },
+   906→  { id: "GOLD", name: "Oro", emoji: "🥇", color: "yellow", min: 100 },
+   907→  { id: "SAPPHIRE", name: "Zafiro", emoji: "🔷", color: "cyan", min: 150 },
+   908→  { id: "RUBY", name: "Rubí", emoji: "❤️", color: "rose", min: 200 },
+   909→  { id: "EMERALD", name: "Esmeralda", emoji: "💚", color: "emerald", min: 300 },
+   910→  { id: "DIAMOND", name: "Diamante", emoji: "💎", color: "violet", min: 500 },
+   911→];
+   912→
+   913→// Items de la tienda
+   914→export interface ShopItem {
+   915→  id: string;
+   916→  name: string;
+   917→  description: string;
+   918→  emoji: string;
+   919→  cost: number;
+   920→  type: "hearts" | "frozen" | "boost" | "cosmetic";
+   921→}
+   922→
+   923→export const SHOP_ITEMS: ShopItem[] = [
+   924→  { id: "refill_hearts", name: "Llenar Corazones", description: "Restaura todos tus corazones al instante", emoji: "❤️", cost: 350, type: "hearts" },
+   925→  { id: "frozen_1", name: "Congelar Racha", description: "Protege tu racha por un día perdido", emoji: "🧊", cost: 200, type: "frozen" },
+   926→  { id: "frozen_3", name: "3 Congeladores", description: "Tres congeladores de racha", emoji: "🧊", cost: 500, type: "frozen" },
+   927→  { id: "double_xp", name: "Doble Quipus (15 min)", description: "Duplica tus quipus tejidos por 15 minutos", emoji: "⚡", cost: 450, type: "boost" },
+   928→  { id: "extra_heart", name: "Corazón Extra", description: "Un corazón adicional permanente", emoji: "💖", cost: 800, type: "hearts" },
+   929→];
+   930→
+   931→// Helpers
+   932→export function getLessonById(lessonId: string): Lesson | undefined {
+   933→  for (const unit of CURRICULUM) {
+   934→    const lesson = unit.lessons.find((l) => l.id === lessonId);
+   935→    if (lesson) return lesson;
+   936→  }
+   937→  return undefined;
+   938→}
+   939→
+   940→export function getAllLessons(): { unit: Unit; lesson: Lesson; index: number }[] {
+   941→  const result: { unit: Unit; lesson: Lesson; index: number }[] = [];
+   942→  CURRICULUM.forEach((unit) => {
+   943→    unit.lessons.forEach((lesson, index) => {
+   944→      result.push({ unit, lesson, index });
+   945→    });
+   946→  });
+   947→  return result;
+   948→}
+   949→
+   950→export function getLessonOrder(lessonId: string): number {
+   951→  let order = 0;
+   952→  for (const unit of CURRICULUM) {
+   953→    for (const lesson of unit.lessons) {
+   954→      if (lesson.id === lessonId) return order;
+   955→      order++;
+   956→    }
+   957→  }
+   958→  return order;
+   959→}
+   960→
+   961→export function getNextLessonId(lessonId: string): string | null {
+   962→  const all = getAllLessons();
+   963→  const idx = all.findIndex((x) => x.lesson.id === lessonId);
+   964→  if (idx === -1 || idx + 1 >= all.length) return null;
+   965→  return all[idx + 1].lesson.id;
+   966→}
+   967→
