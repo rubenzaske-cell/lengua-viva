@@ -13,6 +13,8 @@ interface Message {
   text: string;
   palabraQuechua?: string;
   traduccion?: string;
+  imageUrl?: string;
+  generatingImage?: boolean;
 }
 
 const WELCOME_MESSAGE: Message = {
@@ -137,6 +139,58 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
       if (textoParaHablar) {
         tts.speak(textoParaHablar, "chuichui");
       }
+
+      // Detectar si el usuario pidió generar una imagen
+      const userMessage = mensaje.toLowerCase();
+      const wantsImage = (
+        userMessage.includes("imagen") ||
+        userMessage.includes("dibuja") ||
+        userMessage.includes("dibujar") ||
+        userMessage.includes("crea una imagen") ||
+        userMessage.includes("genera una imagen") ||
+        userMessage.includes("genera imagen") ||
+        userMessage.includes("hazme una imagen") ||
+        userMessage.includes("muéstrame") && userMessage.includes("imagen") ||
+        userMessage.includes("crea un logo") ||
+        userMessage.includes("diseña") ||
+        userMessage.includes("diseñar")
+      );
+
+      if (wantsImage) {
+        // Generar imagen en segundo plano
+        const imagePromptIndex = finalMessages.length - 1;
+        try {
+          const imgResponse = await fetch("/api/generate-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: userMessage }),
+          });
+          const imgData = await imgResponse.json();
+
+          if (imgData.imageUrl) {
+            // Actualizar el mensaje con la imagen
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[imagePromptIndex] = {
+                ...updated[imagePromptIndex],
+                imageUrl: imgData.imageUrl,
+                generatingImage: false,
+              };
+              return updated;
+            });
+            // Guardar historial actualizado
+            setTimeout(() => {
+              setMessages((prev) => {
+                saveHistory(prev);
+                return prev;
+              });
+            }, 100);
+          }
+        } catch (err) {
+          // Si falla la imagen, no romper el chat
+          console.error("Error generando imagen:", err);
+        }
+      }
     } catch {
       const errorMsg = "No pude conectar, pero sigue practicando 🦙";
       const errorMessages = [...newMessages, { role: "kuntur" as const, text: errorMsg }];
@@ -204,7 +258,7 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
                 }`}
               >
                 {msg.role === "kuntur" ? (
-                  <MessageContent text={msg.text} />
+                  <MessageContent text={msg.text} imageUrl={msg.imageUrl} generatingImage={msg.generatingImage} />
                 ) : (
                   <p className="text-sm font-semibold">{msg.text}</p>
                 )}
@@ -278,7 +332,7 @@ export function KunturTutor({ onClose }: { onClose: () => void }) {
 }
 
 // Componente que renderiza texto separando los bloques de código
-function MessageContent({ text }: { text: string }) {
+function MessageContent({ text, imageUrl, generatingImage }: { text: string; imageUrl?: string; generatingImage?: boolean }) {
   // Dividir el texto por bloques de código (```...```)
   const parts: { type: "text" | "code"; content: string; lang?: string }[] = [];
   const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
@@ -372,6 +426,24 @@ function MessageContent({ text }: { text: string }) {
             </>
           )}
         </button>
+      )}
+
+      {/* Imagen generada */}
+      {generatingImage && (
+        <div className="mt-3 flex items-center gap-2 text-xs font-bold text-muted-foreground">
+          <span className="w-2 h-2 rounded-full bg-duo-purple animate-pulse" />
+          Generando imagen...
+        </div>
+      )}
+      {imageUrl && (
+        <div className="mt-3 rounded-xl overflow-hidden border border-border">
+          <img
+            src={imageUrl}
+            alt="Imagen generada por Kuntur"
+            className="w-full h-auto"
+            loading="lazy"
+          />
+        </div>
       )}
     </div>
   );
